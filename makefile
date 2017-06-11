@@ -17,3 +17,6 @@ clean:
 # Directories
 bin:
 	mkdir -p bin
+
+check:
+	test/hello.sh
