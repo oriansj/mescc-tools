@@ -199,7 +199,54 @@ DEFINE SUB_esi_esp 6629E6
 DEFINE SUB_edi_esp 6629E7
 DEFINE SUB_ebp_esp 6629E5
 DEFINE SUB_esp_esp 6629E4
-
+DEFINE SUB_eax_Immediate 662D
+DEFINE SUB_ebx_Immediate 6681EB
+DEFINE SUB_ecx_Immediate 6681E9
+DEFINE SUB_edx_Immediate 6681EA
+DEFINE SUB_esi_Immediate 6681EE
+DEFINE SUB_edi_Immediate 6681EF
+DEFINE SUB_ebp_Immediate 6681ED
+DEFINE SUB_esp_Immediate 6681EC
+DEFINE ADD_eax_Immediate 6605
+DEFINE ADD_ebx_Immediate 6681C3
+DEFINE ADD_ecx_Immediate 6681C1
+DEFINE ADD_edx_Immediate 6681C2
+DEFINE ADD_esi_Immediate 6681C6
+DEFINE ADD_edi_Immediate 6681C7
+DEFINE ADD_ebp_Immediate 6681C5
+DEFINE ADD_esp_Immediate 6681C4
+DEFINE CMP_eax_Immediate 663D
+DEFINE CMP_ebx_Immediate 6681FB
+DEFINE CMP_ecx_Immediate 6681F9
+DEFINE CMP_edx_Immediate 6681FA
+DEFINE CMP_esi_Immediate 6681FE
+DEFINE CMP_edi_Immediate 6681FF
+DEFINE CMP_ebp_Immediate 6681FD
+DEFINE CMP_esp_Immediate 6681FC
+DEFINE AND_eax_Immediate 6625
+DEFINE AND_ebx_Immediate 6681E3
+DEFINE AND_ecx_Immediate 6681E1
+DEFINE AND_edx_Immediate 6681E2
+DEFINE AND_esi_Immediate 6681E6
+DEFINE AND_edi_Immediate 6681E7
+DEFINE AND_ebp_Immediate 6681E5
+DEFINE AND_esp_Immediate 6681E4
+DEFINE XOR_eax_Immediate 6635
+DEFINE XOR_ebx_Immediate 6681F3
+DEFINE XOR_ecx_Immediate 6681F1
+DEFINE XOR_edx_Immediate 6681F2
+DEFINE XOR_esi_Immediate 6681F6
+DEFINE XOR_edi_Immediate 6681F7
+DEFINE XOR_ebp_Immediate 6681F5
+DEFINE XOR_esp_Immediate 6681F4
+DEFINE OR_eax_Immediate 660D
+DEFINE OR_ebx_Immediate 6681CB
+DEFINE OR_ecx_Immediate 6681C9
+DEFINE OR_edx_Immediate 6681CA
+DEFINE OR_esi_Immediate 6681CE
+DEFINE OR_edi_Immediate 6681CF
+DEFINE OR_ebp_Immediate 6681CD
+DEFINE OR_esp_Immediate 6681CC
 
 
 # 16bit realmode instructions
