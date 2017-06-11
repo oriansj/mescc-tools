@@ -22,6 +22,8 @@
 #include <string.h>
 #include <getopt.h>
 #define max_string 255
+// ELF32 virtual base address
+#define VADDR 0x8048000
 
 struct input_files
 {
@@ -212,7 +214,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 	}
 	else if(38 == ch)
 	{ /* Deal with & */
-		outputPointer(target, 4);
+		outputPointer(target + VADDR, 4);
 	}
 	else if(37 == ch)
 	{ /* Deal with % */
