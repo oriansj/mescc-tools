@@ -38,6 +38,7 @@ struct entry
 
 struct entry* jump_table;
 int BigEndian;
+int Base_Address;
 
 int consume_token(FILE* source_file, char* s)
 {
@@ -81,10 +82,8 @@ void storeLabel(FILE* source_file, int ip)
 	entry->target = ip;
 }
 
-void outputPointer(int32_t displacement, int number_of_bytes)
+void range_check(int32_t displacement, int number_of_bytes)
 {
-	uint32_t value = displacement;
-
 	switch(number_of_bytes)
 	{
 		case 4: break;
@@ -117,6 +116,14 @@ void outputPointer(int32_t displacement, int number_of_bytes)
 		}
 		default: exit(EXIT_FAILURE);
 	}
+}
+
+void outputPointer(int32_t displacement, int number_of_bytes)
+{
+	uint32_t value = displacement;
+
+	/* HALT HARD if we are going to do something BAD*/
+	range_check(displacement, number_of_bytes);
 
 	if(BigEndian)
 	{ /* Deal with BigEndian */
@@ -215,7 +222,7 @@ int8_t hex(int c, FILE* source_file)
 
 int first_pass(struct input_files* input)
 {
-	if(NULL == input) return 0;
+	if(NULL == input) return Base_Address;
 
 	int ip = first_pass(input->next);
 	FILE* source_file = fopen(input->filename, "r");
@@ -262,7 +269,7 @@ int first_pass(struct input_files* input)
 
 int second_pass(struct input_files* input)
 {
-	if(NULL == input) return 0;
+	if(NULL == input) return Base_Address;;
 
 	int ip = second_pass(input->next);
 	FILE* source_file = fopen(input->filename, "r");
@@ -332,6 +339,7 @@ int main(int argc, char **argv)
 #endif
 
 	jump_table = NULL;
+	Base_Address = 0;
 	struct input_files* input = NULL;
 
 	int c;
@@ -339,16 +347,22 @@ int main(int argc, char **argv)
 		{"BigEndian", no_argument, &BigEndian, true},
 		{"LittleEndian", no_argument, &BigEndian, false},
 		{"file", required_argument, 0, 'f'},
+		{"BaseAddress",required_argument, 0, 'B'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
 
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "B:L:f:h", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "B:f:h", long_options, &option_index)) != -1)
 	{
 		switch(c)
 		{
 			case 0: break;
+			case 'B':
+			{
+				Base_Address = atoi(optarg);
+				break;
+			}
 			case 'h':
 			{
 				fprintf(stderr, "Usage: %s List of Hex2 formated files that are to be linked together\n", argv[0]);
