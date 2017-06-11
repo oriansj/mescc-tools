@@ -151,13 +151,22 @@ void outputPointer(int32_t displacement, int number_of_bytes)
 int storePointer(char ch, FILE* source_file, int ip)
 {
 	/* Calculate pointer size*/
-	if(38 == ch)
-	{ /* Deal with & */
+	if((37 == ch) || (38 == ch))
+	{ /* Deal with % and & */
 		ip = ip + 4;
+	}
+	else if((64 == ch) || (36 == ch))
+	{ /* Deal with @ and $ */
+		ip = ip + 2;
+	}
+	else if(33 == ch)
+	{ /* Deal with ! */
+		ip = ip + 1;
 	}
 	else
 	{
-		ip = ip + 2;
+		fprintf(stderr, "storePointer given unknown\n");
+		exit(EXIT_FAILURE);
 	}
 
 	/* Get string of pointer */
@@ -168,6 +177,10 @@ int storePointer(char ch, FILE* source_file, int ip)
 	int target = GetTarget(temp);
 
 	/* output calculated difference */
+	if(33 == ch)
+	{ /* Deal with ! */
+		outputPointer((target - ip + 4), 1);
+	}
 	if(36 == ch)
 	{ /* Deal with $ */
 		outputPointer(target, 2);
@@ -179,6 +192,15 @@ int storePointer(char ch, FILE* source_file, int ip)
 	else if(38 == ch)
 	{ /* Deal with & */
 		outputPointer(target, 4);
+	}
+	else if(37 == ch)
+	{ /* Deal with % */
+		outputPointer((target - ip + 4), 4);
+	}
+	else
+	{
+		fprintf(stderr, "storePointer reached impossible case\n");
+		exit(EXIT_FAILURE);
 	}
 
 	return ip;
@@ -238,14 +260,19 @@ int first_pass(struct input_files* input)
 			storeLabel(source_file, ip);
 		}
 
-		/* check for and deal with relative pointers to labels */
-		if((64 == c) || (36 == c))
-		{ /* deal with @ and $ */
+		/* check for and deal with relative/absolute pointers to labels */
+		if(33 == c)
+		{ /* deal with 1byte pointer ! */
+			c = consume_token(source_file, token);
+			ip = ip + 1;
+		}
+		else if((64 == c) || (36 == c))
+		{ /* deal with 2byte pointers (@ and $) */
 			c = consume_token(source_file, token);
 			ip = ip + 2;
 		}
-		else if(38 == c)
-		{ /* deal with & */
+		else if((37 == c) || (38 == c))
+		{ /* deal with 4byte pointers (% and &) */
 			c = consume_token(source_file, token);
 			ip = ip + 4;
 		}
@@ -285,8 +312,8 @@ int second_pass(struct input_files* input)
 		{ /* Deal with : */
 			c = consume_token(source_file, token);
 		}
-		else if((64 == c) || (36 == c) || (38 == c))
-		{ /* Deal with @, $ and & */
+		else if((33 == c) || (64 == c) || (36 == c) || (47 == c) || (38 == c))
+		{ /* Deal with !, @, $, %  and & */
 			ip = storePointer(c, source_file, ip);
 		}
 		else
