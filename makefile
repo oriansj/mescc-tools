@@ -1,5 +1,5 @@
 # Prevent rebuilding
-VPATH = bin
+VPATH = bin:test:test/results
 
 all: M0 hex2
 
@@ -18,5 +18,17 @@ clean:
 bin:
 	mkdir -p bin
 
-check:
-	test/hello.sh
+results:
+	mkdir -p test/results
+
+# tests
+test: test0 | results
+	sha256sum -c test/test.answers
+
+test0-binary: results
+	test/test0/hello.sh
+
+# Generate test answers
+.PHONY: Generate-test-answers
+Generate-test-answers:
+	sha256sum test/results/* >| test/test.answers
