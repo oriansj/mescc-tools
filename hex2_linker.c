@@ -39,6 +39,7 @@ struct entry
 struct entry* jump_table;
 int BigEndian;
 int Base_Address;
+int Architecture;
 
 int consume_token(FILE* source_file, char* s)
 {
@@ -175,11 +176,31 @@ int storePointer(char ch, FILE* source_file, int ip)
 
 	/* Lookup token */
 	int target = GetTarget(temp);
+	int displacement;
+	switch (Architecture)
+	{
+		case 0:
+		{
+			displacement = (target - ip + 4);
+			break;
+		}
+		case 1:
+		case 2:
+		{
+			displacement = (target - ip);
+			break;
+		}
+		default:
+		{
+			fprintf(stderr, "Unknown Architecture, aborting before harm is done\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	/* output calculated difference */
 	if(33 == ch)
 	{ /* Deal with ! */
-		outputPointer((target - ip + 4), 1);
+		outputPointer(displacement, 1);
 	}
 	if(36 == ch)
 	{ /* Deal with $ */
@@ -187,7 +208,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 	}
 	else if(64 == ch)
 	{ /* Deal with @ */
-		outputPointer((target - ip + 4), 2);
+		outputPointer(displacement, 2);
 	}
 	else if(38 == ch)
 	{ /* Deal with & */
@@ -195,7 +216,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 	}
 	else if(37 == ch)
 	{ /* Deal with % */
-		outputPointer((target - ip + 4), 4);
+		outputPointer(displacement, 4);
 	}
 	else
 	{
@@ -312,7 +333,7 @@ int second_pass(struct input_files* input)
 		{ /* Deal with : */
 			c = consume_token(source_file, token);
 		}
-		else if((33 == c) || (64 == c) || (36 == c) || (47 == c) || (38 == c))
+		else if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c))
 		{ /* Deal with !, @, $, %  and & */
 			ip = storePointer(c, source_file, ip);
 		}
@@ -366,6 +387,7 @@ int main(int argc, char **argv)
 #endif
 
 	jump_table = NULL;
+	Architecture = 0;
 	Base_Address = 0;
 	struct input_files* input = NULL;
 
@@ -374,6 +396,7 @@ int main(int argc, char **argv)
 		{"BigEndian", no_argument, &BigEndian, true},
 		{"LittleEndian", no_argument, &BigEndian, false},
 		{"file", required_argument, 0, 'f'},
+		{"Architecture", required_argument, 0, 'A'},
 		{"BaseAddress",required_argument, 0, 'B'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -385,6 +408,11 @@ int main(int argc, char **argv)
 		switch(c)
 		{
 			case 0: break;
+			case 'A':
+			{
+				Architecture = atoi(optarg);
+				break;
+			}
 			case 'B':
 			{
 				Base_Address = atoi(optarg);
@@ -392,7 +420,8 @@ int main(int argc, char **argv)
 			}
 			case 'h':
 			{
-				fprintf(stderr, "Usage: %s List of Hex2 formated files that are to be linked together\n", argv[0]);
+				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\n", argv[0]);
+				fprintf(stderr, "Architecture 0: Knight; 1: x86; 2: AMD64");
 				exit(EXIT_SUCCESS);
 			}
 			case 'f':
