@@ -202,7 +202,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 	{ /* Deal with ! */
 		outputPointer(displacement, 1);
 	}
-	if(36 == ch)
+	else if(36 == ch)
 	{ /* Deal with $ */
 		outputPointer(target, 2);
 	}
@@ -220,7 +220,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 	}
 	else
 	{
-		fprintf(stderr, "storePointer reached impossible case\n");
+		fprintf(stderr, "storePointer reached impossible case: ch=%c\n", ch);
 		exit(EXIT_FAILURE);
 	}
 
