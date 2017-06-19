@@ -269,10 +269,36 @@ void preserve_other(struct Token* p)
 	}
 }
 
-uint16_t numerate_string(char a[])
+int32_t numerate_string(char a[])
 {
 	char *ptr;
-	return (uint16_t)strtol(a, &ptr, 0);
+	return (uint32_t)strtol(a, &ptr, 0);
+}
+
+char* express_number(int32_t value, char c)
+{
+	char* ch;
+	if('!' == c)
+	{
+		ch = calloc(3, sizeof(char));
+		sprintf(ch, "%02x", value);
+	}
+	else if('@' == c)
+	{
+		ch = calloc(5, sizeof(char));
+		sprintf(ch, "%04x", value);
+	}
+	else if('%' == c)
+	{
+		ch = calloc(9, sizeof(char));
+		sprintf(ch, "%08x", value);
+	}
+	else
+	{
+		fprintf(stderr, "Given symbol %c to express immediate value %d\n", c, value);
+		exit(EXIT_FAILURE);
+	}
+	return ch;
 }
 
 void eval_immediates(struct Token* p)
@@ -284,14 +310,12 @@ void eval_immediates(struct Token* p)
 
 	if((NULL == p->Expression) && !(p->type & macro))
 	{
-		uint16_t value;
-		value = numerate_string(p->Text);
+		int32_t value;
+		value = numerate_string(p->Text + 1);
 
-		if(('0' == p->Text[0]) || (0 != value))
+		if(('0' == p->Text[1]) || (0 != value))
 		{
-			char* c = calloc(5, sizeof(char));
-			sprintf(c, "%04x", value);
-			p->Expression = c;
+			p->Expression = express_number(value, p->Text[0]);
 		}
 	}
 }
