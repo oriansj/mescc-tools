@@ -20,10 +20,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <getopt.h>
 #define max_string 63
 
 FILE* source_file;
 bool Reached_EOF;
+int BigEndian;
 
 struct Token
 {
@@ -340,20 +342,72 @@ void print_hex(struct Token* p)
 /* Standard C main program */
 int main(int argc, char **argv)
 {
-	/* Make sure we have a program tape to run */
-	if (argc < 2)
+/* Default endianness is that of the native host */
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
+	defined(__BIG_ENDIAN__) || \
+	defined(__ARMEB__) || \
+	defined(__THUMBEB__) || \
+	defined(__AARCH64EB__) || \
+	defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
+// It's a big-endian target architecture
+		BigEndian = true;
+#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || \
+	defined(__LITTLE_ENDIAN__) || \
+	defined(__ARMEL__) || \
+	defined(__THUMBEL__) || \
+	defined(__AARCH64EL__) || \
+	defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
+// It's a little-endian target architecture
+	BigEndian = false;
+#else
+#error "I don't know what architecture this is!"
+	exit(EXIT_FAILURE);
+#endif
+
+	struct Token* head = NULL;
+	int c;
+	static struct option long_options[] = {
+		{"BigEndian", no_argument, &BigEndian, true},
+		{"LittleEndian", no_argument, &BigEndian, false},
+		{"file", required_argument, 0, 'f'},
+		{"help", no_argument, 0, 'h'},
+		{0, 0, 0, 0}
+	};
+
+	int option_index = 0;
+	while ((c = getopt_long(argc, argv, "f:h", long_options, &option_index)) != -1)
 	{
-		fprintf(stderr, "Usage: %s $FileName\nWhere $FileName is the name of the paper tape of the program being run\n", argv[0]);
-		return EXIT_FAILURE;
+		switch(c)
+		{
+			case 0: break;
+			case 'h':
+			{
+				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\n", argv[0]);
+				fprintf(stderr, "Architecture 0: Knight; 1: x86; 2: AMD64");
+				exit(EXIT_SUCCESS);
+			}
+			case 'f':
+			{
+				source_file = fopen(optarg, "r");
+				Reached_EOF = false;
+				while(!Reached_EOF)
+				{
+					head = Tokenize_Line(head);
+				}
+				break;
+			}
+			default:
+			{
+				fprintf(stderr, "Unknown option\n");
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 
-	source_file = fopen(argv[1], "r");
-
-	Reached_EOF = false;
-	struct Token* head = NULL;
-	while(!Reached_EOF)
+	if(NULL == head)
 	{
-		head = Tokenize_Line(head);
+		fprintf(stderr, "Either no input files were given or they were empty\n");
+		exit(EXIT_FAILURE);
 	}
 
 	identify_macros(head);
