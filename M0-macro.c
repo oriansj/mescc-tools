@@ -277,23 +277,83 @@ int32_t numerate_string(char a[])
 	return (uint32_t)strtol(a, &ptr, 0);
 }
 
+char* LittleEndian(uint32_t value, char* c, int Number_of_bytes)
+{
+	/* {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'} */
+	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
+
+	switch(Number_of_bytes)
+	{
+		case 4:
+		{
+			c[6] = table[value >> 28];
+			c[7] = table[(value >> 24)% 16];
+		}
+		case 3:
+		{
+			c[4] = table[(value >> 20)% 16];
+			c[5] = table[(value >> 16)% 16];
+		}
+		case 2:
+		{
+			c[2] = table[(value >> 12)% 16];
+			c[3] = table[(value >> 8)% 16];
+		}
+		case 1:
+		{
+			c[0] = table[(value >> 4)% 16];
+			c[1] = table[value % 16];
+			break;
+		}
+		default:
+		{
+			fprintf(stderr, "Recieved invalid number of bytes in LittleEndian %d\n", Number_of_bytes);
+			exit(EXIT_FAILURE);
+		}
+	}
+	return c;
+}
+
 char* express_number(int32_t value, char c)
 {
 	char* ch;
 	if('!' == c)
 	{
 		ch = calloc(3, sizeof(char));
-		sprintf(ch, "%02x", value);
+		if(BigEndian)
+		{
+			sprintf(ch, "%02x", value);
+		}
+		else
+		{
+			ch = LittleEndian(value, ch, 1);
+		}
 	}
 	else if('@' == c)
 	{
 		ch = calloc(5, sizeof(char));
-		sprintf(ch, "%04x", value);
+		if(BigEndian)
+		{
+			sprintf(ch, "%04x", value);
+		}
+		else
+		{
+			ch = LittleEndian(value, ch, 2);
+		}
+
 	}
 	else if('%' == c)
 	{
 		ch = calloc(9, sizeof(char));
-		sprintf(ch, "%08x", value);
+		if(BigEndian)
+		{
+			sprintf(ch, "%08x", value);
+		}
+		else
+		{
+			ch = LittleEndian(value, ch, 4);
+		}
+
 	}
 	else
 	{
