@@ -1,3 +1,4 @@
+/* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
 /* Copyright (C) 2017 Jeremiah Orians
  * This file is part of MES
  *
@@ -50,7 +51,7 @@ int consume_token(FILE* source_file, char* s)
 		s[i] = c;
 		i = i + 1;
 		c = fgetc(source_file);
-	} while((' ' != c) && ('\t' != c) && ('\n' != c));
+	} while((' ' != c) && ('\t' != c) && ('\n' != c) && '>' != c);
 
 	return c;
 }
@@ -68,7 +69,7 @@ uint32_t GetTarget(char* c)
 	exit(EXIT_FAILURE);
 }
 
-void storeLabel(FILE* source_file, int ip)
+int storeLabel(FILE* source_file, int ip)
 {
 	struct entry* entry = calloc(1, sizeof(struct entry));
 
@@ -77,10 +78,11 @@ void storeLabel(FILE* source_file, int ip)
 	jump_table = entry;
 
 	/* Store string */
-	consume_token(source_file, entry->name);
+	int c = consume_token(source_file, entry->name);
 
 	/* Ensure we have target address */
 	entry->target = ip;
+	return c;
 }
 
 void range_check(int32_t displacement, int number_of_bytes)
@@ -172,22 +174,32 @@ int storePointer(char ch, FILE* source_file, int ip)
 
 	/* Get string of pointer */
 	char temp[max_string + 1] = {0};
-	consume_token(source_file, temp);
+	int base_sep_p = consume_token(source_file, temp) == 62; // '>'
 
 	/* Lookup token */
 	int target = GetTarget(temp);
 	int displacement;
+
+	int base = ip;
+	/* Change relative base address to :<base> */
+        if (base_sep_p)
+        {
+		char temp2[max_string + 1] = {0};
+		consume_token (source_file, temp2);
+		base = GetTarget (temp2);
+        }
+
 	switch (Architecture)
 	{
 		case 0:
 		{
-			displacement = (target - ip + 4);
+			displacement = (target - base + 4);
 			break;
 		}
 		case 1:
 		case 2:
 		{
-			displacement = (target - ip);
+			displacement = (target - base);
 			break;
 		}
 		default:
@@ -278,7 +290,7 @@ int first_pass(struct input_files* input)
 		/* Check for and deal with label */
 		if(58 == c)
 		{
-			storeLabel(source_file, ip);
+			c = storeLabel(source_file, ip);
 		}
 
 		/* check for and deal with relative/absolute pointers to labels */
@@ -295,6 +307,10 @@ int first_pass(struct input_files* input)
 		else if((37 == c) || (38 == c))
 		{ /* deal with 4byte pointers (% and &) */
 			c = consume_token(source_file, token);
+			if (62 == c)
+			{ /* deal with label>base */
+				c = consume_token (source_file, token);
+			}
 			ip = ip + 4;
 		}
 		else
