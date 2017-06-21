@@ -12,7 +12,7 @@ hex2: hex2_linker.c | bin
 # Clean up after ourselves
 .PHONY: clean
 clean:
-	rm -rf bin/
+	rm -rf bin/ test/results/
 
 # Directories
 bin:
@@ -22,11 +22,14 @@ results:
 	mkdir -p test/results
 
 # tests
-test: test0 | results
+test: test0-binary test1-binary | results
 	sha256sum -c test/test.answers
 
-test0-binary: results
+test0-binary: results hex2
 	test/test0/hello.sh
+
+test1-binary: results hex2 M0
+	test/test1/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers
