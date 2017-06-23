@@ -35,3 +35,11 @@ test1-binary: results hex2 M0
 .PHONY: Generate-test-answers
 Generate-test-answers:
 	sha256sum test/results/* >| test/test.answers
+
+DESTDIR:=
+PREFIX:=/usr/local
+bindir:=$(DESTDIR)$(PREFIX)/bin
+.PHONY: install
+install: M0 hex2
+	mkdir -p $(bindir)
+	cp $^ $(bindir)
