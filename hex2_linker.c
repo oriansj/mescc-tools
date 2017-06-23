@@ -415,6 +415,7 @@ int main(int argc, char **argv)
 		{"Architecture", required_argument, 0, 'A'},
 		{"BaseAddress",required_argument, 0, 'B'},
 		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
 
@@ -448,6 +449,11 @@ int main(int argc, char **argv)
 				temp->next = input;
 				input = temp;
 				break;
+			}
+			case 'v':
+			{
+				fprintf(stdout, "hex2 0.0\n");
+				exit(EXIT_SUCCESS);
 			}
 			default:
 			{
