@@ -174,7 +174,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 
 	/* Get string of pointer */
 	char temp[max_string + 1] = {0};
-	int base_sep_p = consume_token(source_file, temp) == 62; // '>'
+	bool base_sep_p = (consume_token(source_file, temp) == 62); // '>'
 
 	/* Lookup token */
 	int target = GetTarget(temp);
@@ -182,12 +182,12 @@ int storePointer(char ch, FILE* source_file, int ip)
 
 	int base = ip;
 	/* Change relative base address to :<base> */
-        if (base_sep_p)
-        {
+	if (base_sep_p)
+	{
 		char temp2[max_string + 1] = {0};
 		consume_token (source_file, temp2);
 		base = GetTarget (temp2);
-        }
+	}
 
 	switch (Architecture)
 	{
@@ -452,7 +452,7 @@ int main(int argc, char **argv)
 			}
 			case 'v':
 			{
-				fprintf(stdout, "hex2 0.0\n");
+				fprintf(stdout, "hex2 0.1\n");
 				exit(EXIT_SUCCESS);
 			}
 			default:

@@ -431,6 +431,7 @@ int main(int argc, char **argv)
 		{"LittleEndian", no_argument, &BigEndian, false},
 		{"file", required_argument, 0, 'f'},
 		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'v'},
 		{0, 0, 0, 0}
 	};
 
@@ -455,6 +456,10 @@ int main(int argc, char **argv)
 					head = Tokenize_Line(head);
 				}
 				break;
+			}
+			case 'v':
+			{
+				fprintf(stdout, "M0 0.1\n");
 			}
 			default:
 			{
