@@ -61,13 +61,14 @@ struct Token* addToken(struct Token* head, struct Token* p)
 	{
 		return p;
 	}
-	if(NULL == head->next)
+
+	for(struct Token* i = head; NULL != i; i = i->next)
 	{
-		head->next = p;
-	}
-	else
-	{
-		addToken(head->next, p);
+		if(NULL == i->next)
+		{
+			i->next = p;
+			return head;
+		}
 	}
 	return head;
 }
@@ -84,6 +85,11 @@ void purge_lineComment()
 char* store_atom(char c)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
+	if(NULL == store)
+	{
+		fprintf(stderr, "Exhusted available memory\n");
+		exit(EXIT_FAILURE);
+	}
 	int32_t ch;
 	uint32_t i = 0;
 	ch = c;
@@ -92,7 +98,7 @@ char* store_atom(char c)
 		store[i] = (char)ch;
 		ch = fgetc(source_file);
 		i = i + 1;
-	} while ((9 != ch) && (10 != ch) && (32 != ch));
+	} while ((9 != ch) && (10 != ch) && (32 != ch) && (i <= max_string));
 
 	return store;
 }
@@ -100,6 +106,11 @@ char* store_atom(char c)
 char* store_string(char c)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
+	if(NULL == store)
+	{
+		fprintf(stderr, "Exhusted available memory\n");
+		exit(EXIT_FAILURE);
+	}
 	int32_t ch;
 	uint32_t i = 0;
 	ch = c;
@@ -108,6 +119,16 @@ char* store_string(char c)
 		store[i] = (char)ch;
 		i = i + 1;
 		ch = fgetc(source_file);
+		if(-1 == ch)
+		{
+			fprintf(stderr, "Unmatched \"!\n");
+			exit(EXIT_FAILURE);
+		}
+		if(max_string == i)
+		{
+			fprintf(stderr, "String: %s exceeds max string size\n", store);
+			exit(EXIT_FAILURE);
+		}
 	} while(ch != c);
 
 	return store;
@@ -115,19 +136,20 @@ char* store_string(char c)
 
 struct Token* Tokenize_Line(struct Token* head)
 {
-
 	int32_t c;
+
+restart:
 	c = fgetc(source_file);
 
 	if((35 == c) || (59 == c))
 	{
 		purge_lineComment();
-		return Tokenize_Line(head);
+		goto restart;
 	}
 
 	if((9 == c) || (10 == c) || (32 == c))
 	{
-		return Tokenize_Line(head);
+		goto restart;
 	}
 
 	struct Token* p = newToken();
