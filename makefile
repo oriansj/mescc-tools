@@ -13,6 +13,8 @@ hex2: hex2_linker.c | bin
 .PHONY: clean
 clean:
 	rm -rf bin/ test/results/
+	./test/test1/cleanup.sh
+	./test/test2/cleanup.sh
 
 # Directories
 bin:
