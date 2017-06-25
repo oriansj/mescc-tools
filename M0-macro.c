@@ -21,11 +21,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include <getopt.h>
-#define max_string 63
+#define max_string 4096
 
 FILE* source_file;
 bool Reached_EOF;
 int BigEndian;
+int Architecture;
 
 struct Token
 {
@@ -55,22 +56,17 @@ struct Token* newToken()
 	return p;
 }
 
-struct Token* addToken(struct Token* head, struct Token* p)
+struct Token* reverse_list(struct Token* head)
 {
-	if(NULL == head)
+	struct Token* root = NULL;
+	while(NULL != head)
 	{
-		return p;
+		struct Token* next = head->next;
+		head->next = root;
+		root = head;
+		head = next;
 	}
-
-	for(struct Token* i = head; NULL != i; i = i->next)
-	{
-		if(NULL == i->next)
-		{
-			i->next = p;
-			return head;
-		}
-	}
-	return head;
+	return root;
 }
 
 void purge_lineComment()
@@ -169,7 +165,8 @@ restart:
 		p->Text = store_atom(c);
 	}
 
-	return addToken(head, p);
+	p->next = head;
+	return p;
 }
 
 void setExpression(struct Token* p, char match[], char Exp[])
@@ -387,11 +384,28 @@ void eval_immediates(struct Token* p)
 	if((NULL == p->Expression) && !(p->type & macro))
 	{
 		int32_t value;
-		value = numerate_string(p->Text + 1);
-
-		if(('0' == p->Text[1]) || (0 != value))
+		switch(Architecture)
 		{
-			p->Expression = express_number(value, p->Text[0]);
+			case 2:
+			case 1:
+			{
+				value = numerate_string(p->Text + 1);
+				if(('0' == p->Text[1]) || (0 != value))
+				{
+					p->Expression = express_number(value, p->Text[0]);
+				}
+				break;
+			}
+			case 0:
+			{
+				value = numerate_string(p->Text);
+				if(('0' == p->Text[0]) || (0 != value))
+				{
+					p->Expression = calloc(5, sizeof(char));
+					sprintf(p->Expression, "%04X", value);
+				}
+				break;
+			}
 		}
 	}
 }
@@ -439,8 +453,10 @@ int main(int argc, char **argv)
 #endif
 
 	struct Token* head = NULL;
+	Architecture = 0;
 	int c;
 	static struct option long_options[] = {
+		{"Architecture", required_argument, 0, 'A'},
 		{"BigEndian", no_argument, &BigEndian, true},
 		{"LittleEndian", no_argument, &BigEndian, false},
 		{"file", required_argument, 0, 'f'},
@@ -455,6 +471,11 @@ int main(int argc, char **argv)
 		switch(c)
 		{
 			case 0: break;
+			case 'A':
+			{
+				Architecture = atoi(optarg);
+				break;
+			}
 			case 'h':
 			{
 				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\n", argv[0]);
@@ -489,6 +510,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	head = reverse_list(head);
 	identify_macros(head);
 	line_macro(head);
 	process_string(head);

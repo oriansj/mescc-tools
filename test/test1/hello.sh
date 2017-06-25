@@ -1,6 +1,6 @@
 #! /bin/sh
 set -x
-./bin/M0 -f test/test1/hex.M0 --LittleEndian >| test/test1/hold
+./bin/M0 -f test/test1/hex.M0 --LittleEndian --Architecture 2 >| test/test1/hold
 ./bin/hex2 -f test/test1/elf64 -f test/test1/hold --LittleEndian --Architecture 1 --BaseAddress 0x00600000 >| test/results/test1-binary
 chmod u+x test/results/test1-binary
 ./test/results/test1-binary < test/test1/example_test.hex > test/test1/proof
