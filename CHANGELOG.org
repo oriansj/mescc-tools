@@ -17,16 +17,20 @@
 * Current
 ** Added
 created test2 (a 32bit x86 hex assembler) with its associated build and test changes
+Fixed proof answers for test1 and test2
 
 ** Changed
 Adjusted tags to reflect current CHANGELOG
+Make test now depends upon test2 completing
 
 ** Fixed
 Removed unrequired temp file in test1
 Clarified meaning of Label>base displacement conditional
 Corrected error in test0 elf32
+Test1 and Test2 to reflect the fact that /bin/bash doesn't exist in guix
 
 ** Removed
+Removed bashisms from Test1 and Test2 to allow proper behavior on debian based systems
 
 * 0.1 - 2017-6-25
 ** Added

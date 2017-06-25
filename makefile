@@ -22,7 +22,7 @@ results:
 	mkdir -p test/results
 
 # tests
-test: test0-binary test1-binary | results
+test: test0-binary test1-binary test2-binary | results
 	sha256sum -c test/test.answers
 
 test0-binary: results hex2
