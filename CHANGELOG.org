@@ -35,6 +35,7 @@ Fixed M0 regression to continue to support original test code
 
 ** Removed
 Removed bashisms from Test1 and Test2 to allow proper behavior on debian based systems
+Removed alerting on missing files in cleanup target
 
 * 0.1 - 2017-6-25
 ** Added
