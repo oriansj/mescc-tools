@@ -282,6 +282,42 @@ void preserve_other(struct Token* p)
 	}
 }
 
+void range_check(int32_t displacement, int number_of_bytes)
+{
+	switch(number_of_bytes)
+	{
+		case 4: break;
+		case 3:
+		{
+			if((8388607 < displacement) || (displacement < -8388608))
+			{
+				fprintf(stderr, "A displacement of %d does not fit in 3 bytes", displacement);
+				exit(EXIT_FAILURE);
+			}
+			break;
+		}
+		case 2:
+		{
+			if((32767 < displacement) || (displacement < -32768))
+			{
+				fprintf(stderr, "A displacement of %d does not fit in 2 bytes", displacement);
+				exit(EXIT_FAILURE);
+			}
+			break;
+		}
+		case 1:
+		{
+			if((127 < displacement) || (displacement < -128))
+			{
+				fprintf(stderr, "A displacement of %d does not fit in 1 byte", displacement);
+				exit(EXIT_FAILURE);
+			}
+			break;
+		}
+		default: exit(EXIT_FAILURE);
+	}
+}
+
 int32_t numerate_string(char a[])
 {
 	char *ptr;
@@ -330,6 +366,7 @@ char* express_number(int32_t value, char c)
 	char* ch;
 	if('!' == c)
 	{
+		range_check(value, 1);
 		ch = calloc(3, sizeof(char));
 		if(BigEndian)
 		{
@@ -342,6 +379,7 @@ char* express_number(int32_t value, char c)
 	}
 	else if('@' == c)
 	{
+		range_check(value, 2);
 		ch = calloc(5, sizeof(char));
 		if(BigEndian)
 		{
@@ -351,10 +389,10 @@ char* express_number(int32_t value, char c)
 		{
 			ch = LittleEndian(value, ch, 2);
 		}
-
 	}
 	else if('%' == c)
 	{
+		range_check(value, 4);
 		ch = calloc(9, sizeof(char));
 		if(BigEndian)
 		{
@@ -364,7 +402,6 @@ char* express_number(int32_t value, char c)
 		{
 			ch = LittleEndian(value, ch, 4);
 		}
-
 	}
 	else
 	{
@@ -401,6 +438,7 @@ void eval_immediates(struct Token* p)
 				value = numerate_string(p->Text);
 				if(('0' == p->Text[0]) || (0 != value))
 				{
+					range_check(value, 2);
 					p->Expression = calloc(5, sizeof(char));
 					sprintf(p->Expression, "%04X", value);
 				}

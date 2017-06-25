@@ -18,16 +18,20 @@
 ** Added
 created test2 (a 32bit x86 hex assembler) with its associated build and test changes
 Fixed proof answers for test1 and test2
+Added support to M0 for multiple architectures
+Added range checking into M0 to make sure immediates will fit into specified space
 
 ** Changed
 Adjusted tags to reflect current CHANGELOG
 Make test now depends upon test2 completing
+Changed how M0 processes input to reduce stack usage and improve performance
 
 ** Fixed
 Removed unrequired temp file in test1
 Clarified meaning of Label>base displacement conditional
 Corrected error in test0 elf32
 Test1 and Test2 to reflect the fact that /bin/bash doesn't exist in guix
+Fixed M0 regression to continue to support original test code
 
 ** Removed
 Removed bashisms from Test1 and Test2 to allow proper behavior on debian based systems
