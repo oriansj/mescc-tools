@@ -152,24 +152,18 @@ struct Token* Tokenize_Line(struct Token* head)
 
 void setExpression(struct Token* p, char match[], char Exp[])
 {
-	/* Leave macros alone */
-	if((p->type & macro))
+	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		setExpression(p->next, match, Exp);
-		return;
+		/* Leave macros alone */
+		if((i->type & macro))
+		{
+			continue;
+		}
+		else if(0 == strncmp(i->Text, match, max_string))
+		{ /* Only if there is an exact match replace */
+			i->Expression = Exp;
+		}
 	}
-
-	/* Only if there is an exact match replace */
-	if(0 == strncmp(p->Text, match, max_string))
-	{
-		p->Expression = Exp;
-	}
-
-	if(NULL != p->next)
-	{
-		setExpression(p->next, match, Exp);
-	}
-
 }
 
 void identify_macros(struct Token* p)
@@ -197,14 +191,12 @@ void identify_macros(struct Token* p)
 
 void line_macro(struct Token* p)
 {
-	if(p->type & macro)
+	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		setExpression(p->next, p->Text, p->Expression);
-	}
-
-	if(NULL != p->next)
-	{
-		line_macro(p->next);
+		if(i->type & macro)
+		{
+			setExpression(i->next, i->Text, i->Expression);
+		}
 	}
 }
 
