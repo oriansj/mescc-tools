@@ -31,6 +31,9 @@ test0-binary: results hex2
 test1-binary: results hex2 M0
 	test/test1/hello.sh
 
+test2-binary: results hex2 M0
+	test/test2/hello.sh
+
 # Generate test answers
 .PHONY: Generate-test-answers
 Generate-test-answers:

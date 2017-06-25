@@ -54,22 +54,8 @@
 00 80 04 08           # p_vaddr
 00 80 04 08           # p_physaddr
 
-## FIXME!
-##60 00 00 00           # p_filesz
-##60 00 00 00           # p_memsz
-
-#65 01 00 00           # p_filesz
-#65 01 00 00           # p_memsz
-
 00 20 00 00           # p_filesz
 00 20 00 00           # p_memsz
 
-
 07 00 00 00           # p_flags
 01 00 00 00           # alignment
-
-## _start
-# exit (42) -- works!
-#bb 2a 00 00 00      # mov    $42,%ebx
-#b8 01 00 00 00      # mov    $0x1,%eax
-#cd 80               # int    $0x80
