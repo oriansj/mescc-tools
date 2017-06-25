@@ -1,0 +1,58 @@
+## Copyright (C) 2017 Jeremiah Orians
+## This file is part of stage0.
+##
+## stage0 is free software: you an redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## stage0 is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+* Current
+** Added
+created test2 (a 32bit x86 hex assembler) with its associated build and test changes
+
+** Changed
+Adjusted tags to reflect current CHANGELOG
+
+** Fixed
+Removed unrequired temp file in test1
+Clarified meaning of Label>base displacement conditional
+Corrected error in test0 elf32
+
+** Removed
+
+* 0.1 - 2017-6-25
+** Added
+Incorporated support for little Endian output format in hex2
+Incorporated support for multiple input files in hex2
+Added range checking for Hex2
+Added support for 1 and 4 byte relative displacements
+Added Hex2 Test
+Added the ability to specify a new base address
+Added example M0 x86 opcode definitions
+Incorporated support for multiple input files in M0
+Added support for little Endian immediate output in M0
+Added Hex assembler example test
+Added support for Label>base in Hex2
+Added Version info
+Added install target
+Added inital guix package definition
+
+** Changed
+Displacement calculations are now based on architecture specific rules
+M0 Immediates now need prefixes to specify the storage space to use for the immediate
+
+** Fixed
+Behavior regarding !label displacements
+
+** Removed
+
+* 0.0 - 2017-5-10
+Initial release of MESCC Tools from stage0 High Level prototypes
