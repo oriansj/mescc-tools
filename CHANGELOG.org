@@ -25,6 +25,7 @@ Added range checking into M0 to make sure immediates will fit into specified spa
 Adjusted tags to reflect current CHANGELOG
 Make test now depends upon test2 completing
 Changed how M0 processes input to reduce stack usage and improve performance
+Renamed M0 to M1 to reflect the additional functionality it provides
 
 ** Fixed
 Removed unrequired temp file in test1
@@ -32,6 +33,7 @@ Clarified meaning of Label>base displacement conditional
 Corrected error in test0 elf32
 Test1 and Test2 to reflect the fact that /bin/bash doesn't exist in guix
 Fixed M0 regression to continue to support original test code
+Corrected makefile and build scripts to reflect rename
 
 ** Removed
 Removed bashisms from Test1 and Test2 to allow proper behavior on debian based systems
