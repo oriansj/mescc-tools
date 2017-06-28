@@ -20,6 +20,8 @@ created test2 (a 32bit x86 hex assembler) with its associated build and test cha
 Fixed proof answers for test1 and test2
 Added support to M0 for multiple architectures
 Added range checking into M0 to make sure immediates will fit into specified space
+Added a basic tutorial for generating new M0 definitions
+Created a M1 compatible version of test0
 
 ** Changed
 Adjusted tags to reflect current CHANGELOG
@@ -38,6 +40,7 @@ Corrected makefile and build scripts to reflect rename
 ** Removed
 Removed bashisms from Test1 and Test2 to allow proper behavior on debian based systems
 Removed alerting on missing files in cleanup target
+Removed massive M0 Definition lists as they don't serve a useful purpose
 
 * 0.1 - 2017-6-25
 ** Added

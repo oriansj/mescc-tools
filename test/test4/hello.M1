@@ -1,0 +1,15 @@
+:main
+PUSH_ebp
+MOVE_esp_To_ebp
+SUB_Immediate8_From_esp !64
+PUSH_Immediate32 &string_0
+CALLI32 %eputs
+ADD_Immediate8_To_esp !4
+TEST_eax_eax
+LOADI32_eax %42
+LEAVE
+RETURN
+
+:string_0
+"Hello, Mescc!
+"
