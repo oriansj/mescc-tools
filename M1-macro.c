@@ -1,3 +1,4 @@
+/* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
 /* Copyright (C) 2016 Jeremiah Orians
  * This file is part of stage0.
  *
@@ -321,6 +322,10 @@ void range_check(int32_t displacement, int number_of_bytes)
 int32_t numerate_string(char a[])
 {
 	char *ptr;
+	if (a[0] == '0' && a[1] == 'x')
+	{
+		return (uint32_t)strtol(a+2, &ptr, 16);
+	}
 	return (uint32_t)strtol(a, &ptr, 0);
 }
 

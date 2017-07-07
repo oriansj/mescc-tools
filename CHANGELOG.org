@@ -28,6 +28,7 @@ Adjusted tags to reflect current CHANGELOG
 Make test now depends upon test2 completing
 Changed how M0 processes input to reduce stack usage and improve performance
 Renamed M0 to M1 to reflect the additional functionality it provides
+Applied Janneke's patch for accepting hex numerics in M1
 
 ** Fixed
 Removed unrequired temp file in test1
