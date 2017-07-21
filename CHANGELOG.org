@@ -22,6 +22,7 @@ Added support to M0 for multiple architectures
 Added range checking into M0 to make sure immediates will fit into specified space
 Added a basic tutorial for generating new M0 definitions
 Created a M1 compatible version of test0
+Added an amd64 program for enabling execute bits (might need to later alter the 0777)
 
 ** Changed
 Adjusted tags to reflect current CHANGELOG

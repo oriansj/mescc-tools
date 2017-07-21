@@ -17,6 +17,7 @@ clean:
 	./test/test2/cleanup.sh
 	./test/test3/cleanup.sh
 	./test/test4/cleanup.sh
+	./test/test5/cleanup.sh
 
 # Directories
 bin:
@@ -26,7 +27,7 @@ results:
 	mkdir -p test/results
 
 # tests
-test: test0-binary test1-binary test2-binary test3-binary test4-binary | results
+test: test0-binary test1-binary test2-binary test3-binary test4-binary test5-binary | results
 	sha256sum -c test/test.answers
 
 test0-binary: results hex2
@@ -43,6 +44,9 @@ test3-binary: results hex2 M1
 
 test4-binary: results hex2 M1
 	test/test4/hello.sh
+
+test5-binary: results hex2 M1
+	test/test5/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers
