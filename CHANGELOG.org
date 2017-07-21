@@ -23,6 +23,7 @@ Added range checking into M0 to make sure immediates will fit into specified spa
 Added a basic tutorial for generating new M0 definitions
 Created a M1 compatible version of test0
 Added an amd64 program for enabling execute bits (might need to later alter the 0777)
+Added an i386 program for enabling execute bits (might need to later alter the 0777)
 
 ** Changed
 Adjusted tags to reflect current CHANGELOG
@@ -40,6 +41,7 @@ Test1 and Test2 to reflect the fact that /bin/bash doesn't exist in guix
 Fixed M0 regression to continue to support original test code
 Corrected makefile and build scripts to reflect rename
 Modified test make scripts to reflect new standard elf headers
+Fixed base address needed by test5 and its associated checksum
 
 ** Removed
 Removed bashisms from Test1 and Test2 to allow proper behavior on debian based systems
