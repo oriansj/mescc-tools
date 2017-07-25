@@ -34,6 +34,7 @@ Renamed M0 to M1 to reflect the additional functionality it provides
 Applied Janneke's patch for accepting hex numerics in M1
 Refactored x86/amd64 elf headers to a standard to avoid duplication
 Standardized C flags for compiling M1 and Hex2
+Made eval_immediates iterative instead of recursive
 
 ** Fixed
 Removed unrequired temp file in test1

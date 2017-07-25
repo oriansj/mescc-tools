@@ -418,38 +418,36 @@ char* express_number(int32_t value, char c)
 
 void eval_immediates(struct Token* p)
 {
-	if(NULL != p->next)
+	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		eval_immediates(p->next);
-	}
-
-	if((NULL == p->Expression) && !(p->type & macro))
-	{
-		int32_t value;
-		switch(Architecture)
+		if((NULL == i->Expression) && !(i->type & macro))
 		{
-			case 2:
-			case 1:
+			int32_t value;
+			switch(Architecture)
 			{
-				value = numerate_string(p->Text + 1);
-				if(('0' == p->Text[1]) || (0 != value))
+				case 2:
+				case 1:
 				{
-					p->Expression = express_number(value, p->Text[0]);
+					value = numerate_string(i->Text + 1);
+					if(('0' == i->Text[1]) || (0 != value))
+					{
+						i->Expression = express_number(value, i->Text[0]);
+					}
+					break;
 				}
-				break;
-			}
-			case 0:
-			{
-				value = numerate_string(p->Text);
-				if(('0' == p->Text[0]) || (0 != value))
+				case 0:
 				{
-					range_check(value, 2);
-					p->Expression = calloc(5, sizeof(char));
-					sprintf(p->Expression, "%04X", value);
-				}
-				break;
+					value = numerate_string(i->Text);
+					if(('0' == i->Text[0]) || (0 != value))
+					{
+						range_check(value, 2);
+						i->Expression = calloc(5, sizeof(char));
+						sprintf(i->Expression, "%04X", value);
+					}
+					break;
 			}
 		}
+	}
 	}
 }
 
