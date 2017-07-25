@@ -25,6 +25,8 @@ Created a M1 compatible version of test0
 Added an amd64 program for enabling execute bits (might need to later alter the 0777)
 Added an i386 program for enabling execute bits (might need to later alter the 0777)
 Added rain1's improvements to gcc flags
+Added rain1's stack reduction recommendations
+Incorporated an AMD64/elf hex1 example program as a test
 
 ** Changed
 Adjusted tags to reflect current CHANGELOG
