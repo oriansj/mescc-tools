@@ -268,14 +268,12 @@ void process_string(struct Token* p)
 
 void preserve_other(struct Token* p)
 {
-	if(NULL != p->next)
+	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		preserve_other(p->next);
-	}
-
-	if((NULL == p->Expression) && !(p->type & macro))
-	{
-		p->Expression = p->Text;
+		if((NULL == i->Expression) && !(i->type & macro))
+		{
+			i->Expression = i->Text;
+		}
 	}
 }
 
