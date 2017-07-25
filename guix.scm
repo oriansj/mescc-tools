@@ -73,9 +73,9 @@
         (_ #f)))))
 
 (define-public mescc-tools
-  (let ((commit "1d7002039132f6740204ba1f457b905a951a025c")
+  (let ((commit "44f88aa915f28c1a60fa52767fef84de872858ed")
         (revision "0")
-        (version "0.0"))
+        (version "0.2"))
     (package
       (name "mescc-tools")
       (version (string-append version "-" revision "." (string-take commit 7)))
@@ -102,7 +102,7 @@ Currently consists of the M0 macro assembler and the hex2 linker.")
       (license gpl3+))))
 
 (define-public mescc-tools.git
- (let ((version "0.0")
+ (let ((version "0.2")
         (revision "0")
         (commit (read-string (open-pipe "git show HEAD | head -1 | cut -d ' ' -f 2" OPEN_READ))))
     (package
