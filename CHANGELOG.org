@@ -43,7 +43,7 @@ Made process_string iterative instead of recursive
 Made preserve_other iterative instead of recursive
 Made print_hex iterative instead of recursive
 Incremented version numbers for hex2 and M1
-Updated guix.scm to match the new version
+Updated guix.scm to match the new version and finish the release
 
 ** Fixed
 Removed unrequired temp file in test1
