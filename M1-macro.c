@@ -447,19 +447,15 @@ void eval_immediates(struct Token* p)
 
 void print_hex(struct Token* p)
 {
-	if(p->type ^ macro)
+	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		fprintf(stdout, "\n%s", p->Expression);
+		if(i->type ^ macro)
+		{
+			fprintf(stdout, "\n%s", i->Expression);
+		}
 	}
 
-	if(NULL != p->next)
-	{
-		print_hex(p->next);
-	}
-	else
-	{
-		fprintf(stdout, "\n");
-	}
+	fprintf(stdout, "\n");
 }
 
 /* Standard C main program */

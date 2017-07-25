@@ -38,6 +38,7 @@ Made eval_immediates iterative instead of recursive
 Made identify_macros iterative instead of recursive
 Made process_string iterative instead of recursive
 Made preserve_other iterative instead of recursive
+Made print_hex iterative instead of recursive
 
 ** Fixed
 Removed unrequired temp file in test1
