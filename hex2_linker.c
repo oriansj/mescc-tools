@@ -415,12 +415,12 @@ int main(int argc, char **argv)
 		{"Architecture", required_argument, 0, 'A'},
 		{"BaseAddress",required_argument, 0, 'B'},
 		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'v'},
+		{"version", no_argument, 0, 'V'},
 		{0, 0, 0, 0}
 	};
 
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "B:f:h", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "B:f:h:V", long_options, &option_index)) != -1)
 	{
 		switch(c)
 		{
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
 				input = temp;
 				break;
 			}
-			case 'v':
+			case 'V':
 			{
 				fprintf(stdout, "hex2 0.2\n");
 				exit(EXIT_SUCCESS);

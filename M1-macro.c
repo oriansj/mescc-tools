@@ -492,12 +492,12 @@ int main(int argc, char **argv)
 		{"LittleEndian", no_argument, &BigEndian, false},
 		{"file", required_argument, 0, 'f'},
 		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'v'},
+		{"version", no_argument, 0, 'V'},
 		{0, 0, 0, 0}
 	};
 
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "f:h", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "f:h:V", long_options, &option_index)) != -1)
 	{
 		switch(c)
 		{
@@ -523,9 +523,10 @@ int main(int argc, char **argv)
 				}
 				break;
 			}
-			case 'v':
+			case 'V':
 			{
 				fprintf(stdout, "M1 0.2\n");
+				exit(EXIT_SUCCESS);
 			}
 			default:
 			{

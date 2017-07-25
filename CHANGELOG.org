@@ -53,6 +53,7 @@ Fixed M0 regression to continue to support original test code
 Corrected makefile and build scripts to reflect rename
 Modified test make scripts to reflect new standard elf headers
 Fixed base address needed by test5 and its associated checksum
+Harmonized flags for displaying version with standard
 
 ** Removed
 Removed bashisms from Test1 and Test2 to allow proper behavior on debian based systems
