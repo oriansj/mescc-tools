@@ -249,21 +249,19 @@ void hexify_string(struct Token* p)
 
 void process_string(struct Token* p)
 {
-	if(p->type & str)
+	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		if('\'' == p->Text[0])
+		if(i->type & str)
 		{
-			p->Expression = p->Text + 1;
+			if('\'' == i->Text[0])
+			{
+				i->Expression = i->Text + 1;
+			}
+			else if('"' == i->Text[0])
+			{
+				hexify_string(i);
+			}
 		}
-		else if('"' == p->Text[0])
-		{
-			hexify_string(p);
-		}
-	}
-
-	if(NULL != p->next)
-	{
-		process_string(p->next);
 	}
 }
 

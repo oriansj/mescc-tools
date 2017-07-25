@@ -36,6 +36,7 @@ Refactored x86/amd64 elf headers to a standard to avoid duplication
 Standardized C flags for compiling M1 and Hex2
 Made eval_immediates iterative instead of recursive
 Made identify_macros iterative instead of recursive
+Made process_string iterative instead of recursive
 
 ** Fixed
 Removed unrequired temp file in test1
