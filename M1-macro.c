@@ -188,24 +188,22 @@ void setExpression(struct Token* p, char match[], char Exp[])
 
 void identify_macros(struct Token* p)
 {
-	if(0 == strncmp(p->Text, "DEFINE", max_string))
+	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		p->type = macro;
-		p->Text = p->next->Text;
-		if(p->next->next->type & str)
+		if(0 == strncmp(i->Text, "DEFINE", max_string))
 		{
-			p->Expression = p->next->next->Text + 1;
+			i->type = macro;
+			i->Text = i->next->Text;
+			if(i->next->next->type & str)
+			{
+				i->Expression = i->next->next->Text + 1;
+			}
+			else
+			{
+				i->Expression = i->next->next->Text;
+			}
+			i->next = i->next->next->next;
 		}
-		else
-		{
-			p->Expression = p->next->next->Text;
-		}
-		p->next = p->next->next->next;
-	}
-
-	if(NULL != p->next)
-	{
-		identify_macros(p->next);
 	}
 }
 
