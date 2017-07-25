@@ -452,7 +452,7 @@ int main(int argc, char **argv)
 			}
 			case 'v':
 			{
-				fprintf(stdout, "hex2 0.1\n");
+				fprintf(stdout, "hex2 0.2\n");
 				exit(EXIT_SUCCESS);
 			}
 			default:

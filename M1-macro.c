@@ -525,7 +525,7 @@ int main(int argc, char **argv)
 			}
 			case 'v':
 			{
-				fprintf(stdout, "M1 0.1\n");
+				fprintf(stdout, "M1 0.2\n");
 			}
 			default:
 			{
