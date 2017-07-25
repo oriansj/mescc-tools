@@ -27,6 +27,7 @@ Added an i386 program for enabling execute bits (might need to later alter the 0
 Added rain1's improvements to gcc flags
 Added rain1's stack reduction recommendations
 Incorporated an AMD64/elf hex1 example program as a test
+Incorporated Test7 into make test and make clean flows
 
 ** Changed
 Adjusted tags to reflect current CHANGELOG
