@@ -44,6 +44,7 @@ Made preserve_other iterative instead of recursive
 Made print_hex iterative instead of recursive
 Incremented version numbers for hex2 and M1
 Updated guix.scm to match the new version and finish the release
+Converted guix.scm definition for mescc_tools to use uri method instead of git
 
 ** Fixed
 Removed unrequired temp file in test1

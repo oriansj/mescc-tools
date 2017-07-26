@@ -50,6 +50,7 @@
              (guix build-system gnu)
              (guix gexp)
              (guix git-download)
+             (guix download)
              (guix licenses)
              (guix packages))
 
@@ -73,20 +74,14 @@
         (_ #f)))))
 
 (define-public mescc-tools
-  (let ((commit "44f88aa915f28c1a60fa52767fef84de872858ed")
-        (revision "0")
-        (version "0.2"))
     (package
       (name "mescc-tools")
-      (version (string-append version "-" revision "." (string-take commit 7)))
+      (version "0.2")
       (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/oriansj/MECC_Tools")
-                      (commit commit)))
-                (file-name (string-append name "-" version))
+                (method url-fetch)
+                (uri (string-append "https://github.com/oriansj/MESCC_Tools/archive/Release_" version ".tar.gz"))
                 (sha256
-                 (base32 "0wrdnp3hsaxnri6vjjzgd7qbd4whh91g5rvwj6xcrvn5vxm6p3af"))))
+                 (base32 "13hcz7cpp6fsq55di2kbff0bxad95cbfyzcrziynybb16px5hgz4"))))
       (build-system gnu-build-system)
       (arguments
        `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
@@ -99,7 +94,7 @@
        "Mescc-tools is a collection of tools for use in full source bootstrapping process.
 Currently consists of the M0 macro assembler and the hex2 linker.")
       (home-page "https://github.com/oriansj/MESCC_Tools")
-      (license gpl3+))))
+      (license gpl3+)))
 
 (define-public mescc-tools.git
  (let ((version "0.2")
