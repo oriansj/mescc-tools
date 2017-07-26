@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.2 - 2017-07-25
+** Added
 created test2 (a 32bit x86 hex assembler) with its associated build and test changes
 Fixed proof answers for test1 and test2
 Added support to M0 for multiple architectures
@@ -62,7 +71,7 @@ Removed bashisms from Test1 and Test2 to allow proper behavior on debian based s
 Removed alerting on missing files in cleanup target
 Removed massive M0 Definition lists as they don't serve a useful purpose
 
-* 0.1 - 2017-6-25
+* 0.1 - 2017-06-25
 ** Added
 Incorporated support for little Endian output format in hex2
 Incorporated support for multiple input files in hex2
@@ -88,5 +97,5 @@ Behavior regarding !label displacements
 
 ** Removed
 
-* 0.0 - 2017-5-10
+* 0.0 - 2017-05-10
 Initial release of MESCC Tools from stage0 High Level prototypes
