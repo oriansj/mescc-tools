@@ -18,6 +18,7 @@
 ** Added
 
 ** Changed
+Renamed MESCC_Tools to mescc-tools to harmonize with guix package name
 
 ** Fixed
 
