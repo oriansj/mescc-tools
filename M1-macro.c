@@ -493,13 +493,14 @@ int main(int argc, char **argv)
 		{"BigEndian", no_argument, &BigEndian, true},
 		{"LittleEndian", no_argument, &BigEndian, false},
 		{"file", required_argument, 0, 'f'},
+		{"output", required_argument, 0, 'o'},
 		{"help", no_argument, 0, 'h'},
 		{"version", no_argument, 0, 'V'},
 		{0, 0, 0, 0}
 	};
 
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "f:h:V", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "f:h:o:V", long_options, &option_index)) != -1)
 	{
 		switch(c)
 		{
@@ -523,6 +524,11 @@ int main(int argc, char **argv)
 				{
 					head = Tokenize_Line(head);
 				}
+				break;
+			}
+			case 'o':
+			{
+				destination_file = fopen(optarg, "w");
 				break;
 			}
 			case 'V':
