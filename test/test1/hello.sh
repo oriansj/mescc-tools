@@ -1,7 +1,7 @@
 #! /bin/sh
 set -x
 ./bin/M1 -f test/test1/hex.M1 --LittleEndian --Architecture 2 >| test/test1/hold
-./bin/hex2 -f elf_headers/elf64.hex2 -f test/test1/hold --LittleEndian --Architecture 2 --BaseAddress 0x00600000 >| test/results/test1-binary
+./bin/hex2 -f elf_headers/elf64.hex2 -f test/test1/hold --LittleEndian --Architecture 2 --BaseAddress 0x00600000 -o test/results/test1-binary
 chmod u+x test/results/test1-binary
 ./test/results/test1-binary < test/test1/hex0.hex0 > test/test1/proof1
 r=$?

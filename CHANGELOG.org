@@ -24,6 +24,7 @@ Renamed MESCC_Tools to mescc-tools to harmonize with guix package name
 ** Fixed
 
 ** Removed
+Removed the need to redirect hex2 output into a file
 
 * 0.2 - 2017-07-25
 ** Added
