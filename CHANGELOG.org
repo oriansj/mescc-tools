@@ -16,6 +16,7 @@
 
 * Current
 ** Added
+Incorporated a hex0 test which implements hex1 functionality
 
 ** Changed
 Renamed MESCC_Tools to mescc-tools to harmonize with guix package name
