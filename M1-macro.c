@@ -25,6 +25,7 @@
 #define max_string 4096
 
 FILE* source_file;
+FILE* destination_file;
 bool Reached_EOF;
 int BigEndian;
 int Architecture;
@@ -451,11 +452,11 @@ void print_hex(struct Token* p)
 	{
 		if(i->type ^ macro)
 		{
-			fprintf(stdout, "\n%s", i->Expression);
+			fprintf(destination_file, "\n%s", i->Expression);
 		}
 	}
 
-	fprintf(stdout, "\n");
+	fprintf(destination_file, "\n");
 }
 
 /* Standard C main program */
@@ -485,6 +486,7 @@ int main(int argc, char **argv)
 
 	struct Token* head = NULL;
 	Architecture = 0;
+	destination_file = stdout;
 	int c;
 	static struct option long_options[] = {
 		{"Architecture", required_argument, 0, 'A'},
