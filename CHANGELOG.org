@@ -17,6 +17,7 @@
 * Current
 ** Added
 Incorporated a hex0 test which implements hex1 functionality
+Added --output and --exec_enable options to hex2
 
 ** Changed
 Renamed MESCC_Tools to mescc-tools to harmonize with guix package name
@@ -25,6 +26,7 @@ Renamed MESCC_Tools to mescc-tools to harmonize with guix package name
 
 ** Removed
 Removed the need to redirect hex2 output into a file
+Removed the need for chmod u+x in development paths
 
 * 0.2 - 2017-07-25
 ** Added

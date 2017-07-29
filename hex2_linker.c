@@ -22,6 +22,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #define max_string 255
 FILE* output;
 
@@ -42,6 +44,7 @@ struct entry* jump_table;
 int BigEndian;
 int Base_Address;
 int Architecture;
+int exec_enable;
 
 int consume_token(FILE* source_file, char* s)
 {
@@ -408,11 +411,14 @@ int main(int argc, char **argv)
 	Base_Address = 0;
 	struct input_files* input = NULL;
 	output = stdout;
+	char* output_file = "";
+	exec_enable = false;
 
 	int c;
 	static struct option long_options[] = {
 		{"BigEndian", no_argument, &BigEndian, true},
 		{"LittleEndian", no_argument, &BigEndian, false},
+		{"exec_enable", no_argument, &exec_enable, true},
 		{"file", required_argument, 0, 'f'},
 		{"Architecture", required_argument, 0, 'A'},
 		{"BaseAddress",required_argument, 0, 'B'},
@@ -455,7 +461,7 @@ int main(int argc, char **argv)
 			}
 			case 'o':
 			{
-				char* output_file = optarg;
+				output_file = optarg;
 				output = fopen(output_file, "w");
 				break;
 			}
@@ -483,6 +489,16 @@ int main(int argc, char **argv)
 
 	/* Fix all the references*/
 	second_pass(input);
+
+	/* Set file as executable */
+	if(exec_enable)
+	{
+		if(0 != chmod(output_file, 0750))
+		{
+			fprintf(stderr,"Unable to change permissions\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	return EXIT_SUCCESS;
 }
