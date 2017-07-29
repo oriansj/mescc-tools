@@ -23,6 +23,7 @@
 #include <string.h>
 #include <getopt.h>
 #define max_string 255
+FILE* output;
 
 struct input_files
 {
@@ -132,10 +133,10 @@ void outputPointer(int32_t displacement, int number_of_bytes)
 	{ /* Deal with BigEndian */
 		switch(number_of_bytes)
 		{
-			case 4: printf("%c", value >> 24);
-			case 3: printf("%c", (value >> 16)%256);
-			case 2: printf("%c", (value >> 8)%256);
-			case 1: printf("%c", value % 256);
+			case 4: fprintf(output, "%c", value >> 24);
+			case 3: fprintf(output, "%c", (value >> 16)%256);
+			case 2: fprintf(output, "%c", (value >> 8)%256);
+			case 1: fprintf(output, "%c", value % 256);
 			default: break;
 		}
 	}
@@ -145,7 +146,7 @@ void outputPointer(int32_t displacement, int number_of_bytes)
 		{
 			uint8_t byte = value % 256;
 			value = value / 256;
-			printf("%c", byte);
+			fprintf(output, "%c", byte);
 			number_of_bytes = number_of_bytes - 1;
 		}
 	}
@@ -359,7 +360,7 @@ int second_pass(struct input_files* input)
 			{
 				if(toggle)
 				{
-					printf("%c",((holder * 16)) + hex(c, source_file));
+					fprintf(output, "%c",((holder * 16)) + hex(c, source_file));
 					ip = ip + 1;
 					holder = 0;
 				}
@@ -406,6 +407,7 @@ int main(int argc, char **argv)
 	Architecture = 0;
 	Base_Address = 0;
 	struct input_files* input = NULL;
+	output = stdout;
 
 	int c;
 	static struct option long_options[] = {
