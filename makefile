@@ -1,7 +1,7 @@
 # Prevent rebuilding
 VPATH = bin:test:test/results
 
-all: M1 hex2
+all: M1 hex2 exec_enable
 
 CC=gcc
 CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
@@ -11,6 +11,9 @@ M1: M1-macro.c | bin
 
 hex2: hex2_linker.c | bin
 	$(CC) $(CFLAGS) hex2_linker.c -o bin/hex2
+
+exec_enable: exec_enable.c | bin
+	$(CC) $(CFLAGS) exec_enable.c -o bin/exec_enable
 
 # Clean up after ourselves
 .PHONY: clean
@@ -38,7 +41,7 @@ test: test0-binary test1-binary test2-binary test3-binary test4-binary test5-bin
 test0-binary: results hex2
 	test/test0/hello.sh
 
-test1-binary: results hex2 M1
+test1-binary: results hex2 M1 exec_enable
 	test/test1/hello.sh
 
 test2-binary: results hex2 M1

@@ -29,6 +29,7 @@ Renamed MESCC_Tools to mescc-tools to harmonize with guix package name
 Removed the need to redirect hex2 output into a file
 Removed the need for chmod u+x in development paths
 Removed the need to redirect M1 output into a file
+Removed the need for chmod entirely from bootstrap path
 
 * 0.2 - 2017-07-25
 ** Added
