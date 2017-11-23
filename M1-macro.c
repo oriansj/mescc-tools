@@ -1,5 +1,6 @@
 /* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
 /* Copyright (C) 2016 Jeremiah Orians
+ * Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
  * This file is part of stage0.
  *
  * stage0 is free software: you can redistribute it and/or modify
@@ -23,6 +24,11 @@
 #include <string.h>
 #include <getopt.h>
 #define max_string 4096
+
+#if __MESC__
+#include <fcntl.h>
+#define strnlen(string, int) strlen(string)
+#endif
 
 FILE* source_file;
 FILE* destination_file;
@@ -171,7 +177,7 @@ restart:
 	return p;
 }
 
-void setExpression(struct Token* p, char match[], char Exp[])
+void setExpression(struct Token* p, char *match, char *Exp)
 {
 	for(struct Token* i = p; NULL != i; i = i->next)
 	{
@@ -314,7 +320,7 @@ void range_check(int32_t displacement, int number_of_bytes)
 	}
 }
 
-int32_t numerate_string(char a[])
+int32_t numerate_string(char *a)
 {
 	char *ptr;
 	if (a[0] == '0' && a[1] == 'x')
@@ -459,6 +465,20 @@ void print_hex(struct Token* p)
 	fprintf(destination_file, "\n");
 }
 
+#if !__MESC__
+static
+#endif
+struct option long_options[] = {
+	{"Architecture", required_argument, 0, 'A'},
+	{"BigEndian", no_argument, &BigEndian, true},
+	{"LittleEndian", no_argument, &BigEndian, false},
+	{"file", required_argument, 0, 'f'},
+	{"output", required_argument, 0, 'o'},
+	{"help", no_argument, 0, 'h'},
+	{"version", no_argument, 0, 'V'},
+	{0, 0, 0, 0}
+};
+
 /* Standard C main program */
 int main(int argc, char **argv)
 {
@@ -488,16 +508,6 @@ int main(int argc, char **argv)
 	Architecture = 0;
 	destination_file = stdout;
 	int c;
-	static struct option long_options[] = {
-		{"Architecture", required_argument, 0, 'A'},
-		{"BigEndian", no_argument, &BigEndian, true},
-		{"LittleEndian", no_argument, &BigEndian, false},
-		{"file", required_argument, 0, 'f'},
-		{"output", required_argument, 0, 'o'},
-		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'V'},
-		{0, 0, 0, 0}
-	};
 
 	int option_index = 0;
 	while ((c = getopt_long(argc, argv, "f:h:o:V", long_options, &option_index)) != -1)
@@ -518,7 +528,11 @@ int main(int argc, char **argv)
 			}
 			case 'f':
 			{
+#if __MESC__
+				source_file = open(optarg, O_RDONLY);
+#else
 				source_file = fopen(optarg, "r");
+#endif
 				Reached_EOF = false;
 				while(!Reached_EOF)
 				{
