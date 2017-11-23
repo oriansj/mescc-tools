@@ -1,5 +1,6 @@
 /* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
 /* Copyright (C) 2017 Jeremiah Orians
+ * Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
  * This file is part of MES
  *
  * MES is free software: you can redistribute it and/or modify
@@ -26,6 +27,10 @@
 #include <sys/stat.h>
 #define max_string 255
 FILE* output;
+
+#if __MESC__
+#include <fcntl.h>
+#endif
 
 struct input_files
 {
@@ -178,6 +183,9 @@ int storePointer(char ch, FILE* source_file, int ip)
 
 	/* Get string of pointer */
 	char temp[max_string + 1] = {0};
+#if __MESC__
+		memset (temp, 0, max_string + 1);
+#endif
 	bool base_sep_p = (consume_token(source_file, temp) == 62); // '>'
 
 	/* Lookup token */
@@ -189,6 +197,9 @@ int storePointer(char ch, FILE* source_file, int ip)
 	if (base_sep_p)
 	{
 		char temp2[max_string + 1] = {0};
+#if __MESC__
+		memset (temp2, 0, max_string + 1);
+#endif
 		consume_token (source_file, temp2);
 		base = GetTarget (temp2);
 	}
@@ -254,29 +265,24 @@ void line_Comment(FILE* source_file)
 
 int8_t hex(int c, FILE* source_file)
 {
-	switch(c)
+	if (c >= '0' && c <= '9')
 	{
-		case '0' ... '9':
-		{
-			return (c - 48);
-		}
-		case 'a' ... 'z':
-		{
-			return (c - 87);
-		}
-		case 'A' ... 'Z':
-		{
-			return (c - 55);
-		}
-		case 35:
-		case 59:
-		{
-			line_Comment(source_file);
-			return -1;
-		}
-		default: return -1;
+		return (c - 48);
 	}
-
+	else if (c >= 'a' && c <= 'z')
+	{
+		return (c - 87);
+	}
+	else if (c >= 'A' && c <= 'Z')
+	{
+		return (c - 55);
+	}
+	else if (c == '#' || c == ';')
+	{
+		line_Comment(source_file);
+		return -1;
+	}
+	return -1;
 }
 
 int first_pass(struct input_files* input)
@@ -284,7 +290,11 @@ int first_pass(struct input_files* input)
 	if(NULL == input) return Base_Address;
 
 	int ip = first_pass(input->next);
+#if __MESC__
+	int source_file = open(input->filename, O_RDONLY);
+#else
 	FILE* source_file = fopen(input->filename, "r");
+#endif
 
 	bool toggle = false;
 	int c;
@@ -330,7 +340,6 @@ int first_pass(struct input_files* input)
 			}
 		}
 	}
-
 	fclose(source_file);
 	return ip;
 }
@@ -340,7 +349,11 @@ int second_pass(struct input_files* input)
 	if(NULL == input) return Base_Address;;
 
 	int ip = second_pass(input->next);
+#if  __MESC__
+	FILE* source_file = open(input->filename, O_RDONLY);
+#else
 	FILE* source_file = fopen(input->filename, "r");
+#endif
 
 	bool toggle = false;
 	uint8_t holder = 0;
@@ -381,6 +394,22 @@ int second_pass(struct input_files* input)
 	return ip;
 }
 
+#if ! __MESC__
+static
+#endif
+struct option long_options[] = {
+	{"BigEndian", no_argument, &BigEndian, true},
+	{"LittleEndian", no_argument, &BigEndian, false},
+	{"exec_enable", no_argument, &exec_enable, true},
+	{"file", required_argument, 0, 'f'},
+	{"Architecture", required_argument, 0, 'A'},
+	{"BaseAddress",required_argument, 0, 'B'},
+	{"output",required_argument, 0, 'o'},
+	{"help", no_argument, 0, 'h'},
+	{"version", no_argument, 0, 'V'},
+	{0, 0, 0, 0}
+};
+
 /* Standard C main program */
 int main(int argc, char **argv)
 {
@@ -415,19 +444,6 @@ int main(int argc, char **argv)
 	exec_enable = false;
 
 	int c;
-	static struct option long_options[] = {
-		{"BigEndian", no_argument, &BigEndian, true},
-		{"LittleEndian", no_argument, &BigEndian, false},
-		{"exec_enable", no_argument, &exec_enable, true},
-		{"file", required_argument, 0, 'f'},
-		{"Architecture", required_argument, 0, 'A'},
-		{"BaseAddress",required_argument, 0, 'B'},
-		{"output",required_argument, 0, 'o'},
-		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'V'},
-		{0, 0, 0, 0}
-	};
-
 	int option_index = 0;
 	while ((c = getopt_long(argc, argv, "B:f:h:o:V", long_options, &option_index)) != -1)
 	{
