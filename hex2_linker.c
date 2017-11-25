@@ -28,7 +28,7 @@
 #define FALSE 0
 
 #if __MESC__
-#include <fcntl.h>
+	#include <fcntl.h>
 	int output;
 #else
 	FILE* output;
@@ -185,9 +185,9 @@ int storePointer(char ch, FILE* source_file, int ip)
 
 	/* Get string of pointer */
 	char temp[max_string + 1] = {0};
-#if __MESC__
+	#if __MESC__
 		memset (temp, 0, max_string + 1);
-#endif
+	#endif
 	int base_sep_p = (consume_token(source_file, temp) == 62); // '>'
 
 	/* Lookup token */
@@ -199,9 +199,9 @@ int storePointer(char ch, FILE* source_file, int ip)
 	if (base_sep_p)
 	{
 		char temp2[max_string + 1] = {0};
-#if __MESC__
-		memset (temp2, 0, max_string + 1);
-#endif
+		#if __MESC__
+			memset (temp2, 0, max_string + 1);
+		#endif
 		consume_token (source_file, temp2);
 		base = GetTarget (temp2);
 	}
@@ -292,11 +292,11 @@ int first_pass(struct input_files* input)
 	if(NULL == input) return Base_Address;
 
 	int ip = first_pass(input->next);
-#if __MESC__
-	int source_file = open(input->filename, O_RDONLY);
-#else
-	FILE* source_file = fopen(input->filename, "r");
-#endif
+	#if __MESC__
+		int source_file = open(input->filename, O_RDONLY);
+	#else
+		FILE* source_file = fopen(input->filename, "r");
+	#endif
 
 	int toggle = FALSE;
 	int c;
@@ -351,11 +351,11 @@ int second_pass(struct input_files* input)
 	if(NULL == input) return Base_Address;;
 
 	int ip = second_pass(input->next);
-#if __MESC__
-	int source_file = open(input->filename, O_RDONLY);
-#else
-	FILE* source_file = fopen(input->filename, "r");
-#endif
+	#if __MESC__
+		int source_file = open(input->filename, O_RDONLY);
+	#else
+		FILE* source_file = fopen(input->filename, "r");
+	#endif
 
 	int toggle = FALSE;
 	uint holder = 0;
@@ -396,9 +396,6 @@ int second_pass(struct input_files* input)
 	return ip;
 }
 
-#if ! __MESC__
-static
-#endif
 struct option long_options[] = {
 	{"BigEndian", no_argument, &BigEndian, TRUE},
 	{"LittleEndian", no_argument, &BigEndian, FALSE},
