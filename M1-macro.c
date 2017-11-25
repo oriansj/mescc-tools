@@ -316,14 +316,70 @@ void range_check(int displacement, int number_of_bytes)
 	}
 }
 
+int hex(int c)
+{
+	if (c >= '0' && c <= '9') return (c - 48);
+	else if (c >= 'a' && c <= 'z') return (c - 87);
+	else if (c >= 'A' && c <= 'Z') return (c - 55);
+	else return -1;
+}
+
+int decimal(int c)
+{
+	if (c >= '0' && c <= '9') return (c - 48);
+	else return -1;
+}
+
 int numerate_string(char *a)
 {
 	char *ptr;
-	if (a[0] == '0' && a[1] == 'x')
+	int count = 0;
+	int index;
+
+	/* If NULL string */
+	if(0 == a[0])
 	{
-		return (uint)strtol(a+2, &ptr, 16);
+		return 0;
 	}
-	return (uint)strtol(a, &ptr, 0);
+	/* Deal with hex */
+	else if (a[0] == '0' && a[1] == 'x')
+	{
+		index = 2;
+		while(0 != a[index])
+		{
+			if(-1 == hex(a[index])) return 0;
+			count = (16 * count) + hex(a[index]);
+			index = index + 1;
+		}
+		return count;
+	}
+	/* Deal with decimal */
+	else
+	{
+		int negative;
+		if('-' == a[0])
+		{
+			negative = TRUE;
+			index = 1;
+		}
+		else
+		{
+			negative = FALSE;
+			index = 0;
+		}
+
+		while(0 != a[index])
+		{
+			if(-1 == decimal(a[index])) return 0;
+			count = (10 * count) + decimal(a[index]);
+			index = index + 1;
+		}
+		if(negative)
+		{
+			count = count * -1;
+		}
+		return count;
+	}
 }
 
 char* LittleEndian(uint value, char* c, int Number_of_bytes)
