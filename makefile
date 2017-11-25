@@ -1,7 +1,7 @@
 # Prevent rebuilding
 VPATH = bin:test:test/results
 
-all: M1 hex2 exec_enable
+all: M1 hex2 exec_enable get_machine
 
 CC=gcc
 CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
@@ -14,6 +14,9 @@ hex2: hex2_linker.c | bin
 
 exec_enable: exec_enable.c | bin
 	$(CC) $(CFLAGS) exec_enable.c -o bin/exec_enable
+
+get_machine: get_machine.c | bin
+	$(CC) $(CFLAGS) get_machine.c -o bin/get_machine
 
 # Clean up after ourselves
 .PHONY: clean
