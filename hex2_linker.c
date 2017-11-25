@@ -19,17 +19,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
 #include <getopt.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #define max_string 255
-FILE* output;
+#define TRUE 1
+#define FALSE 0
 
 #if __MESC__
 #include <fcntl.h>
+	int output;
+#else
+	FILE* output;
 #endif
 
 struct input_files
@@ -41,7 +43,7 @@ struct input_files
 struct entry
 {
 	struct entry* next;
-	uint32_t target;
+	uint target;
 	char name[max_string + 1];
 };
 
@@ -65,7 +67,7 @@ int consume_token(FILE* source_file, char* s)
 	return c;
 }
 
-uint32_t GetTarget(char* c)
+uint GetTarget(char* c)
 {
 	for(struct entry* i = jump_table; NULL != i; i = i->next)
 	{
@@ -94,7 +96,7 @@ int storeLabel(FILE* source_file, int ip)
 	return c;
 }
 
-void range_check(int32_t displacement, int number_of_bytes)
+void range_check(int displacement, int number_of_bytes)
 {
 	switch(number_of_bytes)
 	{
@@ -130,9 +132,9 @@ void range_check(int32_t displacement, int number_of_bytes)
 	}
 }
 
-void outputPointer(int32_t displacement, int number_of_bytes)
+void outputPointer(int displacement, int number_of_bytes)
 {
-	uint32_t value = displacement;
+	uint value = displacement;
 
 	/* HALT HARD if we are going to do something BAD*/
 	range_check(displacement, number_of_bytes);
@@ -152,7 +154,7 @@ void outputPointer(int32_t displacement, int number_of_bytes)
 	{ /* Deal with LittleEndian */
 		while(number_of_bytes > 0)
 		{
-			uint8_t byte = value % 256;
+			uint byte = value % 256;
 			value = value / 256;
 			fprintf(output, "%c", byte);
 			number_of_bytes = number_of_bytes - 1;
@@ -186,7 +188,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 #if __MESC__
 		memset (temp, 0, max_string + 1);
 #endif
-	bool base_sep_p = (consume_token(source_file, temp) == 62); // '>'
+	int base_sep_p = (consume_token(source_file, temp) == 62); // '>'
 
 	/* Lookup token */
 	int target = GetTarget(temp);
@@ -263,7 +265,7 @@ void line_Comment(FILE* source_file)
 	}
 }
 
-int8_t hex(int c, FILE* source_file)
+int hex(int c, FILE* source_file)
 {
 	if (c >= '0' && c <= '9')
 	{
@@ -296,7 +298,7 @@ int first_pass(struct input_files* input)
 	FILE* source_file = fopen(input->filename, "r");
 #endif
 
-	bool toggle = false;
+	int toggle = FALSE;
 	int c;
 	char token[max_string + 1];
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
@@ -349,14 +351,14 @@ int second_pass(struct input_files* input)
 	if(NULL == input) return Base_Address;;
 
 	int ip = second_pass(input->next);
-#if  __MESC__
-	FILE* source_file = open(input->filename, O_RDONLY);
+#if __MESC__
+	int source_file = open(input->filename, O_RDONLY);
 #else
 	FILE* source_file = fopen(input->filename, "r");
 #endif
 
-	bool toggle = false;
-	uint8_t holder = 0;
+	int toggle = FALSE;
+	uint holder = 0;
 	char token[max_string + 1];
 
 	int c;
@@ -398,9 +400,9 @@ int second_pass(struct input_files* input)
 static
 #endif
 struct option long_options[] = {
-	{"BigEndian", no_argument, &BigEndian, true},
-	{"LittleEndian", no_argument, &BigEndian, false},
-	{"exec_enable", no_argument, &exec_enable, true},
+	{"BigEndian", no_argument, &BigEndian, TRUE},
+	{"LittleEndian", no_argument, &BigEndian, FALSE},
+	{"exec_enable", no_argument, &exec_enable, TRUE},
 	{"file", required_argument, 0, 'f'},
 	{"Architecture", required_argument, 0, 'A'},
 	{"BaseAddress",required_argument, 0, 'B'},
@@ -429,7 +431,7 @@ int main(int argc, char **argv)
 	defined(__AARCH64EL__) || \
 	defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
 // It's a little-endian target architecture
-	BigEndian = false;
+	BigEndian = FALSE;
 #else
 #error "I don't know what architecture this is!"
 	exit(EXIT_FAILURE);
@@ -441,7 +443,7 @@ int main(int argc, char **argv)
 	struct input_files* input = NULL;
 	output = stdout;
 	char* output_file = "";
-	exec_enable = false;
+	exec_enable = FALSE;
 
 	int c;
 	int option_index = 0;
@@ -478,7 +480,11 @@ int main(int argc, char **argv)
 			case 'o':
 			{
 				output_file = optarg;
-				output = fopen(output_file, "w");
+				#if __MESC__
+					output = open(output_file, O_WRONLY);
+				#else
+					output = fopen(output_file, "w");
+				#endif
 				break;
 			}
 			case 'V':
