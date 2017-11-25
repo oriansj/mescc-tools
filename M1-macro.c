@@ -19,11 +19,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
 #include <getopt.h>
 #define max_string 4096
+#define MACRO 1
+#define STR 2
+#define TRUE 1
+#define FALSE 0
 
 #if __MESC__
 #include <fcntl.h>
@@ -32,22 +34,16 @@
 
 FILE* source_file;
 FILE* destination_file;
-bool Reached_EOF;
+int Reached_EOF;
 int BigEndian;
 int Architecture;
 
 struct Token
 {
 	struct Token* next;
-	uint8_t type;
+	int type;
 	char* Text;
 	char* Expression;
-};
-
-enum type
-{
-	macro = 1,
-	str = (1 << 1)
 };
 
 struct Token* newToken()
@@ -94,8 +90,8 @@ char* store_atom(char c)
 		fprintf(stderr, "Exhusted available memory\n");
 		exit(EXIT_FAILURE);
 	}
-	int32_t ch;
-	uint32_t i = 0;
+	int ch;
+	int i = 0;
 	ch = c;
 	do
 	{
@@ -115,8 +111,8 @@ char* store_string(char c)
 		fprintf(stderr, "Exhusted available memory\n");
 		exit(EXIT_FAILURE);
 	}
-	int32_t ch;
-	uint32_t i = 0;
+	int ch;
+	int i = 0;
 	ch = c;
 	do
 	{
@@ -140,7 +136,7 @@ char* store_string(char c)
 
 struct Token* Tokenize_Line(struct Token* head)
 {
-	int32_t c;
+	int c;
 
 restart:
 	c = fgetc(source_file);
@@ -159,14 +155,14 @@ restart:
 	struct Token* p = newToken();
 	if(-1 == c)
 	{
-		Reached_EOF = true;
+		Reached_EOF = TRUE;
 		free(p);
 		return head;
 	}
 	else if((34 == c) || (39 == c))
 	{
 		p->Text = store_string(c);
-		p->type = str;
+		p->type = STR;
 	}
 	else
 	{
@@ -182,7 +178,7 @@ void setExpression(struct Token* p, char *match, char *Exp)
 	for(struct Token* i = p; NULL != i; i = i->next)
 	{
 		/* Leave macros alone */
-		if((i->type & macro))
+		if((i->type & MACRO))
 		{
 			continue;
 		}
@@ -199,9 +195,9 @@ void identify_macros(struct Token* p)
 	{
 		if(0 == strncmp(i->Text, "DEFINE", max_string))
 		{
-			i->type = macro;
+			i->type = MACRO;
 			i->Text = i->next->Text;
-			if(i->next->next->type & str)
+			if(i->next->next->type & STR)
 			{
 				i->Expression = i->next->next->Text + 1;
 			}
@@ -218,7 +214,7 @@ void line_macro(struct Token* p)
 {
 	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		if(i->type & macro)
+		if(i->type & MACRO)
 		{
 			setExpression(i->next, i->Text, i->Expression);
 		}
@@ -258,7 +254,7 @@ void process_string(struct Token* p)
 {
 	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		if(i->type & str)
+		if(i->type & STR)
 		{
 			if('\'' == i->Text[0])
 			{
@@ -277,14 +273,14 @@ void preserve_other(struct Token* p)
 {
 	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		if((NULL == i->Expression) && !(i->type & macro))
+		if((NULL == i->Expression) && !(i->type & MACRO))
 		{
 			i->Expression = i->Text;
 		}
 	}
 }
 
-void range_check(int32_t displacement, int number_of_bytes)
+void range_check(int displacement, int number_of_bytes)
 {
 	switch(number_of_bytes)
 	{
@@ -320,17 +316,17 @@ void range_check(int32_t displacement, int number_of_bytes)
 	}
 }
 
-int32_t numerate_string(char *a)
+int numerate_string(char *a)
 {
 	char *ptr;
 	if (a[0] == '0' && a[1] == 'x')
 	{
-		return (uint32_t)strtol(a+2, &ptr, 16);
+		return (uint)strtol(a+2, &ptr, 16);
 	}
-	return (uint32_t)strtol(a, &ptr, 0);
+	return (uint)strtol(a, &ptr, 0);
 }
 
-char* LittleEndian(uint32_t value, char* c, int Number_of_bytes)
+char* LittleEndian(uint value, char* c, int Number_of_bytes)
 {
 	/* {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'} */
 	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
@@ -367,7 +363,7 @@ char* LittleEndian(uint32_t value, char* c, int Number_of_bytes)
 	return c;
 }
 
-char* express_number(int32_t value, char c)
+char* express_number(int value, char c)
 {
 	char* ch;
 	if('!' == c)
@@ -421,9 +417,9 @@ void eval_immediates(struct Token* p)
 {
 	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		if((NULL == i->Expression) && !(i->type & macro))
+		if((NULL == i->Expression) && !(i->type & MACRO))
 		{
-			int32_t value;
+			int value;
 			switch(Architecture)
 			{
 				case 2:
@@ -456,7 +452,7 @@ void print_hex(struct Token* p)
 {
 	for(struct Token* i = p; NULL != i; i = i->next)
 	{
-		if(i->type ^ macro)
+		if(i->type ^ MACRO)
 		{
 			fprintf(destination_file, "\n%s", i->Expression);
 		}
@@ -470,8 +466,8 @@ static
 #endif
 struct option long_options[] = {
 	{"Architecture", required_argument, 0, 'A'},
-	{"BigEndian", no_argument, &BigEndian, true},
-	{"LittleEndian", no_argument, &BigEndian, false},
+	{"BigEndian", no_argument, &BigEndian, TRUE},
+	{"LittleEndian", no_argument, &BigEndian, FALSE},
 	{"file", required_argument, 0, 'f'},
 	{"output", required_argument, 0, 'o'},
 	{"help", no_argument, 0, 'h'},
@@ -498,7 +494,7 @@ int main(int argc, char **argv)
 	defined(__AARCH64EL__) || \
 	defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
 // It's a little-endian target architecture
-	BigEndian = false;
+	BigEndian = FALSE;
 #else
 #error "I don't know what architecture this is!"
 	exit(EXIT_FAILURE);
@@ -533,7 +529,7 @@ int main(int argc, char **argv)
 #else
 				source_file = fopen(optarg, "r");
 #endif
-				Reached_EOF = false;
+				Reached_EOF = FALSE;
 				while(!Reached_EOF)
 				{
 					head = Tokenize_Line(head);
