@@ -334,6 +334,7 @@ int numerate_string(char *a)
 {
 	int count = 0;
 	int index;
+	int negative;
 
 	/* If NULL string */
 	if(0 == a[0])
@@ -343,19 +344,27 @@ int numerate_string(char *a)
 	/* Deal with hex */
 	else if (a[0] == '0' && a[1] == 'x')
 	{
-		index = 2;
+		if('-' == a[2])
+		{
+			negative = TRUE;
+			index = 3;
+		}
+		else
+		{
+			negative = FALSE;
+			index = 2;
+		}
+
 		while(0 != a[index])
 		{
 			if(-1 == hex(a[index])) return 0;
 			count = (16 * count) + hex(a[index]);
 			index = index + 1;
 		}
-		return count;
 	}
 	/* Deal with decimal */
 	else
 	{
-		int negative;
 		if('-' == a[0])
 		{
 			negative = TRUE;
@@ -373,12 +382,13 @@ int numerate_string(char *a)
 			count = (10 * count) + decimal(a[index]);
 			index = index + 1;
 		}
-		if(negative)
-		{
-			count = count * -1;
-		}
-		return count;
 	}
+
+	if(negative)
+	{
+		count = count * -1;
+	}
+	return count;
 }
 
 char* LittleEndian(uint value, char* c, int Number_of_bytes)
@@ -427,7 +437,7 @@ char* express_number(int value, char c)
 		ch = calloc(3, sizeof(char));
 		if(BigEndian)
 		{
-			sprintf(ch, "%02x", value);
+			sprintf(ch, "%02X", value & 0xFF);
 		}
 		else
 		{
@@ -440,7 +450,7 @@ char* express_number(int value, char c)
 		ch = calloc(5, sizeof(char));
 		if(BigEndian)
 		{
-			sprintf(ch, "%04x", value);
+			sprintf(ch, "%04X", value & 0xFFFF);
 		}
 		else
 		{
@@ -453,7 +463,7 @@ char* express_number(int value, char c)
 		ch = calloc(9, sizeof(char));
 		if(BigEndian)
 		{
-			sprintf(ch, "%08x", value);
+			sprintf(ch, "%08X", value & 0xFFFFFFFF);
 		}
 		else
 		{

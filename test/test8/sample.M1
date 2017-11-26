@@ -1,0 +1,42 @@
+; 8bit tests
+!0x-80  	; deal with -128
+!0x-1   	; deal with -1
+!0xFF   	; deal with 255
+!0x-0   	; deal with -0
+!0x0    	; deal with 0
+!-128   	; deal with -128
+!-1     	; deal with -1
+!255    	; deal with 255
+!0      	; deal with 0
+!0x12   	; Check for nybble order
+!0x34   	; Check for nybble order
+!0x56   	; Check for nybble order
+!0x78   	; Check for nybble order
+!0x90   	; Check for nybble order
+
+; 16bit tests
+@0x-8000	; deal with -32768
+@0x-1   	; deal with -1
+@0xFFFF 	; deal with 65535
+@0x-0   	; deal with -0
+@0x0    	; deal with 0
+@-32768 	; deal with -32768
+@-1     	; deal with -1
+@65535  	; deal with 65535
+@0      	; deal with 0
+@0x1234 	; Check for nybble order across bytes
+@0x5678 	; Check for nybble order across bytes
+@0x9012 	; Check for nybble order across bytes
+
+; 32bit tests
+%0x-80000000	; deal with -2147483648
+%0x-1       	; deal with -1
+%0xFFFFFFFF 	; deal with 4294967295
+%0x-0       	; deal with -0
+%0x0        	; deal with 0
+%-2147483648	; deal with -2147483648
+%-1         	; deal with -1
+%4294967295 	; deal with 4294967295
+%0          	; deal with 0
+%0x12345678 	; Check for nybble order across bytes
+%0x90123456 	; Check for nybble order across bytes
