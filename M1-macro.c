@@ -287,7 +287,7 @@ void range_check(int displacement, int number_of_bytes)
 		case 4: break;
 		case 3:
 		{
-			if((8388607 < displacement) || (displacement < -8388608))
+			if((16777216 < displacement) || (displacement < -8388608))
 			{
 				fprintf(stderr, "A displacement of %d does not fit in 3 bytes", displacement);
 				exit(EXIT_FAILURE);
@@ -296,7 +296,7 @@ void range_check(int displacement, int number_of_bytes)
 		}
 		case 2:
 		{
-			if((32767 < displacement) || (displacement < -32768))
+			if((65535 < displacement) || (displacement < -32768))
 			{
 				fprintf(stderr, "A displacement of %d does not fit in 2 bytes", displacement);
 				exit(EXIT_FAILURE);
@@ -305,7 +305,7 @@ void range_check(int displacement, int number_of_bytes)
 		}
 		case 1:
 		{
-			if((127 < displacement) || (displacement < -128))
+			if((255 < displacement) || (displacement < -128))
 			{
 				fprintf(stderr, "A displacement of %d does not fit in 1 byte", displacement);
 				exit(EXIT_FAILURE);
@@ -319,8 +319,8 @@ void range_check(int displacement, int number_of_bytes)
 int hex(int c)
 {
 	if (c >= '0' && c <= '9') return (c - 48);
-	else if (c >= 'a' && c <= 'z') return (c - 87);
-	else if (c >= 'A' && c <= 'Z') return (c - 55);
+	else if (c >= 'a' && c <= 'f') return (c - 87);
+	else if (c >= 'A' && c <= 'F') return (c - 55);
 	else return -1;
 }
 
