@@ -8,12 +8,8 @@ then
 	./test/results/test1-binary < test/test1/hex0.hex0 > test/test1/proof1
 	r=$?
 	[ $r = 0 ] || exit 1
-fi
-out=$(sha256sum -c test/test1/proof1.answer)
-[ "$out" = "test/test1/proof1: OK" ] || exit 2
-
-if [ "$(./bin/get_machine)" = "x86_64" ]
-then
+	out=$(sha256sum -c test/test1/proof1.answer)
+	[ "$out" = "test/test1/proof1: OK" ] || exit 2
 	./bin/exec_enable test/test1/proof1
 	./test/test1/proof1 < test/test1/hex1.hex0 > test/test1/proof2
 	r=$?
