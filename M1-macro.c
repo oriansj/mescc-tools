@@ -332,7 +332,6 @@ int decimal(int c)
 
 int numerate_string(char *a)
 {
-	char *ptr;
 	int count = 0;
 	int index;
 
@@ -599,7 +598,7 @@ int main(int argc, char **argv)
 			}
 			case 'V':
 			{
-				fprintf(stdout, "M1 0.2\n");
+				fprintf(stdout, "M1 0.3\n");
 				exit(EXIT_SUCCESS);
 			}
 			default:

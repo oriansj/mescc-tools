@@ -486,7 +486,7 @@ int main(int argc, char **argv)
 			}
 			case 'V':
 			{
-				fprintf(stdout, "hex2 0.2\n");
+				fprintf(stdout, "hex2 0.3\n");
 				exit(EXIT_SUCCESS);
 			}
 			default:
