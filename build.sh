@@ -2,6 +2,7 @@
 
 HEX2=${HEX2-hex2}
 M1=${M1-M1}
+BLOOD_ELF=${BLOOD_ELF-blood-elf}
 MES_PREFIX=${MES_PREFIX-../mes}
 MESCC_TOOLS_SEED=${MESCC_TOOLS_SEED-../mescc-tools-seed}
 MES_SEED=${MES_SEED-../mes-seed}
@@ -31,14 +32,17 @@ chmod +x hex2
 $M1 --LittleEndian --Architecture=1\
     -f $MES_PREFIX/stage0/x86.M1\
     -f $MESCC_TOOLS_SEED/M1.M1\
-    > hex2.hex2
+    > M1.hex2
+
+$BLOOD_ELF -f M1.M1 -o M1-blood-elf-footer.M1
+$M1 --LittleEndian --Architecture=1 -f M1-blood-elf-footer.M1 -o M1-blood-elf-footer.hex2
 
 ./hex2 --LittleEndian --Architecture=1 --BaseAddress=0x1000000\
        -f $MES_PREFIX/stage0/elf32-header.hex2\
        -f crt1.hex2\
        -f libc-mes+tcc.hex2\
        -f M1.hex2\
-       -f $MES_PREFIX/stage0/elf32-footer-single-main.hex2\
-       > M1
+       -f M1-blood-elf-footer.hex2\
+     > M1
 
 chmod +x M1
