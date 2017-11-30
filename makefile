@@ -18,6 +18,9 @@ exec_enable: exec_enable.c | bin
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) get_machine.c -o bin/get_machine
 
+ugtg: gdb_table_gen.c | bin
+	$(CC) $(CFLAGS) gdb_table_gen.c -o bin/ugtg
+
 # Clean up after ourselves
 .PHONY: clean
 clean:
