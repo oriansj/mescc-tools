@@ -192,9 +192,9 @@ int main(int argc, char **argv)
 	/* Get all of the labels */
 	first_pass(input);
 
-	fprintf(output, ":ELF_str\n 00\n");
+	fprintf(output, ":ELF_str\n!0\n");
 	output_debug(jump_table, TRUE);
-	fprintf(output, "00 00 00\n:ELF_sym\n00 00 00 00\n00 00 00 00\n00 00 00 00\n00\n00\n01 00\n");
+	fprintf(output, "%c0\n:ELF_sym\n%c0\n%c0\n%c0\n!0\n!0\n@1\n", 37, 37, 37, 37);
 	output_debug(jump_table, FALSE);
 
 	return EXIT_SUCCESS;
