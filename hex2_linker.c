@@ -23,7 +23,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#define max_string 255
+#define max_string 4096
 #define TRUE 1
 #define FALSE 0
 
