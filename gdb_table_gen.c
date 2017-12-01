@@ -209,6 +209,7 @@ int main(int argc, char **argv)
 	output_debug(jump_table, TRUE);
 	fprintf(output, "%c0\n:ELF_sym\n%c0\n%c0\n%c0\n!0\n!0\n@1\n", 37, 37, 37, 37);
 	output_debug(jump_table, FALSE);
+	fprintf(output, "\n:ELF_end\n");
 
 	return EXIT_SUCCESS;
 }
