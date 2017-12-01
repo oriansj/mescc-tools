@@ -43,7 +43,7 @@ struct input_files
 struct entry
 {
 	struct entry* next;
-	uint target;
+	unsigned target;
 	char name[max_string + 1];
 };
 
@@ -67,7 +67,7 @@ int consume_token(FILE* source_file, char* s)
 	return c;
 }
 
-uint GetTarget(char* c)
+unsigned GetTarget(char* c)
 {
 	for(struct entry* i = jump_table; NULL != i; i = i->next)
 	{
@@ -134,7 +134,7 @@ void range_check(int displacement, int number_of_bytes)
 
 void outputPointer(int displacement, int number_of_bytes)
 {
-	uint value = displacement;
+	unsigned value = displacement;
 
 	/* HALT HARD if we are going to do something BAD*/
 	range_check(displacement, number_of_bytes);
@@ -154,7 +154,7 @@ void outputPointer(int displacement, int number_of_bytes)
 	{ /* Deal with LittleEndian */
 		while(number_of_bytes > 0)
 		{
-			uint byte = value % 256;
+			unsigned byte = value % 256;
 			value = value / 256;
 			fprintf(output, "%c", byte);
 			number_of_bytes = number_of_bytes - 1;
@@ -358,7 +358,7 @@ int second_pass(struct input_files* input)
 	#endif
 
 	int toggle = FALSE;
-	uint holder = 0;
+	unsigned holder = 0;
 	char token[max_string + 1];
 
 	int c;

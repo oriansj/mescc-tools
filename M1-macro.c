@@ -391,7 +391,7 @@ int numerate_string(char *a)
 	return count;
 }
 
-char* LittleEndian(uint value, char* c, int Number_of_bytes)
+char* LittleEndian(unsigned value, char* c, int Number_of_bytes)
 {
 	/* {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'} */
 	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
