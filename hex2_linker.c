@@ -456,8 +456,7 @@ int main(int argc, char **argv)
 			}
 			case 'B':
 			{
-				char *ptr;
-				Base_Address = strtol(optarg, &ptr, 0);
+				Base_Address = strtol(optarg, NULL, 0);
 				break;
 			}
 			case 'h':
