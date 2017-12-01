@@ -82,6 +82,15 @@ void line_Comment(FILE* source_file)
 	}
 }
 
+void purge_string(FILE* source_file)
+{
+	int c = fgetc(source_file);
+	while((EOF != c) && (34 != c))
+	{
+		c = fgetc(source_file);
+	}
+}
+
 void first_pass(struct entry* input)
 {
 	if(NULL == input) return;
@@ -105,6 +114,10 @@ void first_pass(struct entry* input)
 		else if (c == '#' || c == ';')
 		{
 			line_Comment(source_file);
+		}
+		else if (34 == c)
+		{
+			purge_string(source_file);
 		}
 	}
 	fclose(source_file);
