@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.3 - 2017-12-01
+** Added
 Incorporated a hex0 test which implements hex1 functionality
 Added --output and --exec_enable options to hex2
 Added --output option to M1
