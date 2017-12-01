@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 			}
 			case 'V':
 			{
-				fprintf(stdout, "gdb_table_gen 0.1\n");
+				fprintf(stdout, "blood-elf 0.1\n(Basically Launches Odd Object Dump ExecutabLe Files\n");
 				exit(EXIT_SUCCESS);
 			}
 			default:
