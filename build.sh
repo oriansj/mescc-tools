@@ -25,12 +25,22 @@ $M1 --LittleEndian --Architecture=1\
     -f $MESCC_TOOLS_SEED/blood-elf.M1\
     -o blood-elf.hex2
 
+$BLOOD_ELF\
+    -f $MES_PREFIX/stage0/x86.M1\
+    -f $MESCC_TOOLS_SEED/blood-elf.M1\
+    -f $MES_SEED/libc-mes+tcc.M1\
+    -o blood-elf-blood-elf-footer.M1
+
+$M1 --LittleEndian --Architecture=1\
+    -f blood-elf-blood-elf-footer.M1\
+    -o blood-elf-blood-elf-footer.hex2
+
 $HEX2 --LittleEndian --Architecture=1 --BaseAddress=0x1000000\
        -f $MES_PREFIX/stage0/elf32-header.hex2\
        -f crt1.hex2\
        -f libc-mes+tcc.hex2\
        -f blood-elf.hex2\
-       -f $MES_PREFIX/stage0/elf32-footer-single-main.hex2\
+       -f blood-elf-blood-elf-footer.hex2\
        --exec_enable\
        -o blood-elf
 
