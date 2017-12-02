@@ -97,7 +97,7 @@ void first_pass(struct entry* input)
 	first_pass(input->next);
 
 	#if __MESC__
-		int source_file = open(input->filename, O_RDONLY);
+		int source_file = open(input->name, O_RDONLY);
 	#else
 		FILE* source_file = fopen(input->name, "r");
 	#endif
@@ -133,7 +133,7 @@ void output_debug(struct entry* node, int stage)
 	}
 	else
 	{
-		fprintf(output, "%cELF_str_%s>ELF_str\n&%s\n%c10\n!2\n!0\n@1\n", 37, node->name, node->name, 37);
+		fprintf(output, "%cELF_str_%s>ELF_str\n&%s\n%c10000\n!2\n!0\n@1\n", 37, node->name, node->name, 37);
 	}
 }
 
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 			{
 				output_file = optarg;
 				#if __MESC__
-					output = open(output_file, O_WRONLY);
+					output = open(output_file, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
 				#else
 					output = fopen(output_file, "w");
 				#endif
