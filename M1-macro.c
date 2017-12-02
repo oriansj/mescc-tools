@@ -603,7 +603,11 @@ int main(int argc, char **argv)
 			}
 			case 'o':
 			{
+#if __MESC__
+				destination_file = open(optarg, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
+#else
 				destination_file = fopen(optarg, "w");
+#endif
 				break;
 			}
 			case 'V':

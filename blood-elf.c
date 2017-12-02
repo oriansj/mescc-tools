@@ -97,7 +97,7 @@ void first_pass(struct entry* input)
 	first_pass(input->next);
 
 	#if __MESC__
-		int source_file = open(input->filename, O_RDONLY);
+		int source_file = open(input->name, O_RDONLY);
 	#else
 		FILE* source_file = fopen(input->name, "r");
 	#endif
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 			{
 				output_file = optarg;
 				#if __MESC__
-					output = open(output_file, O_WRONLY);
+					output = open(output_file, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
 				#else
 					output = fopen(output_file, "w");
 				#endif

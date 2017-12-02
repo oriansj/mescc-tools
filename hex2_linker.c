@@ -477,7 +477,7 @@ int main(int argc, char **argv)
 			{
 				output_file = optarg;
 				#if __MESC__
-					output = open(output_file, O_WRONLY);
+					output = open(output_file, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
 				#else
 					output = fopen(output_file, "w");
 				#endif
