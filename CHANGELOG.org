@@ -16,8 +16,10 @@
 
 * Current
 ** Added
+Added file checks to reduce the number of error messageless faults
 
 ** Changed
+flipped blood-elf from ignoring :: to :_
 
 ** Fixed
 

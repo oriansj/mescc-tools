@@ -298,6 +298,12 @@ int first_pass(struct input_files* input)
 		FILE* source_file = fopen(input->filename, "r");
 	#endif
 
+	if(NULL == source_file)
+	{
+		fprintf(stderr, "The file: %s can not be opened!\n", input->filename);
+		exit(EXIT_FAILURE);
+	}
+
 	int toggle = FALSE;
 	int c;
 	char token[max_string + 1];
@@ -356,6 +362,13 @@ int second_pass(struct input_files* input)
 	#else
 		FILE* source_file = fopen(input->filename, "r");
 	#endif
+
+	/* Something that should never happen */
+	if(NULL == source_file)
+	{
+		fprintf(stderr, "The file: %s can not be opened!\nWTF-pass2\n", input->filename);
+		exit(EXIT_FAILURE);
+	}
 
 	int toggle = FALSE;
 	unsigned holder = 0;
@@ -481,6 +494,12 @@ int main(int argc, char **argv)
 				#else
 					output = fopen(output_file, "w");
 				#endif
+
+				if(NULL == output)
+				{
+					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
+					exit(EXIT_FAILURE);
+				}
 				break;
 			}
 			case 'V':

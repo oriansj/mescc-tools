@@ -589,11 +589,18 @@ int main(int argc, char **argv)
 			}
 			case 'f':
 			{
-#if __MESC__
-				source_file = open(optarg, O_RDONLY);
-#else
-				source_file = fopen(optarg, "r");
-#endif
+				#if __MESC__
+					source_file = open(optarg, O_RDONLY);
+				#else
+					source_file = fopen(optarg, "r");
+				#endif
+
+				if(NULL == source_file)
+				{
+					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
+					exit(EXIT_FAILURE);
+				}
+
 				Reached_EOF = FALSE;
 				while(!Reached_EOF)
 				{
@@ -603,11 +610,17 @@ int main(int argc, char **argv)
 			}
 			case 'o':
 			{
-#if __MESC__
-				destination_file = open(optarg, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
-#else
-				destination_file = fopen(optarg, "w");
-#endif
+				#if __MESC__
+					destination_file = open(optarg, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
+				#else
+					destination_file = fopen(optarg, "w");
+				#endif
+
+				if(NULL == destination_file)
+				{
+					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
+					exit(EXIT_FAILURE);
+				}
 				break;
 			}
 			case 'V':

@@ -66,8 +66,8 @@ void storeLabel(FILE* source_file)
 	entry->name = calloc((max_string + 1), sizeof(char));
 	consume_token(source_file, entry->name);
 
-	/* Remove all entries that start with the forbidden char : */
-	if(':' == entry->name[0])
+	/* Remove all entries that start with the forbidden char pattern :_ */
+	if('_' == entry->name[0])
 	{
 		jump_table = jump_table->next;
 	}
