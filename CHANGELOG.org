@@ -17,9 +17,11 @@
 * Current
 ** Added
 Added file checks to reduce the number of error messageless faults
+Added a current generation M1.M1 file as a test for mescc-tools
 
 ** Changed
 flipped blood-elf from ignoring :: to :_
+converted test8 into a full test
 
 ** Fixed
 Fixed stack overflow bug caused by too deeply nested recursion by transforming into iteration

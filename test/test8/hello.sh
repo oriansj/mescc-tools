@@ -9,4 +9,7 @@ set -x
 
 out=$(sha256sum -c test/test8/proof.answer)
 [ "$out" = "test/test8/proof: OK" ] || exit 2
+
+./bin/hex2 -f test/test8/proof --BigEndian --Architecture 0 --BaseAddress 0 -o test/results/test8-binary
+
 exit 0

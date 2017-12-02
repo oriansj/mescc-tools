@@ -43,7 +43,7 @@ results:
 	mkdir -p test/results
 
 # tests
-test: test0-binary test1-binary test2-binary test3-binary test4-binary test5-binary test6-binary test7-binary test8 test9-binary | results
+test: test0-binary test1-binary test2-binary test3-binary test4-binary test5-binary test6-binary test7-binary test8-binary test9-binary | results
 	sha256sum -c test/test.answers
 
 test0-binary: results hex2
@@ -70,7 +70,7 @@ test6-binary: results hex2 M1
 test7-binary: results hex2 M1
 	test/test7/hello.sh
 
-test8: results M1
+test8-binary: results hex2 M1
 	test/test8/hello.sh
 
 test9-binary: results hex2 M1 blood-elf
