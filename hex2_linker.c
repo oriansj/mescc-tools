@@ -409,6 +409,81 @@ int second_pass(struct input_files* input)
 	return ip;
 }
 
+int hex_numerate(int c)
+{
+	if (c >= '0' && c <= '9') return (c - 48);
+	else if (c >= 'a' && c <= 'f') return (c - 87);
+	else if (c >= 'A' && c <= 'F') return (c - 55);
+	else return -1;
+}
+
+int decimal(int c)
+{
+	if (c >= '0' && c <= '9') return (c - 48);
+	else return -1;
+}
+
+int numerate_string(char *a)
+{
+	int count = 0;
+	int index;
+	int negative;
+
+	/* If NULL string */
+	if(0 == a[0])
+	{
+		return 0;
+	}
+	/* Deal with hex */
+	else if (a[0] == '0' && a[1] == 'x')
+	{
+		if('-' == a[2])
+		{
+			negative = TRUE;
+			index = 3;
+		}
+		else
+		{
+			negative = FALSE;
+			index = 2;
+		}
+
+		while(0 != a[index])
+		{
+			if(-1 == hex_numerate(a[index])) return 0;
+			count = (16 * count) + hex_numerate(a[index]);
+			index = index + 1;
+		}
+	}
+	/* Deal with decimal */
+	else
+	{
+		if('-' == a[0])
+		{
+			negative = TRUE;
+			index = 1;
+		}
+		else
+		{
+			negative = FALSE;
+			index = 0;
+		}
+
+		while(0 != a[index])
+		{
+			if(-1 == decimal(a[index])) return 0;
+			count = (10 * count) + decimal(a[index]);
+			index = index + 1;
+		}
+	}
+
+	if(negative)
+	{
+		count = count * -1;
+	}
+	return count;
+}
+
 struct option long_options[] = {
 	{"BigEndian", no_argument, &BigEndian, TRUE},
 	{"LittleEndian", no_argument, &BigEndian, FALSE},
@@ -469,7 +544,7 @@ int main(int argc, char **argv)
 			}
 			case 'B':
 			{
-				Base_Address = strtol(optarg, NULL, 0);
+				Base_Address = numerate_string(optarg);
 				break;
 			}
 			case 'h':

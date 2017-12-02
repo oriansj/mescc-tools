@@ -27,6 +27,7 @@ converted test8 into a full test
 Fixed stack overflow bug caused by too deeply nested recursion by transforming into iteration
 
 ** Removed
+Removed need for strtol
 
 * 0.3 - 2017-12-01
 ** Added
