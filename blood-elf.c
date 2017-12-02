@@ -131,16 +131,25 @@ void first_pass(struct entry* input)
 
 void output_debug(struct entry* node, int stage)
 {
-	if(NULL == node) return;
-	output_debug(node->next, stage);
-	if(stage)
+	for(struct entry* i = node; NULL != i; i = i->next)
 	{
-		fprintf(output, ":ELF_str_%s\n\"%s\"\n", node->name, node->name);
+		if(stage) fprintf(output, ":ELF_str_%s\n\"%s\"\n", i->name, i->name);
+		else fprintf(output, "%cELF_str_%s>ELF_str\n&%s\n%c10000\n!2\n!0\n@1\n", 37, i->name, i->name, 37);
 	}
-	else
+}
+
+struct entry* reverse_list(struct entry* head)
+{
+	struct entry* root = NULL;
+	struct entry* next;
+	while(NULL != head)
 	{
-		fprintf(output, "%cELF_str_%s>ELF_str\n&%s\n%c10000\n!2\n!0\n@1\n", 37, node->name, node->name, 37);
+		next = head->next;
+		head->next = root;
+		root = head;
+		head = next;
 	}
+	return root;
 }
 
 struct option long_options[] = {
@@ -216,6 +225,9 @@ int main(int argc, char **argv)
 
 	/* Get all of the labels */
 	first_pass(input);
+
+	/* Reverse their order */
+	jump_table = reverse_list(jump_table);
 
 	fprintf(output, ":ELF_str\n!0\n");
 	output_debug(jump_table, TRUE);

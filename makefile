@@ -1,7 +1,7 @@
 # Prevent rebuilding
 VPATH = bin:test:test/results
 
-all: M1 hex2 exec_enable get_machine
+all: M1 hex2 exec_enable get_machine blood-elf
 
 CC=gcc
 CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb

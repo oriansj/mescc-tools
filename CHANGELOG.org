@@ -22,6 +22,7 @@ Added file checks to reduce the number of error messageless faults
 flipped blood-elf from ignoring :: to :_
 
 ** Fixed
+Fixed stack overflow bug caused by too deeply nested recursion by transforming into iteration
 
 ** Removed
 
