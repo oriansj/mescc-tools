@@ -102,6 +102,12 @@ void first_pass(struct entry* input)
 		FILE* source_file = fopen(input->name, "r");
 	#endif
 
+	if(NULL == source_file)
+	{
+		fprintf(stderr, "The file: %s can not be opened!\n", input->name);
+		exit(EXIT_FAILURE);
+	}
+
 	int c;
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
@@ -181,6 +187,12 @@ int main(int argc, char **argv)
 				#else
 					output = fopen(output_file, "w");
 				#endif
+
+				if(NULL == output)
+				{
+					fprintf(stderr, "The file: %s can not be opened!\n", input->name);
+					exit(EXIT_FAILURE);
+				}
 				break;
 			}
 			case 'V':
