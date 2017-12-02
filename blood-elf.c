@@ -133,7 +133,7 @@ void output_debug(struct entry* node, int stage)
 	}
 	else
 	{
-		fprintf(output, "%cELF_str_%s>ELF_str\n&%s\n%c10\n!2\n!0\n@1\n", 37, node->name, node->name, 37);
+		fprintf(output, "%cELF_str_%s>ELF_str\n&%s\n%c10000\n!2\n!0\n@1\n", 37, node->name, node->name, 37);
 	}
 }
 
