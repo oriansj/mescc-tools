@@ -34,7 +34,6 @@
 
 FILE* source_file;
 FILE* destination_file;
-int Reached_EOF;
 int BigEndian;
 int Architecture;
 
@@ -137,40 +136,45 @@ char* store_string(char c)
 struct Token* Tokenize_Line(struct Token* head)
 {
 	int c;
+	struct Token* p;
 
+	do
+	{
 restart:
-	c = fgetc(source_file);
+		c = fgetc(source_file);
 
-	if((35 == c) || (59 == c))
-	{
-		purge_lineComment();
-		goto restart;
-	}
+		if((35 == c) || (59 == c))
+		{
+			purge_lineComment();
+			goto restart;
+		}
 
-	if((9 == c) || (10 == c) || (32 == c))
-	{
-		goto restart;
-	}
+		if((9 == c) || (10 == c) || (32 == c))
+		{
+			goto restart;
+		}
 
-	struct Token* p = newToken();
-	if(-1 == c)
-	{
-		Reached_EOF = TRUE;
-		free(p);
-		return head;
-	}
-	else if((34 == c) || (39 == c))
-	{
-		p->Text = store_string(c);
-		p->type = STR;
-	}
-	else
-	{
-		p->Text = store_atom(c);
-	}
+		if(-1 == c)
+		{
+			goto done;
+		}
 
-	p->next = head;
-	return p;
+		p = newToken();
+		if((34 == c) || (39 == c))
+		{
+			p->Text = store_string(c);
+			p->type = STR;
+		}
+		else
+		{
+			p->Text = store_atom(c);
+		}
+
+		p->next = head;
+		head = p;
+	} while(TRUE);
+done:
+	return head;
 }
 
 void setExpression(struct Token* p, char *match, char *Exp)
@@ -601,11 +605,7 @@ int main(int argc, char **argv)
 					exit(EXIT_FAILURE);
 				}
 
-				Reached_EOF = FALSE;
-				while(!Reached_EOF)
-				{
-					head = Tokenize_Line(head);
-				}
+				head = Tokenize_Line(head);
 				break;
 			}
 			case 'o':
