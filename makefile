@@ -35,6 +35,12 @@ clean:
 	./test/test8/cleanup.sh
 	./test/test9/cleanup.sh
 
+# A cleanup option we probably don't need
+.PHONY: clean-hard
+clean-hard: clean
+	git reset --hard
+	git clean -fd
+
 # Directories
 bin:
 	mkdir -p bin
