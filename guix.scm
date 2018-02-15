@@ -79,7 +79,7 @@
       (version "0.3")
       (source (origin
                 (method url-fetch)
-                (uri (string-append "https://github.com/oriansj/MESCC_Tools/archive/Release_" version ".tar.gz"))
+                (uri (string-append "https://github.com/oriansj/mescc-tools/archive/Release_" version ".tar.gz"))
                 (sha256
                  (base32 "04lvyyp7isamgddrnfpi92lgqdflzdzx5kc2x8fxmgsjisy0dgr4"))))
       (build-system gnu-build-system)
@@ -93,7 +93,7 @@
       (description
        "Mescc-tools is a collection of tools for use in full source bootstrapping process.
 Currently consists of the M0 macro assembler and the hex2 linker.")
-      (home-page "https://github.com/oriansj/MESCC_Tools")
+      (home-page "https://github.com/oriansj/mescc-tools")
       (license gpl3+)))
 
 (define-public mescc-tools.git
