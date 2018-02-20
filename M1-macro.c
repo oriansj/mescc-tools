@@ -279,7 +279,17 @@ void preserve_other(struct Token* p)
 	{
 		if((NULL == i->Expression) && !(i->type & MACRO))
 		{
-			i->Expression = i->Text;
+			char c = i->Text[0];
+
+			if(('!' == c) ||('@' == c) ||('$' == c) ||('%' == c) ||('&' == c) ||(':' == c))
+			{
+				i->Expression = i->Text;
+			}
+			else
+			{
+				fprintf(stderr, "Recieved invalid other; %s\n", i->Text);
+				exit(EXIT_FAILURE);
+			}
 		}
 	}
 }
