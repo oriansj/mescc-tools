@@ -24,7 +24,6 @@
 
 char** tokens;
 int command_done;
-int arguments;
 int VERBOSE;
 
 int match(char* a, char* b)
@@ -85,35 +84,43 @@ char* collect_token(FILE* input)
 	{
 		c = fgetc(input);
 		if(-1 == c)
-		{
+		{// Deal with end of file
 			fprintf(stderr, "execution complete\n");
 			exit(EXIT_SUCCESS);
 		}
 		else if((' ' == c) || ('\t' == c))
-		{
+		{// space and tab are token seperators
 			c = 0;
 		}
 		else if('\n' == c)
-		{
+		{// Command terminates at end of line
 			c = 0;
 			command_done = 1;
 		}
 		else if('"' == c)
-		{
+		{// RAW strings are everything between a pair of ""
 			i = collect_string(input, i, token);
 			c = 0;
 		}
 		else if('#' == c)
-		{
-			arguments = i;
+		{// Line comments to aid the humans
 			collect_comment(input);
+			c = 0;
 			command_done = 1;
-			return token;
+		}
+		else if('\\' == c)
+		{// Support for end of line escapes, drops the char after
+			fgetc(input);
+			c = 0;
 		}
 		token[i] = c;
 		i = i + 1;
 	} while (0 != c);
-	arguments = i;
+	if(1 == i)
+	{// Nothing worth returning
+		free(token);
+		return NULL;
+	}
 	return token;
 }
 
@@ -121,7 +128,6 @@ void execute_command(FILE* script, char** envp)
 {
 	tokens = calloc(1024, sizeof(char*));
 	int i = 0;
-	arguments = 0;
 	int status = 0;
 	command_done = 0;
 	do
@@ -130,11 +136,11 @@ void execute_command(FILE* script, char** envp)
 		if(0 != result)
 		{
 			tokens[i] = result;
+			i = i + 1;
 		}
-		i = i + 1;
 	} while(0 == command_done);
 
-	if((1 == VERBOSE) && (1 < i))
+	if((1 == VERBOSE) && (0 < i))
 	{
 		fprintf(stdout, " +> ");
 		for(int j = 0; j < i; j = j + 1)
@@ -144,7 +150,7 @@ void execute_command(FILE* script, char** envp)
 		fprintf(stdout, "\n");
 	}
 
-	if(0 < arguments)
+	if(0 < i)
 	{ // Not a line comment
 		int f = fork();
 		if (f == -1)
