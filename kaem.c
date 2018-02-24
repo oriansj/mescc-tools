@@ -142,9 +142,34 @@ char* find_char(char* string, char a)
 	while(a != string[0])
 	{
 		string = string + 1;
-		if(0 == string[0]) return NULL;
+		if(0 == string[0]) return string;
 	}
 	return string;
+}
+
+char* prematch(char* search, char* field)
+{
+	do
+	{
+		if(search[0] != field[0]) return NULL;
+		search = search + 1;
+		field = field + 1;
+	} while(0 != search[0]);
+	return field;
+}
+
+char* env_lookup(char* token, char** envp)
+{
+	if(NULL == envp) return NULL;
+	int i = 0;
+	char* ret = NULL;
+	do
+	{
+		ret = prematch(token, envp[i]);
+		if(NULL != ret) return ret;
+		i = i + 1;
+	} while(NULL != envp[i]);
+	return NULL;
 }
 
 char* find_executable(char* name, char* PATH)
@@ -172,7 +197,6 @@ char* find_executable(char* name, char* PATH)
 		next = find_char(PATH, ':');
 		free(trial);
 	}
-	fclose(try);
 	return NULL;
 }
 
@@ -181,13 +205,18 @@ char* find_executable(char* name, char* PATH)
 void execute_command(FILE* script, char** envp)
 {
 	tokens = calloc(max_args, sizeof(char*));
-	char* PATH = calloc(max_string, sizeof(char));
-	copy_string(PATH, getenv("PATH"));
+	char* PATH = env_lookup("PATH=", envp);
+	if(NULL != PATH)
+	{
+		PATH = calloc(max_string, sizeof(char));
+		copy_string(PATH, env_lookup("PATH=", envp));
+	}
 
-	char* USERNAME = getenv("LOGNAME");
+	char* USERNAME = env_lookup("LOGNAME=", envp);
 	if((NULL == PATH) && (NULL == USERNAME))
 	{
-		PATH = "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+		PATH = calloc(max_string, sizeof(char));
+		copy_string(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	}
 	else if(NULL == PATH)
 	{
@@ -263,6 +292,7 @@ struct option long_options[] = {
 	{"file", required_argument, 0, 'f'},
 	{"help", no_argument, 0, 'h'},
 	{"version", no_argument, 0, 'v'},
+	{"nightmare-mode", no_argument, 0, 'n'},
 	{0, 0, 0, 0}
 };
 
@@ -275,7 +305,7 @@ int main(int argc, char** argv, char** envp)
 
 	int c;
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "f:h:o:V", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "f:h:n:V", long_options, &option_index)) != -1)
 	{
 		switch(c)
 		{
@@ -288,6 +318,12 @@ int main(int argc, char** argv, char** envp)
 			case 'f':
 			{
 				filename = optarg;
+				break;
+			}
+			case 'n':
+			{
+				fprintf(stdout, "Begin nightmare");
+				envp = NULL;
 				break;
 			}
 			case 'V':
