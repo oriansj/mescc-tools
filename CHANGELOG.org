@@ -18,16 +18,33 @@
 ** Added
 Added file checks to reduce the number of error messageless faults
 Added a current generation M1.M1 file as a test for mescc-tools
+Added prototype kaem build script
+M1-macro now catches undefined macros to allow easier troubleshooting
+Added kaem build tool
+Added ability to track build progress in kaem
+Added support for line escapes in kaem
+Added support for --strict in kaem to halt in the event of errors
+Added selectable script file support in kaem
+Added support for PATH search to kaem with fallbacks in the event of NULL environments
 
 ** Changed
 flipped blood-elf from ignoring :: to :_
 converted test8 into a full test
+Added bash style line comments to kaem
+Added support for raw strings to kaem
+Stopped showing comment lines in kaem --verbose
+Removed dependence on getenv to have more control over environmental lookup
 
 ** Fixed
 Fixed stack overflow bug caused by too deeply nested recursion by transforming into iteration
+Fixed default repo to point to current repo
+Added missing license header to kaem.c
+Fixed infinite looping in kaem scripts that hit an error that resets the file descriptor
 
 ** Removed
 Removed need for strtol
+Removed need for a global variable in M1-Macro
+Removed legacy functions from kaem
 
 * 0.3 - 2017-12-01
 ** Added
