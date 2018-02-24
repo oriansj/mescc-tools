@@ -1,7 +1,7 @@
 # Prevent rebuilding
 VPATH = bin:test:test/results
 
-all: M1 hex2 exec_enable get_machine blood-elf
+all: M1 hex2 exec_enable get_machine blood-elf kaem
 
 CC=gcc
 CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
@@ -20,6 +20,9 @@ get_machine: get_machine.c | bin
 
 blood-elf: blood-elf.c | bin
 	$(CC) $(CFLAGS) blood-elf.c -o bin/blood-elf
+
+kaem: kaem.c | bin
+	$(CC) $(CFLAGS) kaem.c -o bin/kaem
 
 # Clean up after ourselves
 .PHONY: clean
