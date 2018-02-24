@@ -118,10 +118,82 @@ char* collect_token(FILE* input)
 	return token;
 }
 
+char* copy_string(char* target, char* source)
+{
+	while(0 != source[0])
+	{
+		target[0] = source[0];
+		target = target + 1;
+		source = source + 1;
+	}
+	return target;
+}
+
+char* prepend_string(char* add, char* base)
+{
+	char* ret = calloc(max_string, sizeof(char));
+	copy_string(copy_string(ret, add), base);
+	return ret;
+}
+
+char* find_char(char* string, char a)
+{
+	if(0 == string[0]) return NULL;
+	while(a != string[0])
+	{
+		string = string + 1;
+		if(0 == string[0]) return NULL;
+	}
+	return string;
+}
+
+char* find_executable(char* name, char* PATH)
+{
+	if(('.' == name[0]) || ('/' == name[0]))
+	{ // assume names that start with . or / are relative or absolute
+		return name;
+	}
+
+	char* next = find_char(PATH, ':');
+	char* trial;
+	FILE* try;
+	while(NULL != next)
+	{
+		next[0] = 0;
+		trial = prepend_string(PATH, prepend_string("/", name));
+
+		try = fopen(trial, "r");
+		if(NULL != try)
+		{
+			fclose(try);
+			return trial;
+		}
+		PATH = next + 1;
+		next = find_char(PATH, ':');
+		free(trial);
+	}
+	fclose(try);
+	return NULL;
+}
+
+
 /* Function for executing our programs with desired arguments */
 void execute_command(FILE* script, char** envp)
 {
 	tokens = calloc(max_args, sizeof(char*));
+	char* PATH = calloc(max_string, sizeof(char));
+	copy_string(PATH, getenv("PATH"));
+
+	char* USERNAME = getenv("LOGNAME");
+	if((NULL == PATH) && (NULL == USERNAME))
+	{
+		PATH = "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+	}
+	else if(NULL == PATH)
+	{
+		PATH = prepend_string("/home/", prepend_string(USERNAME,"/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"));
+	}
+
 	int i = 0;
 	int status = 0;
 	command_done = 0;
@@ -147,6 +219,13 @@ void execute_command(FILE* script, char** envp)
 
 	if(0 < i)
 	{ // Not a line comment
+		char* program = find_executable(tokens[0], PATH);
+		if(NULL == program)
+		{
+			fprintf(stderr, "Some weird shit went down with: %s\n", tokens[0]);
+			exit(EXIT_FAILURE);
+		}
+
 		int f = fork();
 		if (f == -1)
 		{
@@ -156,7 +235,7 @@ void execute_command(FILE* script, char** envp)
 		else if (f == 0)
 		{ // child
 			/* execve() returns only on error */
-			execve(tokens[0], tokens, envp);
+			execve(program, tokens, envp);
 			/* Prevent infinite loops */
 			_exit(EXIT_SUCCESS);
 		}
