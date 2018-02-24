@@ -19,8 +19,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <getopt.h>
 #define FALSE 0
 #define TRUE 1
+#define max_string 4096
+#define max_args 256
 
 char** tokens;
 int command_done;
@@ -78,7 +81,7 @@ int collect_string(FILE* input, int index, char* target)
 
 char* collect_token(FILE* input)
 {
-	char* token = calloc(1024, sizeof(char));
+	char* token = calloc(max_string, sizeof(char));
 	char c;
 	int i = 0;
 	do
@@ -127,7 +130,7 @@ char* collect_token(FILE* input)
 
 void execute_command(FILE* script, char** envp)
 {
-	tokens = calloc(1024, sizeof(char*));
+	tokens = calloc(max_args, sizeof(char*));
 	int i = 0;
 	int status = 0;
 	command_done = 0;
@@ -141,7 +144,7 @@ void execute_command(FILE* script, char** envp)
 		}
 	} while(0 == command_done);
 
-	if((1 == VERBOSE) && (0 < i))
+	if(VERBOSE && (0 < i))
 	{
 		fprintf(stdout, " +> ");
 		for(int j = 0; j < i; j = j + 1)
@@ -170,7 +173,7 @@ void execute_command(FILE* script, char** envp)
 		// And we should wait for it to complete
 		waitpid(f, &status, 0);
 		// Then go again
-		if((1 == STRICT) && (0 != status))
+		if(STRICT && (0 != status))
 		{
 			fprintf(stderr, "Subprocess error %d\nABORTING HARD\n", status);
 			exit(EXIT_FAILURE);
@@ -182,34 +185,68 @@ void execute_command(FILE* script, char** envp)
 	}
 }
 
+#if !__MESC__
+static
+#endif
+struct option long_options[] = {
+	{"strict", no_argument, &STRICT, TRUE},
+	{"verbose", no_argument, &VERBOSE, TRUE},
+	{"file", required_argument, 0, 'f'},
+	{"help", no_argument, 0, 'h'},
+	{"version", no_argument, 0, 'v'},
+	{0, 0, 0, 0}
+};
+
+
 int main(int argc, char** argv, char** envp)
 {
 	VERBOSE = 0;
 	STRICT = 0;
-	if((argc == 2) && match(argv[1], "--version"))
+	char* filename = "kaem.run";
+	FILE* script = NULL;
+
+	int c;
+	int option_index = 0;
+	while ((c = getopt_long(argc, argv, "f:h:o:V", long_options, &option_index)) != -1)
 	{
-		fprintf(stdout, "kaem version 0.1\n");
-		exit(EXIT_SUCCESS);
+		switch(c)
+		{
+			case 0: break;
+			case 'h':
+			{
+				fprintf(stdout, "kaem only accepts --help, --version, --verbose or no arguments\n");
+				exit(EXIT_SUCCESS);
+			}
+			case 'f':
+			{
+				filename = optarg;
+				break;
+			}
+			case 'V':
+			{
+				fprintf(stdout, "kaem version 0.1\n");
+				exit(EXIT_SUCCESS);
+			}
+			default:
+			{
+				fprintf(stderr, "Unknown option\n");
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
-	else if((argc == 2) && match(argv[1], "--help"))
+
+	#if __MESC__
+		script = open(filename, O_RDONLY);
+	#else
+		script = fopen(filename, "r");
+	#endif
+
+	if(NULL == script)
 	{
-		fprintf(stdout, "kaem only accepts --help, --version, --verbose or no arguments\n");
-		exit(EXIT_SUCCESS);
-	}
-	else if((argc == 2) && match(argv[1], "--verbose"))
-	{
-		VERBOSE = 1;
-	}
-	else if((argc == 2) && match(argv[1], "--strict"))
-	{
-		STRICT = 1;
-	}
-	else if(argc != 1)
-	{
-		fprintf(stderr, "kaem only accepts --help, --version, --verbose or no arguments\n");
+		fprintf(stderr, "The file: %s can not be opened!\n", filename);
 		exit(EXIT_FAILURE);
 	}
-	FILE* script = fopen("kaem.run", "r");
+
 	while(1)
 	{
 		execute_command(script, envp);
