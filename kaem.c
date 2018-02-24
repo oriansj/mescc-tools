@@ -19,10 +19,26 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#define FALSE 0
+#define TRUE 1
 
 char** tokens;
 int command_done;
 int arguments;
+
+int match(char* a, char* b)
+{
+	int i = -1;
+	do
+	{
+		i = i + 1;
+		if(a[i] != b[i])
+		{
+			return FALSE;
+		}
+	} while((0 != a[i]) && (0 !=b[i]));
+	return TRUE;
+}
 
 void collect_comment(FILE* input)
 {
@@ -38,6 +54,27 @@ void collect_comment(FILE* input)
 	} while('\n' != c);
 }
 
+int collect_string(FILE* input, int index, char* target)
+{
+	int c;
+	do
+	{
+		c = fgetc(input);
+		if(-1 == c)
+		{
+			fprintf(stderr, "IMPROPERLY TERMINATED RAW string!\nABORTING HARD\n");
+			exit(EXIT_FAILURE);
+		}
+		else if('"' == c)
+		{
+			c = 0;
+		}
+		target[index] = c;
+		index = index + 1;
+	} while(0 != c);
+	return index;
+}
+
 char* collect_token(FILE* input)
 {
 	char* token = calloc(1024, sizeof(char));
@@ -51,16 +88,21 @@ char* collect_token(FILE* input)
 			fprintf(stderr, "execution complete\n");
 			exit(EXIT_SUCCESS);
 		}
-		if((' ' == c) || ('\t' == c))
+		else if((' ' == c) || ('\t' == c))
 		{
 			c = 0;
 		}
-		if('\n' == c)
+		else if('\n' == c)
 		{
 			c = 0;
 			command_done = 1;
 		}
-		if('#' == c)
+		else if('"' == c)
+		{
+			i = collect_string(input, i, token);
+			c = 0;
+		}
+		else if('#' == c)
 		{
 			arguments = i;
 			collect_comment(input);
@@ -117,6 +159,21 @@ void execute_command(FILE* script, char** envp)
 
 int main(int argc, char** argv, char** envp)
 {
+	if((argc == 2) && match(argv[1], "--version"))
+	{
+		fprintf(stdout, "kaem version 0.1\n");
+		exit(EXIT_SUCCESS);
+	}
+	else if((argc == 2) && match(argv[1], "--help"))
+	{
+		fprintf(stdout, "kaem only accepts --help, --version or no arguments\n");
+		exit(EXIT_SUCCESS);
+	}
+	else if(argc != 1)
+	{
+		fprintf(stderr, "kaem only accepts --help, --version or no arguments\n");
+		exit(EXIT_FAILURE);
+	}
 	FILE* script = fopen("kaem.run", "r");
 	while(1)
 	{
