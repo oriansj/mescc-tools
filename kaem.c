@@ -143,8 +143,10 @@ void execute_command(FILE* script, char** envp)
 		}
 		else if (f == 0)
 		{ // child
+			/* execve() returns only on error */
 			execve(tokens[0], tokens, envp);
-			exit(EXIT_SUCCESS);
+			/* Prevent infinite loops */
+			_exit(EXIT_SUCCESS);
 		}
 		// Otherwise we are the parent
 		// And we should wait for it to complete
