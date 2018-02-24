@@ -25,6 +25,7 @@
 char** tokens;
 int command_done;
 int VERBOSE;
+int STRICT;
 
 int match(char* a, char* b)
 {
@@ -169,6 +170,11 @@ void execute_command(FILE* script, char** envp)
 		// And we should wait for it to complete
 		waitpid(f, &status, 0);
 		// Then go again
+		if((1 == STRICT) && (0 != status))
+		{
+			fprintf(stderr, "Subprocess error %d\nABORTING HARD\n", status);
+			exit(EXIT_FAILURE);
+		}
 	}
 	else
 	{
@@ -179,6 +185,7 @@ void execute_command(FILE* script, char** envp)
 int main(int argc, char** argv, char** envp)
 {
 	VERBOSE = 0;
+	STRICT = 0;
 	if((argc == 2) && match(argv[1], "--version"))
 	{
 		fprintf(stdout, "kaem version 0.1\n");
@@ -192,6 +199,10 @@ int main(int argc, char** argv, char** envp)
 	else if((argc == 2) && match(argv[1], "--verbose"))
 	{
 		VERBOSE = 1;
+	}
+	else if((argc == 2) && match(argv[1], "--strict"))
+	{
+		STRICT = 1;
 	}
 	else if(argc != 1)
 	{
