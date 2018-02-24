@@ -30,20 +30,7 @@ int command_done;
 int VERBOSE;
 int STRICT;
 
-int match(char* a, char* b)
-{
-	int i = -1;
-	do
-	{
-		i = i + 1;
-		if(a[i] != b[i])
-		{
-			return FALSE;
-		}
-	} while((0 != a[i]) && (0 !=b[i]));
-	return TRUE;
-}
-
+/* Function for purging line comments */
 void collect_comment(FILE* input)
 {
 	int c;
@@ -58,6 +45,7 @@ void collect_comment(FILE* input)
 	} while('\n' != c);
 }
 
+/* Function for collecting RAW strings and removing the " that goes with them */
 int collect_string(FILE* input, int index, char* target)
 {
 	int c;
@@ -65,12 +53,12 @@ int collect_string(FILE* input, int index, char* target)
 	{
 		c = fgetc(input);
 		if(-1 == c)
-		{
+		{ // We never should hit EOF while collecting a RAW string
 			fprintf(stderr, "IMPROPERLY TERMINATED RAW string!\nABORTING HARD\n");
 			exit(EXIT_FAILURE);
 		}
 		else if('"' == c)
-		{
+		{// Made it to the end
 			c = 0;
 		}
 		target[index] = c;
@@ -79,6 +67,7 @@ int collect_string(FILE* input, int index, char* target)
 	return index;
 }
 
+/* Function to collect an individual argument or purge a comment */
 char* collect_token(FILE* input)
 {
 	char* token = calloc(max_string, sizeof(char));
@@ -120,6 +109,7 @@ char* collect_token(FILE* input)
 		token[i] = c;
 		i = i + 1;
 	} while (0 != c);
+
 	if(1 == i)
 	{// Nothing worth returning
 		free(token);
@@ -128,6 +118,7 @@ char* collect_token(FILE* input)
 	return token;
 }
 
+/* Function for executing our programs with desired arguments */
 void execute_command(FILE* script, char** envp)
 {
 	tokens = calloc(max_args, sizeof(char*));
@@ -138,7 +129,7 @@ void execute_command(FILE* script, char** envp)
 	{
 		char* result = collect_token(script);
 		if(0 != result)
-		{
+		{ // Not a comment string but an actual argument
 			tokens[i] = result;
 			i = i + 1;
 		}
@@ -169,19 +160,18 @@ void execute_command(FILE* script, char** envp)
 			/* Prevent infinite loops */
 			_exit(EXIT_SUCCESS);
 		}
+
 		// Otherwise we are the parent
 		// And we should wait for it to complete
 		waitpid(f, &status, 0);
-		// Then go again
+
 		if(STRICT && (0 != status))
-		{
+		{ // Clearly the script hit an issue that should never have happened
 			fprintf(stderr, "Subprocess error %d\nABORTING HARD\n", status);
+			// stop to prevent damage
 			exit(EXIT_FAILURE);
 		}
-	}
-	else
-	{
-//		fprintf(stderr, "Recieved and dropped line comment\n");
+		// Then go again
 	}
 }
 
@@ -196,7 +186,6 @@ struct option long_options[] = {
 	{"version", no_argument, 0, 'v'},
 	{0, 0, 0, 0}
 };
-
 
 int main(int argc, char** argv, char** envp)
 {
