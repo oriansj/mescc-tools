@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.4 - 2018-02-24
+** Added
 Added file checks to reduce the number of error messageless faults
 Added a current generation M1.M1 file as a test for mescc-tools
 Added prototype kaem build script

@@ -76,12 +76,12 @@
 (define-public mescc-tools
     (package
       (name "mescc-tools")
-      (version "0.3")
+      (version "0.4")
       (source (origin
                 (method url-fetch)
                 (uri (string-append "https://github.com/oriansj/mescc-tools/archive/Release_" version ".tar.gz"))
                 (sha256
-                 (base32 "04lvyyp7isamgddrnfpi92lgqdflzdzx5kc2x8fxmgsjisy0dgr4"))))
+                 (base32 "1iwc8xqwzdaqckb4jkkisljrgn8ii4bl7dzk1l2kpv98hsyq9vi1"))))
       (build-system gnu-build-system)
       (arguments
        `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
@@ -97,7 +97,7 @@ Currently consists of the M0 macro assembler and the hex2 linker.")
       (license gpl3+)))
 
 (define-public mescc-tools.git
- (let ((version "0.3")
+ (let ((version "0.4")
         (revision "0")
         (commit (read-string (open-pipe "git show HEAD | head -1 | cut -d ' ' -f 2" OPEN_READ))))
     (package
