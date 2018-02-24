@@ -25,6 +25,7 @@
 char** tokens;
 int command_done;
 int arguments;
+int VERBOSE;
 
 int match(char* a, char* b)
 {
@@ -133,6 +134,16 @@ void execute_command(FILE* script, char** envp)
 		i = i + 1;
 	} while(0 == command_done);
 
+	if(1 == VERBOSE)
+	{
+		fprintf(stdout, " +> ");
+		for(int j = 0; j < i; j = j + 1)
+		{
+			fprintf(stdout, "%s ", tokens[j]);
+		}
+		fprintf(stdout, "\n");
+	}
+
 	if(0 < arguments)
 	{ // Not a line comment
 		int f = fork();
@@ -161,6 +172,7 @@ void execute_command(FILE* script, char** envp)
 
 int main(int argc, char** argv, char** envp)
 {
+	VERBOSE = 0;
 	if((argc == 2) && match(argv[1], "--version"))
 	{
 		fprintf(stdout, "kaem version 0.1\n");
@@ -168,12 +180,16 @@ int main(int argc, char** argv, char** envp)
 	}
 	else if((argc == 2) && match(argv[1], "--help"))
 	{
-		fprintf(stdout, "kaem only accepts --help, --version or no arguments\n");
+		fprintf(stdout, "kaem only accepts --help, --version, --verbose or no arguments\n");
 		exit(EXIT_SUCCESS);
+	}
+	else if((argc == 2) && match(argv[1], "--verbose"))
+	{
+		VERBOSE = 1;
 	}
 	else if(argc != 1)
 	{
-		fprintf(stderr, "kaem only accepts --help, --version or no arguments\n");
+		fprintf(stderr, "kaem only accepts --help, --version, --verbose or no arguments\n");
 		exit(EXIT_FAILURE);
 	}
 	FILE* script = fopen("kaem.run", "r");
