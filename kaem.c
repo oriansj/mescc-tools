@@ -134,7 +134,7 @@ void execute_command(FILE* script, char** envp)
 		i = i + 1;
 	} while(0 == command_done);
 
-	if(1 == VERBOSE)
+	if((1 == VERBOSE) && (1 < i))
 	{
 		fprintf(stdout, " +> ");
 		for(int j = 0; j < i; j = j + 1)
