@@ -518,7 +518,7 @@ void eval_immediates(struct Token* p)
 					{
 						range_check(value, 2);
 						i->Expression = calloc(5, sizeof(char));
-						sprintf(i->Expression, "%04X", value);
+						sprintf(i->Expression, "%04X", value & 0xFFFF);
 					}
 					break;
 			}

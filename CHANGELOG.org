@@ -20,6 +20,7 @@
 ** Changed
 
 ** Fixed
+Corrected M1-macro incorrectly expressing negative numbers
 
 ** Removed
 
