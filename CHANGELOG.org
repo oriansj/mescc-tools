@@ -18,9 +18,13 @@
 ** Added
 
 ** Changed
+Changed Knight architecture offset calculation to match new standard
+Updated test3 lisp.s to include more functionality
+Updated test3 definitions file to reflect changes in Knight instruction encoding
 
 ** Fixed
 Corrected M1-macro incorrectly expressing negative numbers
+Updated test3 checksum to reflect new version of lisp.s
 
 ** Removed
 
