@@ -210,7 +210,7 @@ int storePointer(char ch, FILE* source_file, int ip)
 	{
 		case 0:
 		{
-			displacement = (target - base + 4);
+			displacement = (target - base);
 			break;
 		}
 		case 1:

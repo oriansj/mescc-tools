@@ -21,7 +21,7 @@
 	;;
 	;; Type maps to the following values
 	;; FREE = 1, MARKED = (1 << 1),INT = (1 << 2),SYM = (1 << 3),
-	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),ASCII = (1 << 7)
+	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),CHAR = (1 << 7), STRING = (1 << 8)
 
 	;; CONS space: End of program -> 1MB (0x100000)
 	;; HEAP space: 1MB -> 1.5MB (0x180000)
@@ -139,9 +139,21 @@
 	CMPSKIPI.G R3 32            ; If control character or SPACE
 	JUMP @tokenize_append       ; Stop
 
+	CMPSKIPI.NE R3 34           ; If raw string
+	JUMP @tokenize_string       ; Process that whole thing
+
 	;; Walk further down string
 	ADDUI R4 R4 1               ; Next char
 	JUMP @tokenize_loop         ; And try again
+
+:tokenize_string
+	;; Walk further down string
+	ADDUI R4 R4 1               ; Next char
+	LOADXU8 R3 R1 R4            ; Get char
+	CMPSKIPI.NE R3 34           ; If Found matching quote
+	JUMP @tokenize_append       ; Stop
+
+	JUMP @tokenize_string       ; And try again
 
 :tokenize_append
 	FALSE R3                    ; NULL terminate
@@ -289,7 +301,7 @@
 	LOADU8 R2 R1 0              ; Get first Char
 
 	CMPSKIPI.E R2 39            ; If Not Quote Char
-	JUMP @atom_integer          ; Move to next type
+	JUMP @atom_string           ; Move to next type
 
 	;; When dealing with a quote
 	ADDUI R1 R1 1               ; Move past quote Char
@@ -301,6 +313,21 @@
 	LOADUI R0 $s_quote          ; Using S_QUOTE
 	CALLI R15 @make_cons        ; Make a CONS with the CONS
 	MOVE R1 R0                  ; Put What is being returned into R1
+	JUMP @atom_done             ; We are done
+
+:atom_string
+	CMPSKIPI.E R2 34            ; If Not Double quote
+	JUMP @atom_integer          ; Move to next type
+
+	;; a->string = a->string + 1
+	ADDUI R1 R1 1               ; Move past quote Char
+	STORE32 R1 R0 4             ; And write to CAR
+
+	;; a->type = STRING
+	LOADUI R1 256               ; Using STRING
+	STORE32 R1 R0 0             ; Set type to Integer
+
+	COPY R1 R0                  ; Put the cell we were given in the right place
 	JUMP @atom_done             ; We are done
 
 :atom_integer
@@ -448,7 +475,7 @@
 	RET R15
 
 ;; Our static value for malloc pointer
-;; Starting at 64KB
+;; Starting at 1MB
 :malloc_pointer
 	'00100000'
 
@@ -496,6 +523,9 @@
 	CMPSKIPI.G R0 32            ; If SPACE or below
 	JUMP @Readline_1
 
+	CMPSKIPI.NE R0 34           ; Look for double quote
+	JUMP @Readline_string       ; Keep looping until then
+
 	CMPSKIPI.NE R0 59           ; If LINE Comment (;)
 	JUMP @Readline_0            ; Drop until the end of Line
 
@@ -519,6 +549,25 @@
 	JUMP @Readline_loop         ; Resume
 
 	JUMP @Readline_0            ; Otherwise Keep Looping
+
+	;; Deal with strings
+:Readline_string
+	STOREX8 R0 R2 R3            ; Append to String
+	ADDUI R3 R3 1               ; Increment Size
+	FGETC                       ; Get a Byte
+
+	CMPSKIPI.NE R0 13           ; Deal with CR
+	LOADUI R0 10                ; Convert to LF
+
+	CMPSKIPI.NE R13 0           ; Don't display unless TTY
+	FPUTC                       ; Display the Char we just pressed
+
+	CMPSKIPI.E R0 34            ; Look for double quote
+	JUMP @Readline_string       ; Keep looping until then
+
+	STOREX8 R0 R2 R3            ; Append to String
+	ADDUI R3 R3 1               ; Increment Size
+	JUMP @Readline_loop         ; Resume
 
 	;; Deal with Whitespace and Control Chars
 :Readline_1
@@ -669,8 +718,11 @@
 	CMPSKIPI.NE R2 64           ; If PRIMOP
 	JUMP @writeobj_PRIMOP       ; Print Label
 
-	CMPSKIPI.NE R2 128          ; If ASCII
-	JUMP @writeobj_ASCII        ; Print the Char
+	CMPSKIPI.NE R2 128          ; If CHAR
+	JUMP @writeobj_CHAR         ; Print the Char
+
+	CMPSKIPI.NE R2 256          ; If STRING
+	JUMP @writeobj_STRING       ; Print the String
 
 	;; What the hell is that???
 	LOADUI R0 $writeobj_Error
@@ -740,7 +792,12 @@
 	CALLI R15 @Print_String     ; Write it to output
 	JUMP @writeobj_done         ; Be Done
 
-:writeobj_ASCII
+:writeobj_STRING
+	LOAD32 R0 R3 4              ; Get HEAD->CAR
+	CALLI R15 @Print_String     ; Write it to output
+	JUMP @writeobj_done         ; Be Done
+
+:writeobj_CHAR
 	LOADU8 R0 R3 7              ; Using bottom 8 bits of HEAD->CAR
 	FPUTC                       ; We write our desired output
 
@@ -1148,12 +1205,16 @@
 
 :eval_primop
 	CMPSKIPI.E R4 64            ; If EXP->TYPE is NOT PRIMOP
-	JUMP @eval_ascii            ; Move onto next Case
+	JUMP @eval_char             ; Move onto next Case
 
-:eval_ascii
-	CMPSKIPI.E R4 128           ; If EXP->TYPE is NOT ASCII
+:eval_char
+	CMPSKIPI.E R4 128           ; If EXP->TYPE is NOT CHAR
+	JUMP @eval_string           ; Move onto next Case
+	JUMP @eval_done
+
+:eval_string
+	CMPSKIPI.E R4 256           ; If EXP->TYPE is NOT STRING
 	JUMP @eval_error            ; Move onto next Case
-
 	JUMP @eval_done
 
 :eval_error
@@ -1386,9 +1447,29 @@
 	RET R15
 
 
-	;; nullp
-	;; Recieves a CELL in R0
-	;; Returns NIL if not NIL or TEE if NIL
+;; prim_apply
+;; Recieves arglist in R0
+;; Returns result of applying ARGS->CAR to ARGS->CDR->CAR
+:prim_apply_String
+	"apply"
+:prim_apply
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+
+	LOAD32 R1 R0 8              ; Get ARGS->CDR
+	LOAD32 R1 R1 4              ; Get ARGS->CDR->CAR
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	CALLI R15 @apply            ; Use backing function
+
+	;; Cleanup
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; nullp
+;; Recieves a CELL in R0
+;; Returns NIL if not NIL or TEE if NIL
 :nullp_String
 	"null?"
 :nullp
@@ -1873,6 +1954,102 @@
 	RET R15
 
 
+;; prim_charp
+;; Recieves argslist in R0
+;; Returns #t if CHAR else NIL
+:prim_charp_String
+	"char?"
+:prim_charp
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R0 128          ; If CHAR
+	JUMP @prim_charp_0          ; Return TEE
+
+	LOADUI R0 $NIL              ; Otherwise return NIL
+	JUMP @prim_charp_done
+
+:prim_charp_0
+	LOADUI R0 $TEE              ; Make TEE
+
+:prim_charp_done
+	RET R15
+
+
+;; prim_numberp
+;; Recieves argslist in R0
+;; Returns #t if NUMBER else NIL
+:prim_numberp_String
+	"number?"
+:prim_numberp
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R0 4            ; If NUMBER
+	JUMP @prim_numberp_0        ; Return TEE
+
+	LOADUI R0 $NIL              ; Otherwise return NIL
+	JUMP @prim_numberp_done
+
+:prim_numberp_0
+	LOADUI R0 $TEE              ; Make TEE
+
+:prim_numberp_done
+	RET R15
+
+
+;; prim_symbolp
+;; Recieves argslist in R0
+;; Returns #t if SYMBOL else NIL
+:prim_symbolp_String
+	"symbol?"
+:prim_symbolp
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R0 8            ; If SYMBOL
+	JUMP @prim_symbolp_0        ; Return TEE
+
+	LOADUI R0 $NIL              ; Otherwise return NIL
+	JUMP @prim_symbolp_done
+
+:prim_symbolp_0
+	LOADUI R0 $TEE              ; Make TEE
+
+:prim_symbolp_done
+	RET R15
+
+
+;; prim_stringp
+;; Recieves argslist in R0
+;; Returns #t if CHAR else NIL
+:prim_stringp_String
+	"string?"
+:prim_stringp
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R0 256          ; If CHAR
+	JUMP @prim_stringp_0        ; Return TEE
+
+	LOADUI R0 $NIL              ; Otherwise return NIL
+	JUMP @prim_stringp_done
+
+:prim_stringp_0
+	LOADUI R0 $TEE              ; Make TEE
+
+:prim_stringp_done
+	RET R15
+
+
 ;; prim_output
 ;; Recieves argslist in R0
 ;; Outputs to whatever is specified in R12 and returns TEE
@@ -1899,8 +2076,8 @@
 	CMPSKIPI.NE R2 16           ; If CONS
 	CALLI R15 @prim_output      ; Recurse
 
-	CMPSKIPI.NE R2 128          ; If ASCII
-	CALLI R15 @prim_output_ASCII ; Just print the last Char
+	CMPSKIPI.NE R2 128          ; If CHAR
+	CALLI R15 @prim_output_CHAR ; Just print the last Char
 
 	LOAD32 R0 R3 8              ; Get ARGS->CDR
 	JUMP @prim_output_0         ; Loop until we hit NIL
@@ -1940,10 +2117,10 @@
 	RET R15
 
 
-;; prim_output_ASCII
-;; Recieves an ASCII CELL in R0 and desired Output in R1
+;; prim_output_CHAR
+;; Recieves an CHAR CELL in R0 and desired Output in R1
 ;; Outputs Last CHAR and returns
-:prim_output_ASCII
+:prim_output_CHAR
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	LOADU8 R0 R0 7              ; Get ARG->CAR [bottom 8 bits]
@@ -2043,39 +2220,175 @@
 	"Remaining Cells: "
 
 
-;; prim_ascii
+;; prim_integer_to_char
 ;; Recieves a list in R0
-;; Converts all integers to ASCII
-:prim_ascii_String
-	"ascii!"
-:prim_ascii
+;; Converts INT to CHAR
+:prim_integer_to_char_String
+	"integer->char"
+:prim_integer_to_char
 	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
 	RET R15                     ; Just get the Hell out
-	PUSHR R0 R15                ; Protect R0
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADUI R2 128               ; Using Type CHAR
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R1 4            ; If Type INT
+	STORE32 R2 R0 0             ; Update ARGS->CAR->TYPE
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; prim_char_to_integer
+;; Recieves a list in R0
+;; Converts CHAR to INT
+:prim_char_to_integer_String
+	"char->integer"
+:prim_char_to_integer
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADUI R2 4                 ; Using Type INT
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R1 128          ; If Type CHAR
+	STORE32 R2 R0 0             ; Update ARGS->CAR->TYPE
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; string_to_list
+;; Recieves a pointer to string in R0
+;; Returns a list of chars
+:string_to_list
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	MOVE R1 R0                  ; Put string safely out of the way
+	LOAD8 R0 R1 0               ; Get string[0]
+	JUMP.Z R0 @string_to_list_null
+	CALLI R15 @make_char        ; Make seperate CHAR
+	SWAP R0 R1                  ; Protect RESULT
+	ADDUI R0 R0 1               ; Increment to next iteration
+	CALLI R15 @string_to_list   ; Recurse down STRING
+	SWAP R0 R1                  ; Put RESULT and TAIL in right spot
+	CALLI R15 @make_cons        ; Combine into a Cons
+	JUMP @string_to_list_done   ; And simply return result
+
+:string_to_list_null
+	LOADUI R0 $NIL              ; Nil terminate list
+
+:string_to_list_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; prim_string_to_list
+;; Recieves a pointer to a CONS whose CAR should be a STRING
+;; Returns a list of CHARs in R0
+:prim_string_to_list_String
+	"string->list"
+:prim_string_to_list
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.E R1 256           ; If Not Type STRING
+	JUMP @prim_string_to_list_fail
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR->STRING
+	CALLI R15 @string_to_list   ; Convert to List
+	JUMP @prim_string_to_list_done
+
+:prim_string_to_list_fail
+	LOADUI R0 $NIL              ; Nil terminate list
+
+:prim_string_to_list_done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; list_to_string
+;; Recieves an index in R0, a String pointer in R1
+;; And a list of arguments in R2
+;; Alters only R0
+:list_to_string
+	CMPSKIPI.NE R2 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
-	LOADUI R3 $NIL              ; Using NIL
+	PUSHR R4 R15                ; Protect R4
 
-:prim_ascii_0
-	CMPJUMPI.E R0 R3 @prim_ascii_done
-	LOAD32 R1 R0 4              ; Get ARGS->CAR
-	LOAD32 R2 R1 0              ; Get ARGS->CAR->TYPE
-	LOAD32 R0 R0 8              ; Set ARGS to ARGS->CDR
-	CMPSKIPI.NE R2 4            ; If Type is INT
-	JUMP @prim_ascii_1          ; Convert to ASCII
-	JUMP @prim_ascii_0          ; Go to next list item
+:list_to_string_0
+	CMPSKIPI.NE R2 $NIL         ; If NIL Expression
+	JUMP @list_to_string_done   ; We are done
+	LOAD32 R4 R2 4              ; Get ARGS->CAR
+	LOAD32 R3 R4 0              ; Get ARGS->CAR->TYPE
 
-:prim_ascii_1
-	LOADUI R2 128               ; Using Type ASCII
-	STORE32 R2 R1 0             ; Update ARGS->CAR->TYPE
-	JUMP @prim_ascii_0          ; Keep looping
+	CMPSKIPI.NE R3 128          ; If Type CHAR
+	CALLI R15 @list_to_string_CHAR ; Process
 
-:prim_ascii_done
+	;; Guess CONS
+	SWAP R2 R4                  ; Put i->CAR in i's spot
+	CMPSKIPI.NE R3 16           ; If Type CONS
+	CALLI R15 @list_to_string   ; Recurse
+	SWAP R2 R4                  ; Undo the Guess
+
+	;; Everything else just iterate
+	LOAD32 R2 R2 8              ; i = i->CDR
+	JUMP @list_to_string_0      ; Lets go again
+
+:list_to_string_CHAR
+	LOAD32 R3 R4 4              ; Get ARGS->CAR->VALUE
+	STOREX8 R3 R0 R1            ; STRING[INDEX] = i->CAR->VALUE
+	ADDUI R0 R0 1               ; INDEX = INDEX + 1
+	RET R15                     ; Get back in there
+
+:list_to_string_done
+	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
-	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; prim_list_to_string
+;; Recieves a list in R0
+;; Returns a String CELL in R0
+:prim_list_to_string_String
+	"list->string"
+:prim_list_to_string
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+
+	MOVE R2 R0                  ; Put Args in correct location and Zero R0
+	CALLI R15 @malloc           ; Get where space is free
+	MOVE R1 R0                  ; Put String pointer in correct location and Zero R0
+	CALLI R15 @list_to_string   ; Call backing function
+	ADDUI R0 R0 1               ; NULL Terminate string
+	CALLI R15 @malloc           ; Correct malloc
+
+	CALLI R15 @make_string      ; Use pointer to make our string CELL
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
 
 
@@ -2347,6 +2660,13 @@
 	CALLI R15 @spinup           ; SPINUP
 
 	;; Add Primitive Specials
+	LOADUI R0 $prim_apply       ; Using PRIM_APPLY
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_apply_String ; Using PRIM_APPLY_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
 	LOADUI R0 $nullp            ; Using NULLP
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
@@ -2452,6 +2772,34 @@
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
+	LOADUI R0 $prim_charp       ; Using PRIM_CHARP
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_charp_String ; Using PRIM_CHARP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_numberp     ; Using PRIM_NUMBERP
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_numberp_String ; Using PRIM_NUMBERP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_symbolp     ; Using PRIM_SYMBOLP
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_symbolp_String ; Using PRIM_SYMBOLP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_stringp     ; Using PRIM_STRINGP
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_stringp_String ; Using PRIM_STRINGP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
 	LOADUI R0 $prim_display     ; Using PRIM_DISPLAY
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
@@ -2473,10 +2821,31 @@
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
-	LOADUI R0 $prim_ascii       ; Using PRIM_ASCII
+	LOADUI R0 $prim_integer_to_char ; Using PRIM_INTEGER_TO_CHAR
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
-	LOADUI R0 $prim_ascii_String ; Using PRIM_ASCII_STRING
+	LOADUI R0 $prim_integer_to_char_String ; Using PRIM_INTEGER_TO_CHAR_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_char_to_integer ; Using PRIM_CHAR_TO_INTEGER
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_char_to_integer_String ; Using PRIM_CHAR_TO_INTEGER_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_string_to_list ; Using PRIM_STRING_TO_LIST
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_string_to_list_String ; Using PRIM_STRING_TO_LIST_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_list_to_string ; Using PRIM_LIST_TO_STRING
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_list_to_string_String ; Using PRIM_LIST_TO_STRING_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
@@ -2949,6 +3318,34 @@
 	CALLI R15 @pop_cons         ; Get a CELL
 	STORE32 R1 R0 4             ; Set C->CAR
 	LOADUI R1 4                 ; Using INT
+	STORE32 R1 R0 0             ; Set C->TYPE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; make_char
+;; Recieves a CHAR in R0
+;; Returns a CELL in R0
+:make_char
+	PUSHR R1 R15                ; Protect R1
+	MOVE R1 R0                  ; Protect Integer
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R1 R0 4             ; Set C->CAR
+	LOADUI R1 128               ; Using CHAR
+	STORE32 R1 R0 0             ; Set C->TYPE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; make_string
+;; Recieves a string pointer in R0
+;; Returns a CELL in R0
+:make_string
+	PUSHR R1 R15                ; Protect R1
+	MOVE R1 R0                  ; Protect Integer
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R1 R0 4             ; Set C->CAR
+	LOADUI R1 256               ; Using STRING
 	STORE32 R1 R0 0             ; Set C->TYPE
 	POPR R1 R15                 ; Restore R1
 	RET R15
