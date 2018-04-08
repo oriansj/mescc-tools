@@ -94,6 +94,6 @@ DESTDIR:=
 PREFIX:=/usr/local
 bindir:=$(DESTDIR)$(PREFIX)/bin
 .PHONY: install
-install: M1 hex2
+install: M1 hex2 blood-elf
 	mkdir -p $(bindir)
 	cp $^ $(bindir)
