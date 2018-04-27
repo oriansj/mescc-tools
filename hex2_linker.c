@@ -52,6 +52,7 @@ int BigEndian;
 int Base_Address;
 int Architecture;
 int exec_enable;
+int ip;
 
 int consume_token(FILE* source_file, char* s)
 {
@@ -162,33 +163,45 @@ void outputPointer(int displacement, int number_of_bytes)
 	}
 }
 
-int storePointer(char ch, FILE* source_file, int ip)
+int Architectural_displacement(int target, int base)
+{
+	switch (Architecture)
+	{
+		case 0:
+		case 1:
+		case 2: return (target - base);
+		default:
+		{
+			fprintf(stderr, "Unknown Architecture, aborting before harm is done\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+int ConsumePointer(char ch, FILE* source_file, char* s)
 {
 	/* Calculate pointer size*/
-	if((37 == ch) || (38 == ch))
-	{ /* Deal with % and & */
-		ip = ip + 4;
-	}
-	else if((64 == ch) || (36 == ch))
-	{ /* Deal with @ and $ */
-		ip = ip + 2;
-	}
-	else if(33 == ch)
-	{ /* Deal with ! */
-		ip = ip + 1;
-	}
+	if((37 == ch) || (38 == ch)) ip = ip + 4; /* Deal with % and & */
+	else if((64 == ch) || (36 == ch)) ip = ip + 2; /* Deal with @ and $ */
+	else if(33 == ch) ip = ip + 1; /* Deal with ! */
 	else
 	{
 		fprintf(stderr, "storePointer given unknown\n");
 		exit(EXIT_FAILURE);
 	}
 
+	return consume_token(source_file, s);
+}
+
+void storePointer(char ch, FILE* source_file)
+{
 	/* Get string of pointer */
 	char temp[max_string + 1] = {0};
 	#if __MESC__
 		memset (temp, 0, max_string + 1);
 	#endif
-	int base_sep_p = (consume_token(source_file, temp) == 62); // '>'
+
+	int base_sep_p = (ConsumePointer(ch, source_file, temp) == 62); // '>'
 
 	/* Lookup token */
 	int target = GetTarget(temp);
@@ -206,54 +219,19 @@ int storePointer(char ch, FILE* source_file, int ip)
 		base = GetTarget (temp2);
 	}
 
-	switch (Architecture)
-	{
-		case 0:
-		{
-			displacement = (target - base);
-			break;
-		}
-		case 1:
-		case 2:
-		{
-			displacement = (target - base);
-			break;
-		}
-		default:
-		{
-			fprintf(stderr, "Unknown Architecture, aborting before harm is done\n");
-			exit(EXIT_FAILURE);
-		}
-	}
+	displacement = Architectural_displacement(target, base);
 
 	/* output calculated difference */
-	if(33 == ch)
-	{ /* Deal with ! */
-		outputPointer(displacement, 1);
-	}
-	else if(36 == ch)
-	{ /* Deal with $ */
-		outputPointer(target, 2);
-	}
-	else if(64 == ch)
-	{ /* Deal with @ */
-		outputPointer(displacement, 2);
-	}
-	else if(38 == ch)
-	{ /* Deal with & */
-		outputPointer(target, 4);
-	}
-	else if(37 == ch)
-	{ /* Deal with % */
-		outputPointer(displacement, 4);
-	}
+	if(33 == ch) outputPointer(displacement, 1); /* Deal with ! */
+	else if(36 == ch) outputPointer(target, 2); /* Deal with $ */
+	else if(64 == ch) outputPointer(displacement, 2); /* Deal with @ */
+	else if(38 == ch) outputPointer(target, 4); /* Deal with & */
+	else if(37 == ch) outputPointer(displacement, 4);  /* Deal with % */
 	else
 	{
 		fprintf(stderr, "storePointer reached impossible case: ch=%c\n", ch);
 		exit(EXIT_FAILURE);
 	}
-
-	return ip;
 }
 
 void line_Comment(FILE* source_file)
@@ -287,11 +265,11 @@ int hex(int c, FILE* source_file)
 	return -1;
 }
 
-int first_pass(struct input_files* input)
+void first_pass(struct input_files* input)
 {
-	if(NULL == input) return Base_Address;
+	if(NULL == input) return;
+	first_pass(input->next);
 
-	int ip = first_pass(input->next);
 	#if __MESC__
 		int source_file = open(input->filename, O_RDONLY);
 	#else
@@ -316,24 +294,13 @@ int first_pass(struct input_files* input)
 		}
 
 		/* check for and deal with relative/absolute pointers to labels */
-		if(33 == c)
-		{ /* deal with 1byte pointer ! */
-			c = consume_token(source_file, token);
-			ip = ip + 1;
-		}
-		else if((64 == c) || (36 == c))
-		{ /* deal with 2byte pointers (@ and $) */
-			c = consume_token(source_file, token);
-			ip = ip + 2;
-		}
-		else if((37 == c) || (38 == c))
-		{ /* deal with 4byte pointers (% and &) */
-			c = consume_token(source_file, token);
+		if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c))
+		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 4byte pointers (% and &) */
+			c = ConsumePointer(c, source_file, token);
 			if (62 == c)
 			{ /* deal with label>base */
 				c = consume_token (source_file, token);
 			}
-			ip = ip + 4;
 		}
 		else
 		{
@@ -349,14 +316,13 @@ int first_pass(struct input_files* input)
 		}
 	}
 	fclose(source_file);
-	return ip;
 }
 
-int second_pass(struct input_files* input)
+void second_pass(struct input_files* input)
 {
-	if(NULL == input) return Base_Address;;
+	if(NULL == input) return;
+	second_pass(input->next);
 
-	int ip = second_pass(input->next);
 	#if __MESC__
 		int source_file = open(input->filename, O_RDONLY);
 	#else
@@ -383,7 +349,7 @@ int second_pass(struct input_files* input)
 		}
 		else if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c))
 		{ /* Deal with !, @, $, %  and & */
-			ip = storePointer(c, source_file, ip);
+			storePointer(c, source_file);
 		}
 		else
 		{
@@ -406,7 +372,6 @@ int second_pass(struct input_files* input)
 	}
 
 	fclose(source_file);
-	return ip;
 }
 
 int hex_numerate(int c)
@@ -550,7 +515,7 @@ int main(int argc, char **argv)
 			case 'h':
 			{
 				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\n", argv[0]);
-				fprintf(stderr, "Architecture 0: Knight; 1: x86; 2: AMD64");
+				fprintf(stderr, "Architecture 0: Knight; 1: x86; 2: AMD64\n");
 				exit(EXIT_SUCCESS);
 			}
 			case 'f':
@@ -597,9 +562,11 @@ int main(int argc, char **argv)
 	}
 
 	/* Get all of the labels */
+	ip = Base_Address;
 	first_pass(input);
 
 	/* Fix all the references*/
+	ip = Base_Address;
 	second_pass(input);
 
 	/* Set file as executable */
