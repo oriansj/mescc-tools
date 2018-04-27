@@ -51,6 +51,7 @@ struct entry* jump_table;
 int BigEndian;
 int Base_Address;
 int Architecture;
+int ByteMode;
 int exec_enable;
 int ip;
 
@@ -252,24 +253,80 @@ int hex(int c, FILE* source_file)
 	return -1;
 }
 
+int octal(int c, FILE* source_file)
+{
+	if (c >= '0' && c <= '7') return (c - 48);
+	else if (c == '#' || c == ';') line_Comment(source_file);
+	return -1;
+}
+
+int binary(int c, FILE* source_file)
+{
+	if (c == '0' || c == '1') return (c - 48);
+	else if (c == '#' || c == ';') line_Comment(source_file);
+	return -1;
+}
+
+
 int hold;
 int toggle;
 void process_byte(char c, FILE* source_file, int write)
 {
-	if(0 <= hex(c, source_file))
+	if(16 == ByteMode)
 	{
-		if(toggle)
+		if(0 <= hex(c, source_file))
 		{
-			if(write) fprintf(output, "%c",((hold * 16)) + hex(c, source_file));
-			ip = ip + 1;
-			hold = 0;
+			if(toggle)
+			{
+				if(write) fprintf(output, "%c",((hold * 16)) + hex(c, source_file));
+				ip = ip + 1;
+				hold = 0;
+			}
+			else
+			{
+				hold = hex(c, source_file);
+			}
+			toggle = !toggle;
 		}
-		else
+	}
+	else if(8 ==ByteMode)
+	{
+		if(0 <= octal(c, source_file))
 		{
-			hold = hex(c, source_file);
+			if(2 == toggle)
+			{
+				if(write) fprintf(output, "%c",((hold * 8)) + octal(c, source_file));
+				ip = ip + 1;
+				hold = 0;
+			}
+			else if(1 == toggle)
+			{
+				hold = ((hold * 8) + octal(c, source_file));
+				toggle = 2;
+			}
+			else
+			{
+				hold = octal(c, source_file);
+				toggle = 1;
+			}
 		}
-
-		toggle = !toggle;
+	}
+	else if(2 == ByteMode)
+	{
+		if(0 <= binary(c, source_file))
+		{
+			if(7 == toggle)
+			{
+				if(write) fprintf(output, "%c",(hold * 2) + binary(c, source_file));
+				ip = ip + 1;
+				hold = 0;
+			}
+			else
+			{
+				hold = ((hold * 2) + binary(c, source_file));
+				toggle = toggle + 1;
+			}
+		}
 	}
 }
 
@@ -430,7 +487,9 @@ struct option long_options[] = {
 	{"file", required_argument, 0, 'f'},
 	{"Architecture", required_argument, 0, 'A'},
 	{"BaseAddress",required_argument, 0, 'B'},
+	{"binary",no_argument, 0, 'b'},
 	{"output",required_argument, 0, 'o'},
+	{"octal",no_argument, 0, 'O'},
 	{"help", no_argument, 0, 'h'},
 	{"version", no_argument, 0, 'V'},
 	{0, 0, 0, 0}
@@ -468,6 +527,7 @@ int main(int argc, char **argv)
 	output = stdout;
 	char* output_file = "";
 	exec_enable = FALSE;
+	ByteMode = 16;
 
 	int c;
 	int option_index = 0;
@@ -480,6 +540,10 @@ int main(int argc, char **argv)
 			{
 				Architecture = atoi(optarg);
 				break;
+			}
+			case 'b':
+			{
+				ByteMode = 2;
 			}
 			case 'B':
 			{
@@ -514,6 +578,11 @@ int main(int argc, char **argv)
 					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
 					exit(EXIT_FAILURE);
 				}
+				break;
+			}
+			case 'O':
+			{
+				ByteMode = 8;
 				break;
 			}
 			case 'V':
