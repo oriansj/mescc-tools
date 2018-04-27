@@ -298,6 +298,7 @@ void process_byte(char c, FILE* source_file, int write)
 				if(write) fprintf(output, "%c",((hold * 8)) + octal(c, source_file));
 				ip = ip + 1;
 				hold = 0;
+				toggle = 0;
 			}
 			else if(1 == toggle)
 			{
@@ -320,6 +321,7 @@ void process_byte(char c, FILE* source_file, int write)
 				if(write) fprintf(output, "%c",(hold * 2) + binary(c, source_file));
 				ip = ip + 1;
 				hold = 0;
+				toggle = 0;
 			}
 			else
 			{
