@@ -245,24 +245,32 @@ void line_Comment(FILE* source_file)
 
 int hex(int c, FILE* source_file)
 {
-	if (c >= '0' && c <= '9')
-	{
-		return (c - 48);
-	}
-	else if (c >= 'a' && c <= 'z')
-	{
-		return (c - 87);
-	}
-	else if (c >= 'A' && c <= 'Z')
-	{
-		return (c - 55);
-	}
-	else if (c == '#' || c == ';')
-	{
-		line_Comment(source_file);
-		return -1;
-	}
+	if (c >= '0' && c <= '9') return (c - 48);
+	else if (c >= 'a' && c <= 'z') return (c - 87);
+	else if (c >= 'A' && c <= 'Z') return (c - 55);
+	else if (c == '#' || c == ';') line_Comment(source_file);
 	return -1;
+}
+
+int hold;
+int toggle;
+void process_byte(char c, FILE* source_file, int write)
+{
+	if(0 <= hex(c, source_file))
+	{
+		if(toggle)
+		{
+			if(write) fprintf(output, "%c",((hold * 16)) + hex(c, source_file));
+			ip = ip + 1;
+			hold = 0;
+		}
+		else
+		{
+			hold = hex(c, source_file);
+		}
+
+		toggle = !toggle;
+	}
 }
 
 void first_pass(struct input_files* input)
@@ -282,7 +290,7 @@ void first_pass(struct input_files* input)
 		exit(EXIT_FAILURE);
 	}
 
-	int toggle = FALSE;
+	toggle = FALSE;
 	int c;
 	char token[max_string + 1];
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
@@ -302,18 +310,7 @@ void first_pass(struct input_files* input)
 				c = consume_token (source_file, token);
 			}
 		}
-		else
-		{
-			if(0 <= hex(c, source_file))
-			{
-				if(toggle)
-				{
-					ip = ip + 1;
-				}
-
-				toggle = !toggle;
-			}
-		}
+		else process_byte(c, source_file, FALSE);
 	}
 	fclose(source_file);
 }
@@ -336,39 +333,16 @@ void second_pass(struct input_files* input)
 		exit(EXIT_FAILURE);
 	}
 
-	int toggle = FALSE;
-	unsigned holder = 0;
+	toggle = FALSE;
+	hold = 0;
 	char token[max_string + 1];
 
 	int c;
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
-		if(58 == c)
-		{ /* Deal with : */
-			c = consume_token(source_file, token);
-		}
-		else if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c))
-		{ /* Deal with !, @, $, %  and & */
-			storePointer(c, source_file);
-		}
-		else
-		{
-			if(0 <= hex(c, source_file))
-			{
-				if(toggle)
-				{
-					fprintf(output, "%c",((holder * 16)) + hex(c, source_file));
-					ip = ip + 1;
-					holder = 0;
-				}
-				else
-				{
-					holder = hex(c, source_file);
-				}
-
-				toggle = !toggle;
-			}
-		}
+		if(58 == c) c = consume_token(source_file, token); /* Deal with : */
+		else if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c)) storePointer(c, source_file);  /* Deal with !, @, $, %  and & */
+		else process_byte(c, source_file, TRUE);
 	}
 
 	fclose(source_file);
