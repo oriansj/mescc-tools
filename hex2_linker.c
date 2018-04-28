@@ -546,6 +546,7 @@ int main(int argc, char **argv)
 			case 'b':
 			{
 				ByteMode = 2;
+				break;
 			}
 			case 'B':
 			{
@@ -556,6 +557,7 @@ int main(int argc, char **argv)
 			{
 				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\n", argv[0]);
 				fprintf(stderr, "Architecture 0: Knight; 1: x86; 2: AMD64\n");
+				fprintf(stderr, "To leverage octal or binary input: --octal, --binary\n");
 				exit(EXIT_SUCCESS);
 			}
 			case 'f':
