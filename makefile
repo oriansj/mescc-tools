@@ -55,7 +55,7 @@ results:
 test: test0-binary test1-binary test2-binary test3-binary test4-binary test5-binary test6-binary test7-binary test8-binary test9-binary | results
 	sha256sum -c test/test.answers
 
-test0-binary: results hex2
+test0-binary: results hex2 get_machine
 	test/test0/hello.sh
 
 test1-binary: results hex2 M1 exec_enable

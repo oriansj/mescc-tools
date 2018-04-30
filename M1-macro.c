@@ -35,6 +35,7 @@
 FILE* source_file;
 FILE* destination_file;
 int BigEndian;
+int BigBitEndian;
 int Architecture;
 
 struct Token
@@ -405,41 +406,30 @@ int numerate_string(char *a)
 	return count;
 }
 
-char* LittleEndian(unsigned value, char* c, int Number_of_bytes)
+void reverseBitOrder(char* c)
 {
-	/* {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'} */
-	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
+	if(NULL == c) return;
+	if(0 == c[1]) return;
+	int hold = c[0];
+	c[0] = c[1];
+	c[1] = hold;
+	reverseBitOrder(c+2);
+}
 
-	switch(Number_of_bytes)
+void LittleEndian(char* start)
+{
+	char* end = start;
+	char* c = start;
+	while(0 != end[0]) end = end + 1;
+	int hold;
+	for(end = end - 1; start < end; start = start + 1, end = end - 1)
 	{
-		case 4:
-		{
-			c[6] = table[value >> 28];
-			c[7] = table[(value >> 24)% 16];
-		}
-		case 3:
-		{
-			c[4] = table[(value >> 20)% 16];
-			c[5] = table[(value >> 16)% 16];
-		}
-		case 2:
-		{
-			c[2] = table[(value >> 12)% 16];
-			c[3] = table[(value >> 8)% 16];
-		}
-		case 1:
-		{
-			c[0] = table[(value >> 4)% 16];
-			c[1] = table[value % 16];
-			break;
-		}
-		default:
-		{
-			fprintf(stderr, "Recieved invalid number of bytes in LittleEndian %d\n", Number_of_bytes);
-			exit(EXIT_FAILURE);
-		}
+		hold = start[0];
+		start[0] = end[0];
+		end[0] = hold;
 	}
-	return c;
+
+	if(BigBitEndian) reverseBitOrder(c);
 }
 
 char* express_number(int value, char c)
@@ -449,46 +439,28 @@ char* express_number(int value, char c)
 	{
 		range_check(value, 1);
 		ch = calloc(3, sizeof(char));
-		if(BigEndian)
-		{
-			sprintf(ch, "%02X", value & 0xFF);
-		}
-		else
-		{
-			ch = LittleEndian(value, ch, 1);
-		}
+		sprintf(ch, "%02X", value & 0xFF);
 	}
 	else if('@' == c)
 	{
 		range_check(value, 2);
 		ch = calloc(5, sizeof(char));
-		if(BigEndian)
-		{
-			sprintf(ch, "%04X", value & 0xFFFF);
-		}
-		else
-		{
-			ch = LittleEndian(value, ch, 2);
-		}
+		sprintf(ch, "%04X", value & 0xFFFF);
 	}
 	else if('%' == c)
 	{
 		range_check(value, 4);
 		ch = calloc(9, sizeof(char));
-		if(BigEndian)
-		{
-			sprintf(ch, "%08X", value & 0xFFFFFFFF);
-		}
-		else
-		{
-			ch = LittleEndian(value, ch, 4);
-		}
+		sprintf(ch, "%08X", value & 0xFFFFFFFF);
 	}
 	else
 	{
 		fprintf(stderr, "Given symbol %c to express immediate value %d\n", c, value);
 		exit(EXIT_FAILURE);
 	}
+
+	if(!BigEndian) LittleEndian(ch);
+	else if(!BigBitEndian) reverseBitOrder(ch);
 	return ch;
 }
 
@@ -565,7 +537,7 @@ int main(int argc, char **argv)
 	defined(__AARCH64EB__) || \
 	defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
 // It's a big-endian target architecture
-		BigEndian = true;
+		BigEndian = TRUE;
 #elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || \
 	defined(__LITTLE_ENDIAN__) || \
 	defined(__ARMEL__) || \
@@ -582,6 +554,7 @@ int main(int argc, char **argv)
 	struct Token* head = NULL;
 	Architecture = 0;
 	destination_file = stdout;
+	BigBitEndian = TRUE;
 	int c;
 
 	int option_index = 0;
