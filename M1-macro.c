@@ -36,6 +36,7 @@ FILE* source_file;
 FILE* destination_file;
 int BigEndian;
 int BigBitEndian;
+int ByteMode;
 int Architecture;
 
 struct Token
@@ -411,9 +412,34 @@ void reverseBitOrder(char* c)
 	if(NULL == c) return;
 	if(0 == c[1]) return;
 	int hold = c[0];
-	c[0] = c[1];
-	c[1] = hold;
-	reverseBitOrder(c+2);
+
+	if(16 == ByteMode)
+	{
+		c[0] = c[1];
+		c[1] = hold;
+		reverseBitOrder(c+2);
+	}
+	else if(8 == ByteMode)
+	{
+		c[0] = c[2];
+		c[2] = hold;
+		reverseBitOrder(c+4);
+	}
+	else if(2 == ByteMode)
+	{
+		c[0] = c[7];
+		c[7] = hold;
+		hold = c[1];
+		c[1] = c[6];
+		c[6] = hold;
+		hold = c[2];
+		c[2] = c[5];
+		c[5] = hold;
+		hold = c[3];
+		c[3] = c[4];
+		c[4] = hold;
+		reverseBitOrder(c+9);
+	}
 }
 
 void LittleEndian(char* start)
@@ -432,26 +458,35 @@ void LittleEndian(char* start)
 	if(BigBitEndian) reverseBitOrder(c);
 }
 
+char* numerate_binary(char* c, int value, int bytes)
+{
+	fprintf(stderr, "numerate_binary has not been implemented yet\n");
+	exit(EXIT_FAILURE);
+}
+
 char* express_number(int value, char c)
 {
-	char* ch;
+	char* ch = calloc(42, sizeof(char));
 	if('!' == c)
 	{
 		range_check(value, 1);
-		ch = calloc(3, sizeof(char));
-		sprintf(ch, "%02X", value & 0xFF);
+		if(16 == ByteMode) sprintf(ch, "%02X", value & 0xFF);
+		else if(8 == ByteMode) sprintf(ch, "%03o", value & 0xFF);
+		else if(2 == ByteMode) numerate_binary(ch, (value & 0xFF), 1);
 	}
 	else if('@' == c)
 	{
 		range_check(value, 2);
-		ch = calloc(5, sizeof(char));
-		sprintf(ch, "%04X", value & 0xFFFF);
+		if(16 == ByteMode) sprintf(ch, "%04X", value & 0xFFFF);
+		else if(8 == ByteMode) sprintf(ch, "%03o %03o", ((value >> 8) & 0xFF), (value & 0xFF));
+		else if(2 == ByteMode) numerate_binary(ch, (value & 0xFFFF), 2);
 	}
 	else if('%' == c)
 	{
 		range_check(value, 4);
-		ch = calloc(9, sizeof(char));
-		sprintf(ch, "%08X", value & 0xFFFFFFFF);
+		if(16 == ByteMode) sprintf(ch, "%08X", value & 0xFFFFFFFF);
+		else if(8 == ByteMode) sprintf(ch, "%03o %03o %03o %03o", ((value >> 24) & 0xFF), ((value >> 16) & 0xFF), ((value >> 8) & 0xFF), (value & 0xFF));
+		else if(2 == ByteMode) numerate_binary(ch, (value & 0xFFFFFFFF), 4);
 	}
 	else
 	{
@@ -521,6 +556,8 @@ struct option long_options[] = {
 	{"LittleEndian", no_argument, &BigEndian, FALSE},
 	{"file", required_argument, 0, 'f'},
 	{"output", required_argument, 0, 'o'},
+	{"octal", no_argument, 0, 'O'},
+	{"binary", no_argument, 0, 'B'},
 	{"help", no_argument, 0, 'h'},
 	{"version", no_argument, 0, 'V'},
 	{0, 0, 0, 0}
@@ -555,6 +592,7 @@ int main(int argc, char **argv)
 	Architecture = 0;
 	destination_file = stdout;
 	BigBitEndian = TRUE;
+	ByteMode = 16;
 	int c;
 
 	int option_index = 0;
@@ -566,6 +604,11 @@ int main(int argc, char **argv)
 			case 'A':
 			{
 				Architecture = atoi(optarg);
+				break;
+			}
+			case 'B':
+			{
+				ByteMode = 2;
 				break;
 			}
 			case 'h':
@@ -604,6 +647,11 @@ int main(int argc, char **argv)
 					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
 					exit(EXIT_FAILURE);
 				}
+				break;
+			}
+			case 'O':
+			{
+				ByteMode = 8;
 				break;
 			}
 			case 'V':
