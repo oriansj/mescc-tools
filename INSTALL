@@ -1,0 +1,32 @@
+Building and Installing mescc-tools
+
+* Get it
+	git clone https://github.com/oriansj/mescc-tools.git
+
+* Prerequisites
+** Bootstrapping
+mescc-tools can be bootstrapped from a simple hex assembler.
+Once hex0 (in test1) is built, you'll be able to build hex1
+exec_enable (test6) will also need to be built on systems that require an execute
+bit to be set on binaries before they can be run.
+Once hex1 is built, hex2-linker can be built with it.
+Once hex2-linker is built, M1-Macro can be built with it.
+Then everything else can be built with M1-Macro and hex2
+
+** Development
+The tools required for easier development include binutils, gcc and make
+
+* Build it
+	make
+or
+	./build.sh
+
+* Check it
+	make test
+or
+	./check.sh
+
+* Install it
+	make install
+or
+	./install.sh

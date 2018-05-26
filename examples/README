@@ -1,0 +1,8 @@
+This folder contains only example versions of C programs implementing the Hex1,
+Hex2 and M1-Macro specifications; although only the marginal subset that was
+ultimately needed to bootstrap mescc-tools on that specific architecture.
+
+Considerable modification maybe required should you wish to use them for your
+architecture's bootstrap and thus are more informational than anything else.
+
+They are neither examples of clean code nor best practices for bootstrapping.

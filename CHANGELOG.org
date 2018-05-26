@@ -16,15 +16,21 @@
 
 * Current
 ** Added
+Added INSTALL notes
+Added HACKING notes
+Added examples of minimal Hex1, Hex2 and M1-macro programs that may need to be
+written to bootstrap a particular architecture.
 
 ** Changed
 Changed Knight architecture offset calculation to match new standard
 Updated test3 lisp.s to include more functionality
 Updated test3 definitions file to reflect changes in Knight instruction encoding
+enhanced README to be more useful
 
 ** Fixed
 Corrected M1-macro incorrectly expressing negative numbers
 Updated test3 checksum to reflect new version of lisp.s
+fixed check.sh to actually perform all checks.
 
 ** Removed
 
