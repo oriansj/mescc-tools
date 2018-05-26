@@ -31,8 +31,11 @@ enhanced README to be more useful
 Corrected M1-macro incorrectly expressing negative numbers
 Updated test3 checksum to reflect new version of lisp.s
 fixed check.sh to actually perform all checks.
+Fixed build.sh to function in a self-hosting fashion
 
 ** Removed
+Removed blood-elf's dependency on getopt
+Removed C preprocessor macro from blood-elf needed for mescc support
 
 * 0.4 - 2018-02-24
 ** Added

@@ -23,16 +23,17 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#define max_string 4096
-#define TRUE 1
-#define FALSE 0
 
-#if __MESC__
-	#include <fcntl.h>
-	int output;
-#else
-	FILE* output;
-#endif
+
+#define max_string 4096
+//CONSTANT max_string 4096
+#define TRUE 1
+//CONSTANT TRUE 1
+#define FALSE 0
+//CONSTANT FALSE 0
+
+void file_print(char* s, FILE* f);
+int match(char* a, char* b);
 
 struct entry
 {
@@ -40,6 +41,7 @@ struct entry
 	char* name;
 };
 
+FILE* output;
 struct entry* jump_table;
 
 void consume_token(FILE* source_file, char* s)
@@ -96,15 +98,13 @@ void first_pass(struct entry* input)
 	if(NULL == input) return;
 	first_pass(input->next);
 
-	#if __MESC__
-		int source_file = open(input->name, O_RDONLY);
-	#else
-		FILE* source_file = fopen(input->name, "r");
-	#endif
+	FILE* source_file = fopen(input->name, "r");
 
 	if(NULL == source_file)
 	{
-		fprintf(stderr, "The file: %s can not be opened!\n", input->name);
+		file_print("The file: ", stderr);
+		file_print(input->name, stderr);
+		file_print(" can not be opened!\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -131,10 +131,25 @@ void first_pass(struct entry* input)
 
 void output_debug(struct entry* node, int stage)
 {
-	for(struct entry* i = node; NULL != i; i = i->next)
+	struct entry* i;
+	for(i = node; NULL != i; i = i->next)
 	{
-		if(stage) fprintf(output, ":ELF_str_%s\n\"%s\"\n", i->name, i->name);
-		else fprintf(output, "%cELF_str_%s>ELF_str\n&%s\n%c10000\n!2\n!0\n@1\n", 37, i->name, i->name, 37);
+		if(stage)
+		{
+			file_print(":ELF_str_", output);
+			file_print(i->name, output);
+			file_print("\n\x22", output);
+			file_print(i->name, output);
+			file_print("\x22\n", output);
+		}
+		else
+		{
+			file_print("%ELF_str_", output);
+			file_print(i->name, output);
+			file_print(">ELF_str\n&", output);
+			file_print(i->name, output);
+			file_print("\n%10000\n!2\n!0\n@1\n", output);
+		}
 	}
 }
 
@@ -152,14 +167,6 @@ struct entry* reverse_list(struct entry* head)
 	return root;
 }
 
-struct option long_options[] = {
-	{"file", required_argument, 0, 'f'},
-	{"output",required_argument, 0, 'o'},
-	{"help", no_argument, 0, 'h'},
-	{"version", no_argument, 0, 'V'},
-	{0, 0, 0, 0}
-};
-
 /* Standard C main program */
 int main(int argc, char **argv)
 {
@@ -168,52 +175,51 @@ int main(int argc, char **argv)
 	output = stdout;
 	char* output_file = "";
 
-	int c;
-	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "B:f:h:o:V", long_options, &option_index)) != -1)
+	int option_index = 1;
+	while(option_index <= argc)
 	{
-		switch(c)
+		if(NULL == argv[option_index])
 		{
-			case 0: break;
-			case 'h':
-			{
-				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2}\n", argv[0]);
-				exit(EXIT_SUCCESS);
-			}
-			case 'f':
-			{
-				struct entry* temp = calloc(1, sizeof(struct entry));
-				temp->name = optarg;
-				temp->next = input;
-				input = temp;
-				break;
-			}
-			case 'o':
-			{
-				output_file = optarg;
-				#if __MESC__
-					output = open(output_file, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
-				#else
-					output = fopen(output_file, "w");
-				#endif
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
+		{
+			file_print("Usage: ", stderr);
+			file_print(argv[0], stderr);
+			file_print(" -f FILENAME1 {-f FILENAME2}\n", stderr);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
+		{
+			struct entry* temp = calloc(1, sizeof(struct entry));
+			temp->name = argv[option_index + 1];
+			temp->next = input;
+			input = temp;
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-o") || match(argv[option_index], "--output"))
+		{
+			output_file = argv[option_index + 1];
+			output = fopen(output_file, "w");
 
-				if(NULL == output)
-				{
-					fprintf(stderr, "The file: %s can not be opened!\n", input->name);
-					exit(EXIT_FAILURE);
-				}
-				break;
-			}
-			case 'V':
+			if(NULL == output)
 			{
-				fprintf(stdout, "blood-elf 0.1\n(Basically Launches Odd Object Dump ExecutabLe Files\n");
-				exit(EXIT_SUCCESS);
-			}
-			default:
-			{
-				fprintf(stderr, "Unknown option\n");
+				file_print("The file: ", stderr);
+				file_print(input->name, stderr);
+				file_print(" can not be opened!\n", stderr);
 				exit(EXIT_FAILURE);
 			}
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
+		{
+			file_print("blood-elf 0.1\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			exit(EXIT_SUCCESS);
+		}
+		else
+		{
+			file_print("Unknown option\n", stderr);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -229,11 +235,11 @@ int main(int argc, char **argv)
 	/* Reverse their order */
 	jump_table = reverse_list(jump_table);
 
-	fprintf(output, ":ELF_str\n!0\n");
+	file_print(":ELF_str\n!0\n", output);
 	output_debug(jump_table, TRUE);
-	fprintf(output, "%c0\n:ELF_sym\n%c0\n%c0\n%c0\n!0\n!0\n@1\n", 37, 37, 37, 37);
+	file_print("%0\n:ELF_sym\n%0\n%0\n%0\n!0\n!0\n@1\n", output);
 	output_debug(jump_table, FALSE);
-	fprintf(output, "\n:ELF_end\n");
+	file_print("\n:ELF_end\n", output);
 
 	return EXIT_SUCCESS;
 }

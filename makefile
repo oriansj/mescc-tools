@@ -19,7 +19,7 @@ get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) get_machine.c -o bin/get_machine
 
 blood-elf: blood-elf.c | bin
-	$(CC) $(CFLAGS) blood-elf.c -o bin/blood-elf
+	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c -o bin/blood-elf
 
 kaem: kaem.c | bin
 	$(CC) $(CFLAGS) kaem.c -o bin/kaem
