@@ -591,7 +591,8 @@ int main(int argc, char **argv)
 	/* Set file as executable */
 	if(exec_enable)
 	{
-		if(0 != chmod(output_file, 0750))
+		/* 488 = 750 in octal */
+		if(0 != chmod(output_file, 488))
 		{
 			file_print("Unable to change permissions\n", stderr);
 			exit(EXIT_FAILURE);

@@ -20,6 +20,7 @@ Added INSTALL notes
 Added HACKING notes
 Added examples of minimal Hex1, Hex2 and M1-macro programs that may need to be
 written to bootstrap a particular architecture.
+Added useful functions to reduce bootstrap dependencies
 
 ** Changed
 Changed Knight architecture offset calculation to match new standard
@@ -36,6 +37,9 @@ Fixed build.sh to function in a self-hosting fashion
 ** Removed
 Removed blood-elf's dependency on getopt
 Removed C preprocessor macro from blood-elf needed for mescc support
+Removed hex2's dependency on getopt
+Removed C preprocessor macro from hex2 need for mescc support
+Removed need for octal support in the building of hex2
 
 * 0.4 - 2018-02-24
 ** Added
