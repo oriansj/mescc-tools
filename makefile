@@ -9,8 +9,8 @@ CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
 M1: M1-macro.c | bin
 	$(CC) $(CFLAGS) M1-macro.c -o bin/M1
 
-hex2: hex2_linker.c | bin
-	$(CC) $(CFLAGS) hex2_linker.c -o bin/hex2
+hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c | bin
+	$(CC) $(CFLAGS) hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c -o bin/hex2
 
 exec_enable: exec_enable.c | bin
 	$(CC) $(CFLAGS) exec_enable.c -o bin/exec_enable
@@ -18,7 +18,7 @@ exec_enable: exec_enable.c | bin
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) get_machine.c -o bin/get_machine
 
-blood-elf: blood-elf.c | bin
+blood-elf: blood-elf.c functions/file_print.c functions/match.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c -o bin/blood-elf
 
 kaem: kaem.c | bin

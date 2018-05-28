@@ -20,19 +20,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#define max_string 4096
-#define TRUE 1
-#define FALSE 0
 
-#if __MESC__
-	#include <fcntl.h>
-	int output;
-#else
-	FILE* output;
-#endif
+
+#define max_string 4096
+//CONSTANT max_string 4096
+#define TRUE 1
+//CONSTANT TRUE 1
+#define FALSE 0
+//CONSTANT FALSE 0
+
+void file_print(char* s, FILE* f);
+int match(char* a, char* b);
+char* numerate_number(int a);
 
 struct input_files
 {
@@ -44,9 +45,10 @@ struct entry
 {
 	struct entry* next;
 	unsigned target;
-	char name[max_string + 1];
+	char* name;
 };
 
+FILE* output;
 struct entry* jump_table;
 int BigEndian;
 int Base_Address;
@@ -54,6 +56,8 @@ int Architecture;
 int ByteMode;
 int exec_enable;
 int ip;
+char* scratch;
+char* scratch2;
 
 int consume_token(FILE* source_file, char* s)
 {
@@ -61,7 +65,7 @@ int consume_token(FILE* source_file, char* s)
 	int c = fgetc(source_file);
 	do
 	{
-		s[i] = c;
+		if(NULL != s) s[i] = c;
 		i = i + 1;
 		c = fgetc(source_file);
 	} while((' ' != c) && ('\t' != c) && ('\n' != c) && '>' != c);
@@ -71,14 +75,17 @@ int consume_token(FILE* source_file, char* s)
 
 unsigned GetTarget(char* c)
 {
-	for(struct entry* i = jump_table; NULL != i; i = i->next)
+	struct entry* i;
+	for(i = jump_table; NULL != i; i = i->next)
 	{
-		if(0 == strcmp(c, i->name))
+		if(match(c, i->name))
 		{
 			return i->target;
 		}
 	}
-	fprintf(stderr, "Target label %s is not valid\n", c);
+	file_print("Target label ", stderr);
+	file_print(c, stderr);
+	file_print(" is not valid\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -91,6 +98,7 @@ int storeLabel(FILE* source_file, int ip)
 	jump_table = entry;
 
 	/* Store string */
+	entry->name = calloc(max_string + 1, sizeof(char));
 	int c = consume_token(source_file, entry->name);
 
 	/* Ensure we have target address */
@@ -100,38 +108,43 @@ int storeLabel(FILE* source_file, int ip)
 
 void range_check(int displacement, int number_of_bytes)
 {
-	switch(number_of_bytes)
+	if(4 == number_of_bytes) return;
+	else if (3 == number_of_bytes)
 	{
-		case 4: break;
-		case 3:
+		if((8388607 < displacement) || (displacement < -8388608))
 		{
-			if((8388607 < displacement) || (displacement < -8388608))
-			{
-				fprintf(stderr, "A displacement of %d does not fit in 3 bytes", displacement);
-				exit(EXIT_FAILURE);
-			}
-			break;
+			file_print("A displacement of ", stderr);
+			file_print(numerate_number(displacement), stderr);
+			file_print(" does not fit in 3 bytes\n", stderr);
+			exit(EXIT_FAILURE);
 		}
-		case 2:
-		{
-			if((32767 < displacement) || (displacement < -32768))
-			{
-				fprintf(stderr, "A displacement of %d does not fit in 2 bytes", displacement);
-				exit(EXIT_FAILURE);
-			}
-			break;
-		}
-		case 1:
-		{
-			if((127 < displacement) || (displacement < -128))
-			{
-				fprintf(stderr, "A displacement of %d does not fit in 1 byte", displacement);
-				exit(EXIT_FAILURE);
-			}
-			break;
-		}
-		default: exit(EXIT_FAILURE);
+		return;
 	}
+	else if (2 == number_of_bytes)
+	{
+		if((32767 < displacement) || (displacement < -32768))
+		{
+			file_print("A displacement of ", stderr);
+			file_print(numerate_number(displacement), stderr);
+			file_print(" does not fit in 2 bytes\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
+	else if (1 == number_of_bytes)
+	{
+		if((127 < displacement) || (displacement < -128))
+		{
+			file_print("A displacement of ", stderr);
+			file_print(numerate_number(displacement), stderr);
+			file_print(" does not fit in 1 byte\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
+
+	file_print("Invalid number of bytes given\n", stderr);
+	exit(EXIT_FAILURE);
 }
 
 void outputPointer(int displacement, int number_of_bytes)
@@ -143,14 +156,10 @@ void outputPointer(int displacement, int number_of_bytes)
 
 	if(BigEndian)
 	{ /* Deal with BigEndian */
-		switch(number_of_bytes)
-		{
-			case 4: fprintf(output, "%c", value >> 24);
-			case 3: fprintf(output, "%c", (value >> 16)%256);
-			case 2: fprintf(output, "%c", (value >> 8)%256);
-			case 1: fprintf(output, "%c", value % 256);
-			default: break;
-		}
+		if(4 == number_of_bytes) fputc((value >> 24), output);
+		if(3 <= number_of_bytes) fputc(((value >> 16)%256), output);
+		if(2 <= number_of_bytes) fputc(((value >> 8)%256), output);
+		if(1 <= number_of_bytes) fputc((value % 256), output);
 	}
 	else
 	{ /* Deal with LittleEndian */
@@ -158,7 +167,7 @@ void outputPointer(int displacement, int number_of_bytes)
 		{
 			unsigned byte = value % 256;
 			value = value / 256;
-			fprintf(output, "%c", byte);
+			fputc(byte, output);
 			number_of_bytes = number_of_bytes - 1;
 		}
 	}
@@ -166,17 +175,12 @@ void outputPointer(int displacement, int number_of_bytes)
 
 int Architectural_displacement(int target, int base)
 {
-	switch (Architecture)
-	{
-		case 0:
-		case 1:
-		case 2: return (target - base);
-		default:
-		{
-			fprintf(stderr, "Unknown Architecture, aborting before harm is done\n");
-			exit(EXIT_FAILURE);
-		}
-	}
+	if(0 == Architecture) return (target - base);
+	else if(1 == Architecture) return (target - base);
+	else if(2 == Architecture) return (target - base);
+
+	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
+	exit(EXIT_FAILURE);
 }
 
 int ConsumePointer(char ch, FILE* source_file, char* s)
@@ -187,7 +191,7 @@ int ConsumePointer(char ch, FILE* source_file, char* s)
 	else if(33 == ch) ip = ip + 1; /* Deal with ! */
 	else
 	{
-		fprintf(stderr, "storePointer given unknown\n");
+		file_print("storePointer given unknown\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -197,27 +201,20 @@ int ConsumePointer(char ch, FILE* source_file, char* s)
 void storePointer(char ch, FILE* source_file)
 {
 	/* Get string of pointer */
-	char temp[max_string + 1] = {0};
-	#if __MESC__
-		memset (temp, 0, max_string + 1);
-	#endif
-
-	int base_sep_p = (ConsumePointer(ch, source_file, temp) == 62); // '>'
+	memset (scratch, 0, max_string + 1);
+	int base_sep_p = (ConsumePointer(ch, source_file, scratch) == 62); /* '>' */
 
 	/* Lookup token */
-	int target = GetTarget(temp);
+	int target = GetTarget(scratch);
 	int displacement;
 
 	int base = ip;
 	/* Change relative base address to :<base> */
 	if (base_sep_p)
 	{
-		char temp2[max_string + 1] = {0};
-		#if __MESC__
-			memset (temp2, 0, max_string + 1);
-		#endif
-		consume_token (source_file, temp2);
-		base = GetTarget (temp2);
+		memset (scratch2, 0, max_string + 1);
+		consume_token (source_file, scratch2);
+		base = GetTarget (scratch2);
 	}
 
 	displacement = Architectural_displacement(target, base);
@@ -230,7 +227,9 @@ void storePointer(char ch, FILE* source_file)
 	else if(37 == ch) outputPointer(displacement, 4);  /* Deal with % */
 	else
 	{
-		fprintf(stderr, "storePointer reached impossible case: ch=%c\n", ch);
+		file_print("storePointer reached impossible case: ch=", stderr);
+		fputc(ch, stderr);
+		file_print("\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -278,7 +277,7 @@ void process_byte(char c, FILE* source_file, int write)
 		{
 			if(toggle)
 			{
-				if(write) fprintf(output, "%c",((hold * 16)) + hex(c, source_file));
+				if(write) fputc(((hold * 16)) + hex(c, source_file), output);
 				ip = ip + 1;
 				hold = 0;
 			}
@@ -295,7 +294,7 @@ void process_byte(char c, FILE* source_file, int write)
 		{
 			if(2 == toggle)
 			{
-				if(write) fprintf(output, "%c",((hold * 8)) + octal(c, source_file));
+				if(write) fputc(((hold * 8)) + octal(c, source_file), output);
 				ip = ip + 1;
 				hold = 0;
 				toggle = 0;
@@ -318,7 +317,7 @@ void process_byte(char c, FILE* source_file, int write)
 		{
 			if(7 == toggle)
 			{
-				if(write) fprintf(output, "%c",(hold * 2) + binary(c, source_file));
+				if(write) fputc((hold * 2) + binary(c, source_file), output);
 				ip = ip + 1;
 				hold = 0;
 				toggle = 0;
@@ -336,22 +335,18 @@ void first_pass(struct input_files* input)
 {
 	if(NULL == input) return;
 	first_pass(input->next);
-
-	#if __MESC__
-		int source_file = open(input->filename, O_RDONLY);
-	#else
-		FILE* source_file = fopen(input->filename, "r");
-	#endif
+	FILE* source_file = fopen(input->filename, "r");
 
 	if(NULL == source_file)
 	{
-		fprintf(stderr, "The file: %s can not be opened!\n", input->filename);
+		file_print("The file: ", stderr);
+		file_print(input->filename, stderr);
+		file_print(" can not be opened!\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	toggle = FALSE;
 	int c;
-	char token[max_string + 1];
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
 		/* Check for and deal with label */
@@ -363,10 +358,10 @@ void first_pass(struct input_files* input)
 		/* check for and deal with relative/absolute pointers to labels */
 		if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c))
 		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 4byte pointers (% and &) */
-			c = ConsumePointer(c, source_file, token);
+			c = ConsumePointer(c, source_file, NULL);
 			if (62 == c)
 			{ /* deal with label>base */
-				c = consume_token (source_file, token);
+				c = consume_token (source_file, NULL);
 			}
 		}
 		else process_byte(c, source_file, FALSE);
@@ -378,28 +373,24 @@ void second_pass(struct input_files* input)
 {
 	if(NULL == input) return;
 	second_pass(input->next);
-
-	#if __MESC__
-		int source_file = open(input->filename, O_RDONLY);
-	#else
-		FILE* source_file = fopen(input->filename, "r");
-	#endif
+	FILE* source_file = fopen(input->filename, "r");
 
 	/* Something that should never happen */
 	if(NULL == source_file)
 	{
-		fprintf(stderr, "The file: %s can not be opened!\nWTF-pass2\n", input->filename);
+		file_print("The file: ", stderr);
+		file_print(input->filename, stderr);
+		file_print(" can not be opened!\nWTF-pass2\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	toggle = FALSE;
 	hold = 0;
-	char token[max_string + 1];
 
 	int c;
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
-		if(58 == c) c = consume_token(source_file, token); /* Deal with : */
+		if(58 == c) c = consume_token(source_file, NULL); /* Deal with : */
 		else if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c)) storePointer(c, source_file);  /* Deal with !, @, $, %  and & */
 		else process_byte(c, source_file, TRUE);
 	}
@@ -482,46 +473,10 @@ int numerate_string(char *a)
 	return count;
 }
 
-struct option long_options[] = {
-	{"BigEndian", no_argument, &BigEndian, TRUE},
-	{"LittleEndian", no_argument, &BigEndian, FALSE},
-	{"exec_enable", no_argument, &exec_enable, TRUE},
-	{"file", required_argument, 0, 'f'},
-	{"Architecture", required_argument, 0, 'A'},
-	{"BaseAddress",required_argument, 0, 'B'},
-	{"binary",no_argument, 0, 'b'},
-	{"output",required_argument, 0, 'o'},
-	{"octal",no_argument, 0, 'O'},
-	{"help", no_argument, 0, 'h'},
-	{"version", no_argument, 0, 'V'},
-	{0, 0, 0, 0}
-};
-
 /* Standard C main program */
 int main(int argc, char **argv)
 {
-/* Default endianness is that of the native host */
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
-	defined(__BIG_ENDIAN__) || \
-	defined(__ARMEB__) || \
-	defined(__THUMBEB__) || \
-	defined(__AARCH64EB__) || \
-	defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
-// It's a big-endian target architecture
-		BigEndian = true;
-#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || \
-	defined(__LITTLE_ENDIAN__) || \
-	defined(__ARMEL__) || \
-	defined(__THUMBEL__) || \
-	defined(__AARCH64EL__) || \
-	defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
-// It's a little-endian target architecture
-	BigEndian = FALSE;
-#else
-#error "I don't know what architecture this is!"
-	exit(EXIT_FAILURE);
-#endif
-
+	BigEndian = TRUE;
 	jump_table = NULL;
 	Architecture = 0;
 	Base_Address = 0;
@@ -530,75 +485,92 @@ int main(int argc, char **argv)
 	char* output_file = "";
 	exec_enable = FALSE;
 	ByteMode = 16;
+	scratch = calloc(max_string + 1, sizeof(char));
+	scratch2 = calloc(max_string + 1, sizeof(char));
 
-	int c;
-	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "B:f:h:o:V", long_options, &option_index)) != -1)
+	int option_index = 1;
+	while(option_index <= argc)
 	{
-		switch(c)
+		if(NULL == argv[option_index])
 		{
-			case 0: break;
-			case 'A':
-			{
-				Architecture = atoi(optarg);
-				break;
-			}
-			case 'b':
-			{
-				ByteMode = 2;
-				break;
-			}
-			case 'B':
-			{
-				Base_Address = numerate_string(optarg);
-				break;
-			}
-			case 'h':
-			{
-				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\n", argv[0]);
-				fprintf(stderr, "Architecture 0: Knight; 1: x86; 2: AMD64\n");
-				fprintf(stderr, "To leverage octal or binary input: --octal, --binary\n");
-				exit(EXIT_SUCCESS);
-			}
-			case 'f':
-			{
-				struct input_files* temp = calloc(1, sizeof(struct input_files));
-				temp->filename = optarg;
-				temp->next = input;
-				input = temp;
-				break;
-			}
-			case 'o':
-			{
-				output_file = optarg;
-				#if __MESC__
-					output = open(output_file, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
-				#else
-					output = fopen(output_file, "w");
-				#endif
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--BigEndian"))
+		{
+			BigEndian = TRUE;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--LittleEndian"))
+		{
+			BigEndian = FALSE;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--exec_enable"))
+		{
+			exec_enable = TRUE;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-A") || match(argv[option_index], "--Architecture"))
+		{
+			Architecture = numerate_string(argv[option_index + 1]);
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
+		{
+			ByteMode = 2;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-B") || match(argv[option_index], "--BaseAddress"))
+		{
+			Base_Address = numerate_string(argv[option_index + 1]);
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
+		{
+			file_print("Usage: ", stderr);
+			file_print(argv[0], stderr);
+			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian)", stderr);
+			file_print(" [--BaseAddress 12345] [--Architecture 12345]\nArchitecture", stderr);
+			file_print(" 0: Knight; 1: x86; 2: AMD64\nTo leverage octal or binary", stderr);
+			file_print(" input: --octal, --binary\n", stderr);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
+		{
+			struct input_files* temp = calloc(1, sizeof(struct input_files));
+			temp->filename = argv[option_index + 1];
+			temp->next = input;
+			input = temp;
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-o") || match(argv[option_index], "--output"))
+		{
+			output_file = argv[option_index + 1];
+			output = fopen(output_file, "w");
 
-				if(NULL == output)
-				{
-					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
-					exit(EXIT_FAILURE);
-				}
-				break;
-			}
-			case 'O':
+			if(NULL == output)
 			{
-				ByteMode = 8;
-				break;
-			}
-			case 'V':
-			{
-				fprintf(stdout, "hex2 0.3\n");
-				exit(EXIT_SUCCESS);
-			}
-			default:
-			{
-				fprintf(stderr, "Unknown option\n");
+				file_print("The file: ", stderr);
+				file_print(argv[option_index + 1], stderr);
+				file_print(" can not be opened!\n", stderr);
 				exit(EXIT_FAILURE);
 			}
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-O") || match(argv[option_index], "--octal"))
+		{
+			ByteMode = 8;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
+		{
+			file_print("hex2 0.3\n", stdout);
+			exit(EXIT_SUCCESS);
+		}
+		else
+		{
+			file_print("Unknown option\n", stderr);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -621,7 +593,7 @@ int main(int argc, char **argv)
 	{
 		if(0 != chmod(output_file, 0750))
 		{
-			fprintf(stderr,"Unable to change permissions\n");
+			file_print("Unable to change permissions\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}
