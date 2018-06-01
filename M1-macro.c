@@ -423,7 +423,7 @@ void reverseBitOrder(char* c)
 	{
 		c[0] = c[2];
 		c[2] = hold;
-		reverseBitOrder(c+4);
+		reverseBitOrder(c+3);
 	}
 	else if(2 == ByteMode)
 	{
@@ -438,7 +438,7 @@ void reverseBitOrder(char* c)
 		hold = c[3];
 		c[3] = c[4];
 		c[4] = hold;
-		reverseBitOrder(c+9);
+		reverseBitOrder(c+8);
 	}
 }
 
@@ -458,41 +458,75 @@ void LittleEndian(char* start)
 	if(BigBitEndian) reverseBitOrder(c);
 }
 
-char* numerate_binary(char* c, int value, int bytes)
+int hex2char(int c)
 {
-	fprintf(stderr, "numerate_binary has not been implemented yet\n");
-	exit(EXIT_FAILURE);
+	if((c >= 0) && (c <= 9)) return (c + 48);
+	else if((c >= 10) && (c <= 15)) return (c + 55);
+	else return -1;
+}
+
+int stringify(char* s, int digits, int divisor, int value, int shift)
+{
+	int i = value;
+	if(digits > 1)
+	{
+		i = stringify(s+1, (digits - 1), divisor, value, shift);
+	}
+	s[0] = hex2char(i & (divisor - 1));
+	return (i >> shift);
 }
 
 char* express_number(int value, char c)
 {
 	char* ch = calloc(42, sizeof(char));
+	int size;
+	int number_of_bytes;
+	int shift;
 	if('!' == c)
 	{
-		range_check(value, 1);
-		if(16 == ByteMode) sprintf(ch, "%02X", value & 0xFF);
-		else if(8 == ByteMode) sprintf(ch, "%03o", value & 0xFF);
-		else if(2 == ByteMode) numerate_binary(ch, (value & 0xFF), 1);
+		number_of_bytes = 1;
+		value = value & 0xFF;
 	}
 	else if('@' == c)
 	{
-		range_check(value, 2);
-		if(16 == ByteMode) sprintf(ch, "%04X", value & 0xFFFF);
-		else if(8 == ByteMode) sprintf(ch, "%03o %03o", ((value >> 8) & 0xFF), (value & 0xFF));
-		else if(2 == ByteMode) numerate_binary(ch, (value & 0xFFFF), 2);
+		number_of_bytes = 2;
+		value = value & 0xFFFF;
 	}
 	else if('%' == c)
 	{
-		range_check(value, 4);
-		if(16 == ByteMode) sprintf(ch, "%08X", value & 0xFFFFFFFF);
-		else if(8 == ByteMode) sprintf(ch, "%03o %03o %03o %03o", ((value >> 24) & 0xFF), ((value >> 16) & 0xFF), ((value >> 8) & 0xFF), (value & 0xFF));
-		else if(2 == ByteMode) numerate_binary(ch, (value & 0xFFFFFFFF), 4);
+		number_of_bytes = 4;
+		value = value & 0xFFFFFFFF;
 	}
 	else
 	{
 		fprintf(stderr, "Given symbol %c to express immediate value %d\n", c, value);
 		exit(EXIT_FAILURE);
 	}
+
+	range_check(value, number_of_bytes);
+
+	if(16 == ByteMode)
+	{
+		size = number_of_bytes * 2;
+		shift = 4;
+	}
+	else if(8 == ByteMode)
+	{
+		size = number_of_bytes * 3;
+		shift = 3;
+	}
+	else if(2 == ByteMode)
+	{
+		size = number_of_bytes * 8;
+		shift = 1;
+	}
+	else
+	{
+		fprintf(stderr,"Got invalid ByteMode in express_number\n");
+		exit(EXIT_FAILURE);
+	}
+
+	stringify(ch, size, ByteMode, value, shift);
 
 	if(!BigEndian) LittleEndian(ch);
 	else if(!BigBitEndian) reverseBitOrder(ch);
@@ -523,9 +557,7 @@ void eval_immediates(struct Token* p)
 					value = numerate_string(i->Text);
 					if(('0' == i->Text[0]) || (0 != value))
 					{
-						range_check(value, 2);
-						i->Expression = calloc(5, sizeof(char));
-						sprintf(i->Expression, "%04X", value & 0xFFFF);
+						i->Expression = express_number(value, '@');
 					}
 					break;
 			}
