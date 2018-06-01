@@ -21,12 +21,14 @@ Added HACKING notes
 Added examples of minimal Hex1, Hex2 and M1-macro programs that may need to be
 written to bootstrap a particular architecture.
 Added useful functions to reduce bootstrap dependencies
+Added support for binary output in M1-macro
 
 ** Changed
 Changed Knight architecture offset calculation to match new standard
 Updated test3 lisp.s to include more functionality
 Updated test3 definitions file to reflect changes in Knight instruction encoding
 enhanced README to be more useful
+Pulled numerate_string functionality out of hex2 and M1 into a shared library
 
 ** Fixed
 Corrected M1-macro incorrectly expressing negative numbers
@@ -38,8 +40,11 @@ Fixed build.sh to function in a self-hosting fashion
 Removed blood-elf's dependency on getopt
 Removed C preprocessor macro from blood-elf needed for mescc support
 Removed hex2's dependency on getopt
-Removed C preprocessor macro from hex2 need for mescc support
+Removed C preprocessor macro from hex2 needed for mescc support
 Removed need for octal support in the building of hex2
+Removed M1's dependency on getopt
+Removed C preprocessor macro from M1 needed for mescc support
+Removed need for sprintf from M1
 
 * 0.4 - 2018-02-24
 ** Added

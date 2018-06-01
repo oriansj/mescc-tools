@@ -22,15 +22,22 @@
 #include <string.h>
 #include <getopt.h>
 #define max_string 4096
+//CONSTANT max_string 4096
 #define MACRO 1
+//CONSTANT MACRO 1
 #define STR 2
+//CONSTANT STR 2
 #define TRUE 1
+//CONSTANT TRUE 1
 #define FALSE 0
+//CONSTANT FALSE 0
 
-#if __MESC__
-#include <fcntl.h>
-#define strnlen(string, int) strlen(string)
-#endif
+void file_print(char* s, FILE* f);
+int match(char* a, char* b);
+int string_length(char* a);
+char* numerate_number(int a);
+int numerate_string(char *a);
+int hex2char(int c);
 
 FILE* source_file;
 FILE* destination_file;
@@ -54,7 +61,7 @@ struct Token* newToken()
 	p = calloc (1, sizeof (struct Token));
 	if (NULL == p)
 	{
-		fprintf (stderr, "calloc failed.\n");
+		file_print("calloc failed.\n", stderr);
 		exit (EXIT_FAILURE);
 	}
 
@@ -88,15 +95,14 @@ char* store_atom(char c)
 	char* store = calloc(max_string + 1, sizeof(char));
 	if(NULL == store)
 	{
-		fprintf(stderr, "Exhusted available memory\n");
+		file_print("Exhusted available memory\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-	int ch;
+	int ch = c;
 	int i = 0;
-	ch = c;
 	do
 	{
-		store[i] = (char)ch;
+		store[i] = ch;
 		ch = fgetc(source_file);
 		i = i + 1;
 	} while ((9 != ch) && (10 != ch) && (32 != ch) && (i <= max_string));
@@ -109,25 +115,26 @@ char* store_string(char c)
 	char* store = calloc(max_string + 1, sizeof(char));
 	if(NULL == store)
 	{
-		fprintf(stderr, "Exhusted available memory\n");
+		file_print("Exhusted available memory\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-	int ch;
+	int ch = c;
 	int i = 0;
-	ch = c;
 	do
 	{
-		store[i] = (char)ch;
+		store[i] = ch;
 		i = i + 1;
 		ch = fgetc(source_file);
 		if(-1 == ch)
 		{
-			fprintf(stderr, "Unmatched \"!\n");
+			file_print("Unmatched \"!\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		if(max_string == i)
 		{
-			fprintf(stderr, "String: %s exceeds max string size\n", store);
+			file_print("String: ", stderr);
+			file_print(store, stderr);
+			file_print(" exceeds max string size\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	} while(ch != c);
@@ -179,16 +186,17 @@ done:
 	return head;
 }
 
-void setExpression(struct Token* p, char *match, char *Exp)
+void setExpression(struct Token* p, char *c, char *Exp)
 {
-	for(struct Token* i = p; NULL != i; i = i->next)
+	struct Token* i;
+	for(i = p; NULL != i; i = i->next)
 	{
 		/* Leave macros alone */
 		if((i->type & MACRO))
 		{
 			continue;
 		}
-		else if(0 == strncmp(i->Text, match, max_string))
+		else if(match(i->Text, c))
 		{ /* Only if there is an exact match replace */
 			i->Expression = Exp;
 		}
@@ -197,9 +205,10 @@ void setExpression(struct Token* p, char *match, char *Exp)
 
 void identify_macros(struct Token* p)
 {
-	for(struct Token* i = p; NULL != i; i = i->next)
+	struct Token* i;
+	for(i = p; NULL != i; i = i->next)
 	{
-		if(0 == strncmp(i->Text, "DEFINE", max_string))
+		if(match(i->Text, "DEFINE"))
 		{
 			i->type = MACRO;
 			i->Text = i->next->Text;
@@ -218,7 +227,8 @@ void identify_macros(struct Token* p)
 
 void line_macro(struct Token* p)
 {
-	for(struct Token* i = p; NULL != i; i = i->next)
+	struct Token* i;
+	for(i = p; NULL != i; i = i->next)
 	{
 		if(i->type & MACRO)
 		{
@@ -229,8 +239,8 @@ void line_macro(struct Token* p)
 
 void hexify_string(struct Token* p)
 {
-	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
-	int i = ((strnlen(p->Text + 1 , max_string)/4) + 1) * 8;
+	char* table = "0123456789ABCDEF";
+	int i = ((string_length(p->Text + 1)/4) + 1) * 8;
 
 	char* d = calloc(max_string, sizeof(char));
 	p->Expression = d;
@@ -258,7 +268,8 @@ void hexify_string(struct Token* p)
 
 void process_string(struct Token* p)
 {
-	for(struct Token* i = p; NULL != i; i = i->next)
+	struct Token* i;
+	for(i = p; NULL != i; i = i->next)
 	{
 		if(i->type & STR)
 		{
@@ -277,7 +288,8 @@ void process_string(struct Token* p)
 
 void preserve_other(struct Token* p)
 {
-	for(struct Token* i = p; NULL != i; i = i->next)
+	struct Token* i;
+	for(i = p; NULL != i; i = i->next)
 	{
 		if((NULL == i->Expression) && !(i->type & MACRO))
 		{
@@ -289,122 +301,49 @@ void preserve_other(struct Token* p)
 			}
 			else
 			{
-				fprintf(stderr, "Recieved invalid other; %s\n", i->Text);
+				file_print("Recieved invalid other; ", stderr);
+				file_print(i->Text, stderr);
+				file_print("\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 		}
+	}
+}
+
+void bound_values(int displacement, int number_of_bytes, int low, int high)
+{
+	if((high < displacement) || (displacement < low))
+	{
+		file_print("A displacement of ", stderr);
+		file_print(numerate_number(displacement), stderr);
+		file_print(" does not fit in ", stderr);
+		file_print(numerate_number(number_of_bytes), stderr);
+		file_print(" bytes\n", stderr);
+		exit(EXIT_FAILURE);
 	}
 }
 
 void range_check(int displacement, int number_of_bytes)
 {
-	switch(number_of_bytes)
+	if(4 == number_of_bytes) return;
+	else if(3 == number_of_bytes)
 	{
-		case 4: break;
-		case 3:
-		{
-			if((16777216 < displacement) || (displacement < -8388608))
-			{
-				fprintf(stderr, "A displacement of %d does not fit in 3 bytes", displacement);
-				exit(EXIT_FAILURE);
-			}
-			break;
-		}
-		case 2:
-		{
-			if((65535 < displacement) || (displacement < -32768))
-			{
-				fprintf(stderr, "A displacement of %d does not fit in 2 bytes", displacement);
-				exit(EXIT_FAILURE);
-			}
-			break;
-		}
-		case 1:
-		{
-			if((255 < displacement) || (displacement < -128))
-			{
-				fprintf(stderr, "A displacement of %d does not fit in 1 byte", displacement);
-				exit(EXIT_FAILURE);
-			}
-			break;
-		}
-		default: exit(EXIT_FAILURE);
+		bound_values(displacement, number_of_bytes, -8388608, 16777216);
+		return;
 	}
-}
-
-int hex(int c)
-{
-	if (c >= '0' && c <= '9') return (c - 48);
-	else if (c >= 'a' && c <= 'f') return (c - 87);
-	else if (c >= 'A' && c <= 'F') return (c - 55);
-	else return -1;
-}
-
-int decimal(int c)
-{
-	if (c >= '0' && c <= '9') return (c - 48);
-	else return -1;
-}
-
-int numerate_string(char *a)
-{
-	int count = 0;
-	int index;
-	int negative;
-
-	/* If NULL string */
-	if(0 == a[0])
+	else if(2 == number_of_bytes)
 	{
-		return 0;
+		bound_values(displacement, number_of_bytes, -32768, 65535);
+		return;
 	}
-	/* Deal with hex */
-	else if (a[0] == '0' && a[1] == 'x')
+	else if(1 == number_of_bytes)
 	{
-		if('-' == a[2])
-		{
-			negative = TRUE;
-			index = 3;
-		}
-		else
-		{
-			negative = FALSE;
-			index = 2;
-		}
-
-		while(0 != a[index])
-		{
-			if(-1 == hex(a[index])) return 0;
-			count = (16 * count) + hex(a[index]);
-			index = index + 1;
-		}
-	}
-	/* Deal with decimal */
-	else
-	{
-		if('-' == a[0])
-		{
-			negative = TRUE;
-			index = 1;
-		}
-		else
-		{
-			negative = FALSE;
-			index = 0;
-		}
-
-		while(0 != a[index])
-		{
-			if(-1 == decimal(a[index])) return 0;
-			count = (10 * count) + decimal(a[index]);
-			index = index + 1;
-		}
+		bound_values(displacement, number_of_bytes, -128, 255);
+		return;
 	}
 
-	if(negative)
-	{
-		count = count * -1;
-	}
-	return count;
+	file_print("Recieved an invalid number of bytes in range_check\n", stderr);
+	exit(EXIT_FAILURE);
 }
 
 void reverseBitOrder(char* c)
@@ -448,21 +387,15 @@ void LittleEndian(char* start)
 	char* c = start;
 	while(0 != end[0]) end = end + 1;
 	int hold;
-	for(end = end - 1; start < end; start = start + 1, end = end - 1)
+	for(end = end - 1; start < end; start = start + 1)
 	{
 		hold = start[0];
 		start[0] = end[0];
 		end[0] = hold;
+		end = end - 1;
 	}
 
 	if(BigBitEndian) reverseBitOrder(c);
-}
-
-int hex2char(int c)
-{
-	if((c >= 0) && (c <= 9)) return (c + 48);
-	else if((c >= 10) && (c <= 15)) return (c + 55);
-	else return -1;
 }
 
 int stringify(char* s, int digits, int divisor, int value, int shift)
@@ -499,7 +432,11 @@ char* express_number(int value, char c)
 	}
 	else
 	{
-		fprintf(stderr, "Given symbol %c to express immediate value %d\n", c, value);
+		file_print("Given symbol ", stderr);
+		fputc(c, stderr);
+		file_print(" to express immediate value ", stderr);
+		file_print(numerate_number(value), stderr);
+		fputc('\n', stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -522,7 +459,7 @@ char* express_number(int value, char c)
 	}
 	else
 	{
-		fprintf(stderr,"Got invalid ByteMode in express_number\n");
+		file_print("Got invalid ByteMode in express_number\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -535,173 +472,144 @@ char* express_number(int value, char c)
 
 void eval_immediates(struct Token* p)
 {
-	for(struct Token* i = p; NULL != i; i = i->next)
+	struct Token* i;
+	for(i = p; NULL != i; i = i->next)
 	{
 		if((NULL == i->Expression) && !(i->type & MACRO))
 		{
 			int value;
-			switch(Architecture)
+			if((1 == Architecture) || (2 == Architecture))
 			{
-				case 2:
-				case 1:
+				value = numerate_string(i->Text + 1);
+				if(('0' == i->Text[1]) || (0 != value))
 				{
-					value = numerate_string(i->Text + 1);
-					if(('0' == i->Text[1]) || (0 != value))
-					{
-						i->Expression = express_number(value, i->Text[0]);
-					}
-					break;
+					i->Expression = express_number(value, i->Text[0]);
 				}
-				case 0:
+			}
+			else if(0 == Architecture)
+			{
+				value = numerate_string(i->Text);
+				if(('0' == i->Text[0]) || (0 != value))
 				{
-					value = numerate_string(i->Text);
-					if(('0' == i->Text[0]) || (0 != value))
-					{
-						i->Expression = express_number(value, '@');
-					}
-					break;
+					i->Expression = express_number(value, '@');
+				}
+			}
+			else
+			{
+				file_print("Unknown architecture recieved in eval_immediates\n", stderr);
+				exit(EXIT_FAILURE);
 			}
 		}
-	}
 	}
 }
 
 void print_hex(struct Token* p)
 {
-	for(struct Token* i = p; NULL != i; i = i->next)
+	struct Token* i;
+	for(i = p; NULL != i; i = i->next)
 	{
 		if(i->type ^ MACRO)
 		{
-			fprintf(destination_file, "\n%s", i->Expression);
+			fputc('\n', destination_file);
+			file_print(i->Expression, destination_file);
 		}
 	}
 
-	fprintf(destination_file, "\n");
+	fputc('\n', destination_file);
 }
-
-#if !__MESC__
-static
-#endif
-struct option long_options[] = {
-	{"Architecture", required_argument, 0, 'A'},
-	{"BigEndian", no_argument, &BigEndian, TRUE},
-	{"LittleEndian", no_argument, &BigEndian, FALSE},
-	{"file", required_argument, 0, 'f'},
-	{"output", required_argument, 0, 'o'},
-	{"octal", no_argument, 0, 'O'},
-	{"binary", no_argument, 0, 'B'},
-	{"help", no_argument, 0, 'h'},
-	{"version", no_argument, 0, 'V'},
-	{0, 0, 0, 0}
-};
 
 /* Standard C main program */
 int main(int argc, char **argv)
 {
-/* Default endianness is that of the native host */
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
-	defined(__BIG_ENDIAN__) || \
-	defined(__ARMEB__) || \
-	defined(__THUMBEB__) || \
-	defined(__AARCH64EB__) || \
-	defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
-// It's a big-endian target architecture
-		BigEndian = TRUE;
-#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || \
-	defined(__LITTLE_ENDIAN__) || \
-	defined(__ARMEL__) || \
-	defined(__THUMBEL__) || \
-	defined(__AARCH64EL__) || \
-	defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
-// It's a little-endian target architecture
-	BigEndian = FALSE;
-#else
-#error "I don't know what architecture this is!"
-	exit(EXIT_FAILURE);
-#endif
-
+	BigEndian = TRUE;
 	struct Token* head = NULL;
 	Architecture = 0;
 	destination_file = stdout;
 	BigBitEndian = TRUE;
 	ByteMode = 16;
-	int c;
 
-	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "f:h:o:V", long_options, &option_index)) != -1)
+	int option_index = 1;
+	while(option_index <= argc)
 	{
-		switch(c)
+		if(NULL == argv[option_index])
 		{
-			case 0: break;
-			case 'A':
-			{
-				Architecture = atoi(optarg);
-				break;
-			}
-			case 'B':
-			{
-				ByteMode = 2;
-				break;
-			}
-			case 'h':
-			{
-				fprintf(stderr, "Usage: %s -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\n", argv[0]);
-				fprintf(stderr, "Architecture 0: Knight; 1: x86; 2: AMD64");
-				exit(EXIT_SUCCESS);
-			}
-			case 'f':
-			{
-				#if __MESC__
-					source_file = open(optarg, O_RDONLY);
-				#else
-					source_file = fopen(optarg, "r");
-				#endif
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--BigEndian"))
+		{
+			BigEndian = TRUE;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--LittleEndian"))
+		{
+			BigEndian = FALSE;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-A") || match(argv[option_index], "--Architecture"))
+		{
+			Architecture = numerate_string(argv[option_index + 1]);
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
+		{
+			ByteMode = 2;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
+		{
+			file_print("Usage: ", stderr);
+			file_print(argv[0], stderr);
+			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\nArchitecture 0: Knight; 1: x86; 2: AMD64", stderr);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
+		{
+			source_file = fopen(argv[option_index + 1], "r");
 
-				if(NULL == source_file)
-				{
-					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
-					exit(EXIT_FAILURE);
-				}
-
-				head = Tokenize_Line(head);
-				break;
-			}
-			case 'o':
+			if(NULL == source_file)
 			{
-				#if __MESC__
-					destination_file = open(optarg, O_CREAT|O_TRUNC|O_WRONLY, S_IRUSR|S_IWUSR);
-				#else
-					destination_file = fopen(optarg, "w");
-				#endif
-
-				if(NULL == destination_file)
-				{
-					fprintf(stderr, "The file: %s can not be opened!\n", optarg);
-					exit(EXIT_FAILURE);
-				}
-				break;
-			}
-			case 'O':
-			{
-				ByteMode = 8;
-				break;
-			}
-			case 'V':
-			{
-				fprintf(stdout, "M1 0.3\n");
-				exit(EXIT_SUCCESS);
-			}
-			default:
-			{
-				fprintf(stderr, "Unknown option\n");
+				file_print("The file: ", stderr);
+				file_print(argv[option_index + 1], stderr);
+				file_print(" can not be opened!\n", stderr);
 				exit(EXIT_FAILURE);
 			}
+
+			head = Tokenize_Line(head);
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-o") || match(argv[option_index], "--output"))
+		{
+			destination_file = fopen(argv[option_index + 1], "w");
+
+			if(NULL == destination_file)
+			{
+				file_print("The file: ", stderr);
+				file_print(argv[option_index + 1], stderr);
+				file_print(" can not be opened!\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			option_index = option_index + 2;
+		}
+		else if(match(argv[option_index], "-O") || match(argv[option_index], "--octal"))
+		{
+			ByteMode = 8;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
+		{
+			file_print("M1 0.3\n", stdout);
+			exit(EXIT_SUCCESS);
+		}
+		else
+		{
+			file_print("Unknown option\n", stderr);
+			exit(EXIT_FAILURE);
 		}
 	}
 
 	if(NULL == head)
 	{
-		fprintf(stderr, "Either no input files were given or they were empty\n");
+		file_print("Either no input files were given or they were empty\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 

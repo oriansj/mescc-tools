@@ -6,8 +6,8 @@ all: M1 hex2 exec_enable get_machine blood-elf kaem
 CC=gcc
 CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
 
-M1: M1-macro.c | bin
-	$(CC) $(CFLAGS) M1-macro.c -o bin/M1
+M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c | bin
+	$(CC) $(CFLAGS) M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c -o bin/M1
 
 hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c | bin
 	$(CC) $(CFLAGS) hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c -o bin/hex2
