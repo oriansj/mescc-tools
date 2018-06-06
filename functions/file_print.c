@@ -15,6 +15,7 @@
  * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include<stdio.h>
+// void fputc(char s, FILE* f);
 
 void file_print(char* s, FILE* f)
 {
