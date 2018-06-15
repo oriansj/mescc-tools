@@ -29,6 +29,7 @@ Updated test3 lisp.s to include more functionality
 Updated test3 definitions file to reflect changes in Knight instruction encoding
 enhanced README to be more useful
 Pulled numerate_string functionality out of hex2 and M1 into a shared library
+Eliminated getopt from M1-Macro, hex2-linker and blood-elf; use --Architecture 1 instead of --Architecture=1
 
 ** Fixed
 Corrected M1-macro incorrectly expressing negative numbers
