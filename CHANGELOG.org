@@ -16,6 +16,16 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+Fixed broken test9 thanks to janneke
+
+** Removed
+
+* 0.5 - 2018-06-15
+** Added
 Added INSTALL notes
 Added HACKING notes
 Added examples of minimal Hex1, Hex2 and M1-macro programs that may need to be
