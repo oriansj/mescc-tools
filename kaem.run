@@ -12,7 +12,7 @@
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture=1 \
+	--Architecture 1 \
 	-f ../mes/stage0/x86.M1 \
 	-f ../mes-seed/crt1.M1 \
 	-f ../mes-seed/libc+tcc-mes.M1 \
@@ -23,8 +23,8 @@
 # Link
 /usr/bin/env hex2 \
 	--LittleEndian \
-	--Architecture=1 \
-	--BaseAddress=0x1000000 \
+	--Architecture 1 \
+	--BaseAddress 0x1000000 \
 	-f ../mes/stage0/elf32-header.hex2 \
 	-f blood-elf.hex2 \
 	-o blood-elf \
@@ -39,7 +39,7 @@
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture=1 \
+	--Architecture 1 \
 	-f ../mes/stage0/x86.M1 \
 	-f ../mes-seed/crt1.M1 \
 	-f ../mes-seed/libc+tcc-mes.M1 \
@@ -50,8 +50,8 @@
 # Link
 /usr/bin/env hex2 \
 	--LittleEndian \
-	--Architecture=1 \
-	--BaseAddress=0x1000000 \
+	--Architecture 1 \
+	--BaseAddress 0x1000000 \
 	-f ../mes/stage0/elf32-header.hex2 \
 	-f hex2.hex2 \
 	-o hex2 \
@@ -67,7 +67,7 @@
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture=1 \
+	--Architecture 1 \
 	-f ../mes/stage0/x86.M1 \
 	-f ../mes-seed/crt1.M1 \
 	-f ../mes-seed/libc+tcc-mes.M1 \
@@ -78,8 +78,8 @@
 # Link
 ./hex2 \
 	--LittleEndian \
-	--Architecture=1 \
-	--BaseAddress=0x1000000 \
+	--Architecture 1 \
+	--BaseAddress 0x1000000 \
 	-f ../mes/stage0/elf32-header.hex2 \
 	-f M1.hex2 \
 	-o M1 \

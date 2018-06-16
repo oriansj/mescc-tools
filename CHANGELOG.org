@@ -18,6 +18,7 @@
 ** Added
 
 ** Changed
+Updated build.sh and kaem.run to the current mescc-tools syntax
 
 ** Fixed
 Fixed broken test9 thanks to janneke

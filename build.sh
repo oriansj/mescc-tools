@@ -38,7 +38,7 @@ $MESCC_TOOLS_SEED/blood-elf\
 
 # Build
 # M1-macro phase
-$MESCC_TOOLS_SEED/M1 --LittleEndian --Architecture=1\
+$MESCC_TOOLS_SEED/M1 --LittleEndian --Architecture 1\
     -f $MES_SEED/x86.M1\
     -f $MES_SEED/crt1.M1\
     -f $MES_SEED/libc+tcc-mes.M1\
@@ -48,8 +48,8 @@ $MESCC_TOOLS_SEED/M1 --LittleEndian --Architecture=1\
 # Hex2-linker phase
 $MESCC_TOOLS_SEED/hex2\
     --LittleEndian\
-    --Architecture=1\
-    --BaseAddress=0x1000000\
+    --Architecture 1\
+    --BaseAddress 0x1000000\
     -f $MES_SEED/elf32-header.hex2\
     -f blood-elf.hex2\
     --exec_enable\
@@ -65,7 +65,7 @@ $MESCC_TOOLS_SEED/hex2\
 # M1-macro phase
 $MESCC_TOOLS_SEED/M1 \
     --LittleEndian\
-    --Architecture=1\
+    --Architecture 1\
     -f $MES_SEED/x86.M1\
     -f $MES_SEED/crt1.M1\
     -f $MES_SEED/libc+tcc-mes.M1\
@@ -75,8 +75,8 @@ $MESCC_TOOLS_SEED/M1 \
 # Hex2-linker phase
 $MESCC_TOOLS_SEED/hex2 \
     --LittleEndian\
-    --Architecture=1\
-    --BaseAddress=0x1000000\
+    --Architecture 1\
+    --BaseAddress 0x1000000\
     -f $MES_SEED/elf32-header.hex2\
     -f M1.hex2\
     --exec_enable\
@@ -92,7 +92,7 @@ $MESCC_TOOLS_SEED/hex2 \
 # M1-macro phase
 ./bin/M1 \
     --LittleEndian\
-    --Architecture=1\
+    --Architecture 1\
     -f $MES_SEED/x86.M1\
     -f $MES_SEED/crt1.M1\
     -f $MES_SEED/libc+tcc-mes.M1\
@@ -102,8 +102,8 @@ $MESCC_TOOLS_SEED/hex2 \
 # Hex2-linker phase
 $MESCC_TOOLS_SEED/hex2 \
       --LittleEndian\
-      --Architecture=1\
-      --BaseAddress=0x1000000\
+      --Architecture 1\
+      --BaseAddress 0x1000000\
       -f $MES_SEED/elf32-header.hex2\
       -f hex2.hex2\
       --exec_enable\
@@ -123,7 +123,7 @@ $MESCC_TOOLS_SEED/hex2 \
 # M1-macro phase
 ./bin/M1 \
     --LittleEndian\
-    --Architecture=1\
+    --Architecture 1\
     -f $MES_SEED/x86.M1\
     -f $MES_SEED/crt1.M1\
     -f $MES_SEED/libc+tcc-mes.M1\
@@ -133,8 +133,8 @@ $MESCC_TOOLS_SEED/hex2 \
 # Hex2-linker phase
 ./bin/hex2 \
     --LittleEndian\
-    --Architecture=1\
-    --BaseAddress=0x1000000\
+    --Architecture 1\
+    --BaseAddress 0x1000000\
     -f $MES_SEED/elf32-header.hex2\
     -f blood-elf.hex2\
     --exec_enable\
@@ -150,7 +150,7 @@ $MESCC_TOOLS_SEED/hex2 \
 # M1-macro phase
 ./bin/M1 \
     --LittleEndian\
-    --Architecture=1\
+    --Architecture 1\
     -f $MES_SEED/x86.M1\
     -f $MES_SEED/crt1.M1\
     -f $MES_SEED/libc+tcc-mes.M1\
@@ -160,8 +160,8 @@ $MESCC_TOOLS_SEED/hex2 \
 # Hex2-linker phase
 ./bin/hex2 \
     --LittleEndian\
-    --Architecture=1\
-    --BaseAddress=0x1000000\
+    --Architecture 1\
+    --BaseAddress 0x1000000\
     -f $MES_SEED/elf32-header.hex2\
     -f M1.hex2\
     --exec_enable\
@@ -177,7 +177,7 @@ $MESCC_TOOLS_SEED/hex2 \
 # M1-macro phase
 ./bin/M1 \
     --LittleEndian\
-    --Architecture=1\
+    --Architecture 1\
     -f $MES_SEED/x86.M1\
     -f $MES_SEED/crt1.M1\
     -f $MES_SEED/libc+tcc-mes.M1\
@@ -187,8 +187,8 @@ $MESCC_TOOLS_SEED/hex2 \
 # Hex2-linker phase
 ./bin/hex2 \
       --LittleEndian\
-      --Architecture=1\
-      --BaseAddress=0x1000000\
+      --Architecture 1\
+      --BaseAddress 0x1000000\
       -f $MES_SEED/elf32-header.hex2\
       -f hex2.hex2\
       --exec_enable\
