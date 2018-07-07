@@ -20,12 +20,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/utsname.h>
+void file_print(char* s, FILE* f);
 
 /* Standard C main program */
 int main()
 {
-	struct utsname unameData;
-	uname(&unameData);
-	fprintf(stdout, "%s\n", unameData.machine);
+	struct utsname* unameData = calloc(1, sizeof(struct utsname));
+	uname(unameData);
+	file_print(unameData->machine, stdout);
+	file_print("\n", stdout);
 	return EXIT_SUCCESS;
 }

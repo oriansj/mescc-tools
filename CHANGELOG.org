@@ -19,6 +19,7 @@
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax
+Reduced get_machine's build dependencies
 
 ** Fixed
 Fixed broken test9 thanks to janneke
