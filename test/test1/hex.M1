@@ -178,3 +178,6 @@ JMP32 %_start
 :input
 	# Reserve 4bytes of Zeros
 	NULL
+
+:ELF_end
+

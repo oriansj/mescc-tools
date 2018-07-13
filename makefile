@@ -58,7 +58,7 @@ test: test0-binary test1-binary test2-binary test3-binary test4-binary test5-bin
 test0-binary: results hex2 get_machine
 	test/test0/hello.sh
 
-test1-binary: results hex2 M1 exec_enable
+test1-binary: results hex2 M1 exec_enable get_machine
 	test/test1/hello.sh
 
 test2-binary: results hex2 M1

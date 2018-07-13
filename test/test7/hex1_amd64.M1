@@ -285,3 +285,5 @@ DEFINE TEST_RAX_RAX 4885C0
 	RET
 
 :table
+:ELF_end
+

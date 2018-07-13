@@ -3,17 +3,15 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
 	/************************************************
-	 * Note that the leading 0 makes it Octal       *
-	 * not base 10 or base 16.                      *
-	 * hex numbers begin with 0x                    *
-	 * 777 indicates that we want read, write and   *
-	 * execute permissions applied to the file      *
-	 * For the owner, group and all users           *
+	 * 493 in decimal is 755 in Octal, which is the *
+	 * value we need to set the execute and read    *
+	 * bits for all users and the write bit for the *
+	 * Owner of the files                           *
 	 ************************************************/
-	int m = 0755;
+	int m = 493;
 
 	if(2 != argc)
 	{

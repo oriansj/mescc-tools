@@ -151,3 +151,6 @@ JMP32 %_start
 	NULL
 :output
 	NULL
+
+:ELF_end
+

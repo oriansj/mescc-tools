@@ -51,3 +51,6 @@ DEFINE INT_80 CD80
 :msg
 "needs a proper file name
 "
+
+:ELF_end
+
