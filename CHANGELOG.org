@@ -16,13 +16,17 @@
 
 * Current
 ** Added
+Added template ELF headers for ARM
+Added initial support for ARM
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax
 Reduced get_machine's build dependencies
+Cleaned up x86 elf headers
 
 ** Fixed
 Fixed broken test9 thanks to janneke
+Fixed wrong displacement calculations for ARM immediates
 
 ** Removed
 

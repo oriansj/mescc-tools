@@ -1,0 +1,4 @@
+# Ignore the files created by script
+*.hex2
+footer.M1
+

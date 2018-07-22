@@ -15,17 +15,18 @@
 ### You should have received a copy of the GNU General Public License
 ### along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-### stage0's hex2 format for x86
+### stage0's hex2 format
 ###    !<label>          1 byte relative
 ###    $<label>          2 byte address
 ###    @<label>          2 byte relative
 ###    &<label>          4 byte address
 ###    %<label>          4 byte relative
-###    local_<label>     function-local
-###    string_<index>    string #<index>
 
-### elf32-header-exit-42.hex2: 32 bit elf header in hex2 for `exit 42'
+### elf32.hex2: 32 bit elf header in hex2
+### if you wish to use this header, you need to add :ELF_end to the end of your
+### M1 or hex2 files.
 
+## ELF Header
 :ELF_base
 7F 45 4C 46                    # e_ident[EI_MAG0-3] ELF's magic number
 
@@ -39,7 +40,7 @@
 00 00 00 00 00 00 00           # e_ident[EI_PAD]
 
 02 00                          # e_type Indicating Executable
-03 00                          # e_machine Indicating AMD64
+03 00                          # e_machine Indicating x86
 01 00 00 00                    # e_version Indicating original elf
 
 &ELF_text                      # e_entry Address of the entry point
@@ -68,10 +69,13 @@
 :ELF_program_header__text
 01 00 00 00                    # ph_type: PT-LOAD = 1
 00 00 00 00                    # ph_offset
+
 &ELF_base                      # ph_vaddr
 &ELF_base                      # ph_physaddr
+
 %ELF_end>ELF_base              # ph_filesz
 %ELF_end>ELF_base              # ph_memsz
+
 07 00 00 00                    # ph_flags: PF-X|PF-W|PF-R = 7
 01 00 00 00                    # ph_align
 

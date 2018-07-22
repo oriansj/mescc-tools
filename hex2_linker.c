@@ -222,7 +222,11 @@ void storePointer(char ch, FILE* source_file)
 	displacement = Architectural_displacement(target, base);
 
 	/* output calculated difference */
-	if(33 == ch) outputPointer(displacement, 1); /* Deal with ! */
+	if(33 == ch)
+	{
+		if(40 == Architecture) outputPointer(displacement - 7, 1); /* Deal with ! */
+		else outputPointer(displacement, 1); /* Deal with ! */
+	}
 	else if(36 == ch) outputPointer(target, 2); /* Deal with $ */
 	else if(64 == ch) outputPointer(displacement, 2); /* Deal with @ */
 	else if(38 == ch) outputPointer(target, 4); /* Deal with & */

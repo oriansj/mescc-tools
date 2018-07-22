@@ -38,6 +38,7 @@ clean:
 	./test/test8/cleanup.sh
 	./test/test9/cleanup.sh
 	./test/test10/cleanup.sh
+	./test/test11/cleanup.sh
 
 # A cleanup option we probably don't need
 .PHONY: clean-hard
@@ -63,7 +64,8 @@ test: test0-binary \
 	test7-binary \
 	test8-binary \
 	test9-binary \
-	test10-binary | results
+	test10-binary \
+	test11-binary | results
 	sha256sum -c test/test.answers
 
 test0-binary: results hex2 get_machine
@@ -98,6 +100,9 @@ test9-binary: results hex2 M1 blood-elf
 
 test10-binary: results hex2 M1
 	test/test10/hello.sh
+
+test11-binary: results hex2 M1 blood-elf
+	test/test11/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers
