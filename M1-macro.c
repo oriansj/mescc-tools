@@ -478,7 +478,7 @@ void eval_immediates(struct Token* p)
 		if((NULL == i->Expression) && !(i->type & MACRO))
 		{
 			int value;
-			if((1 == Architecture) || (2 == Architecture))
+			if((1 == Architecture) || (2 == Architecture) || (40 == Architecture))
 			{
 				value = numerate_string(i->Text + 1);
 				if(('0' == i->Text[1]) || (0 != value))
@@ -559,7 +559,8 @@ int main(int argc, char **argv)
 		{
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
-			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\nArchitecture 0: Knight; 1: x86; 2: AMD64", stderr);
+			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) ", stderr);
+			file_print("[--Architecture 12345]\nArchitecture 0: Knight; 1: x86; 2: AMD64; 40: armv7", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))

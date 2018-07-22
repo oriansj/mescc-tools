@@ -13,7 +13,7 @@ hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_
 	$(CC) $(CFLAGS) hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c -o bin/hex2
 
 exec_enable: exec_enable.c | bin
-	$(CC) $(CFLAGS) exec_enable.c -o bin/exec_enable
+	$(CC) $(CFLAGS) functions/file_print.c exec_enable.c -o bin/exec_enable
 
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) functions/file_print.c get_machine.c -o bin/get_machine
@@ -37,6 +37,7 @@ clean:
 	./test/test7/cleanup.sh
 	./test/test8/cleanup.sh
 	./test/test9/cleanup.sh
+	./test/test10/cleanup.sh
 
 # A cleanup option we probably don't need
 .PHONY: clean-hard
@@ -52,7 +53,17 @@ results:
 	mkdir -p test/results
 
 # tests
-test: test0-binary test1-binary test2-binary test3-binary test4-binary test5-binary test6-binary test7-binary test8-binary test9-binary | results
+test: test0-binary \
+	test1-binary \
+	test2-binary \
+	test3-binary \
+	test4-binary \
+	test5-binary \
+	test6-binary \
+	test7-binary \
+	test8-binary \
+	test9-binary \
+	test10-binary | results
 	sha256sum -c test/test.answers
 
 test0-binary: results hex2 get_machine
@@ -84,6 +95,9 @@ test8-binary: results hex2 M1
 
 test9-binary: results hex2 M1 blood-elf
 	test/test9/hello.sh
+
+test10-binary: results hex2 M1
+	test/test10/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers

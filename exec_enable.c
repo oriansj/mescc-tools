@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+void file_print(char* s, FILE* f);
 
 int main(int argc, char **argv)
 {
@@ -15,13 +16,13 @@ int main(int argc, char **argv)
 
 	if(2 != argc)
 	{
-		printf("arg count\n");
+		file_print("arg count\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	if(0 != chmod(argv[1], m))
 	{
-		printf("Unable to change permissions\n");
+		file_print("Unable to change permissions\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 

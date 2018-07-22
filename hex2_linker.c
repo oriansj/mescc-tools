@@ -179,6 +179,7 @@ int Architectural_displacement(int target, int base)
 	if(0 == Architecture) return (target - base);
 	else if(1 == Architecture) return (target - base);
 	else if(2 == Architecture) return (target - base);
+	else if(40 == Architecture) return (target - base);
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
@@ -457,7 +458,8 @@ int main(int argc, char **argv)
 			file_print(argv[0], stderr);
 			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian)", stderr);
 			file_print(" [--BaseAddress 12345] [--Architecture 12345]\nArchitecture", stderr);
-			file_print(" 0: Knight; 1: x86; 2: AMD64\nTo leverage octal or binary", stderr);
+			file_print(" 0: Knight; 1: x86; 2: AMD64; 40: armv7", stderr);
+			file_print("\nTo leverage octal or binary", stderr);
 			file_print(" input: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
