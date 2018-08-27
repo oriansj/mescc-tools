@@ -1,7 +1,7 @@
 ## Copyright (C) 2017 Jeremiah Orians
 ## This file is part of mescc-tools.
 ##
-## mescc-tools is free software: you an redistribute it and/or modify
+## mescc-tools is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
