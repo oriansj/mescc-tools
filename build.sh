@@ -228,6 +228,9 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-o bin/hex2 \
 	--exec_enable || exit 21
 
+# Clean up after ourself
+rm -f bin/blood-elf-0 bin/M1-0 bin/hex2-0
+
 # Build pieces that were not needed in bootstrap
 # but are generally useful
 
@@ -268,9 +271,40 @@ $M2/bin/M2-Planet \
 	-o bin/get_machine \
 	--exec_enable || exit 25
 
-# Clean up after ourself
-rm -f bin/blood-elf-0 bin/M1-0 bin/hex2-0
+# exec_enable
+$M2/bin/M2-Planet \
+	-f $M2/functions/file.c \
+	-f functions/file_print.c \
+	-f $M2/functions/exit.c \
+	-f $M2/functions/stat.c \
+	-f exec_enable.c \
+	--debug \
+	-o exec_enable.M1 || exit 26
+
+# Build debug footer
+./bin/blood-elf \
+	-f exec_enable.M1 \
+	-o exec_enable-footer.M1 || exit 27
+
+# Macro assemble with libc written in M1-Macro
+./bin/M1 \
+	-f $M2/test/common_x86/x86_defs.M1 \
+	-f $M2/functions/libc-core.M1 \
+	-f exec_enable.M1 \
+	-f exec_enable-footer.M1 \
+	--LittleEndian \
+	--Architecture 1 \
+	-o exec_enable.hex2 || exit 28
+
+# Resolve all linkages
+./bin/hex2 \
+	-f elf_headers/elf32-debug.hex2 \
+	-f exec_enable.hex2 \
+	--LittleEndian \
+	--Architecture 1 \
+	--BaseAddress 0x8048000 \
+	-o bin/exec_enable \
+	--exec_enable || exit 29
 
 # TODO
-# exec_enable
 # kaem

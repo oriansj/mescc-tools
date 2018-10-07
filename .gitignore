@@ -40,4 +40,7 @@ hex2_linker.hex2
 get_machine-footer.M1
 get_machine.M1
 get_machine.hex2
+exec_enable-footer.M1
+exec_enable.M1
+exec_enable.hex2
 

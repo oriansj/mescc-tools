@@ -19,12 +19,12 @@
 
 set -eux
 [ -e bin ] || mkdir -p bin
-[ -f bin/M1 ] || gcc -D_GNU_SOURCE -std=c99 -ggdb M1-macro.c -o bin/M1
-[ -f bin/hex2 ] || gcc -D_GNU_SOURCE -std=c99 -ggdb hex2_linker.c -o bin/hex2
-[ -f bin/exec_enable ] || gcc -D_GNU_SOURCE -std=c99 -ggdb exec_enable.c -o bin/exec_enable
-[ -f bin/get_machine ] || gcc -D_GNU_SOURCE -std=c99 -ggdb get_machine.c -o bin/get_machine
-[ -f bin/blood-elf ] || gcc -D_GNU_SOURCE -std=c99 -ggdb blood-elf.c -o bin/blood-elf
-[ -f bin/kaem ] || gcc -D_GNU_SOURCE -std=c99 -ggdb kaem.c -o bin/kaem
+[ -f bin/M1 ] || exit 1
+[ -f bin/hex2 ] || exit 2
+[ -f bin/blood-elf ] || exit 3
+#[ -f bin/kaem ] || exit 4
+[ -f bin/get_machine ] || exit 5
+[ -f bin/exec_enable ] || exit 6
 [ -e test/results ] || mkdir -p test/results
 ./test/test0/hello.sh
 ./test/test1/hello.sh
@@ -36,4 +36,6 @@ set -eux
 ./test/test7/hello.sh
 ./test/test8/hello.sh
 ./test/test9/hello.sh
+./test/test10/hello.sh
+./test/test11/hello.sh
 sha256sum -c test/test.answers
