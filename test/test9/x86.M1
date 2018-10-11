@@ -29,13 +29,11 @@ DEFINE add____$i8,%esp 83c4
 DEFINE add____$i8,(%eax) 8300
 DEFINE add____$i8,0x32 8305
 DEFINE add____$i8,0x32(%eax) 8380
-DEFINE add____$i8,0x32(%eax) 8380
 DEFINE add____$i8,0x32(%ebp) 8385
 DEFINE add____$i8,0x8(%eax) 8340
 DEFINE add____$i8,0x8(%ebp) 8345
 DEFINE add____%eax,%eax 01c0
 DEFINE add____%ebp,%eax 01e8
-DEFINE add____%edx,%eax 01d0
 DEFINE add____%edx,%eax 01d0
 DEFINE and____%edx,%eax 21d0
 DEFINE call32 e8
@@ -122,10 +120,8 @@ DEFINE mov____0x32(%eax),%eax 8b80
 DEFINE mov____0x32(%eax),%ebx 8b98
 DEFINE mov____0x32(%eax),%ecx 8b88
 DEFINE mov____0x32(%ebp),%eax 8b85
-DEFINE mov____0x32(%ebp),%eax 8b85
 DEFINE mov____0x32(%ebp),%ebx 8b9d
 DEFINE mov____0x32(%ebp),%ecx 8b8d
-DEFINE mov____0x32(%ebp),%edx 8b95
 DEFINE mov____0x32(%ebp),%edx 8b95
 DEFINE mov____0x32,%eax a1
 DEFINE mov____0x32,%edx 8b15
@@ -178,7 +174,6 @@ DEFINE shr____%cl,%eax d3e8
 DEFINE sub____%al,%dl 28d0
 DEFINE sub____%dl,%al 28c2
 DEFINE sub____%eax,%edx 29c2
-DEFINE sub____%edx,%eax 29d0
 DEFINE sub____%edx,%eax 29d0
 DEFINE sub____%esp,$i32 81ec
 DEFINE sub____%esp,$i8 83ec

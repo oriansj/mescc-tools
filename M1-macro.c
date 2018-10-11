@@ -194,6 +194,13 @@ void setExpression(struct Token* p, char *c, char *Exp)
 		/* Leave macros alone */
 		if((i->type & MACRO))
 		{
+			if(match(i->Text, c))
+			{
+				file_print("Multiple definitions for macro ", stderr);
+				file_print(c, stderr);
+				file_print("\n", stderr);
+				exit(EXIT_FAILURE);
+			}
 			continue;
 		}
 		else if(match(i->Text, c))
