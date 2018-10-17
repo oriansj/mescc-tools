@@ -39,7 +39,7 @@ mkdir -p bin
 /usr/bin/env hex2 \
 	--LittleEndian \
 	--Architecture 1 \
-	--BaseAddress 0x1000000 \
+	--BaseAddress 0x8048000 \
 	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
 	-f ../mescc-tools-seed/blood-elf.hex2 \
 	-o bin/blood-elf \
@@ -65,7 +65,7 @@ mkdir -p bin
 /usr/bin/env hex2 \
 	--LittleEndian \
 	--Architecture 1 \
-	--BaseAddress 0x1000000 \
+	--BaseAddress 0x8048000 \
 	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
 	-f ../mescc-tools-seed/hex2.hex2 \
 	-o bin/hex2 \
@@ -91,7 +91,7 @@ mkdir -p bin
 ./bin/hex2 \
 	--LittleEndian \
 	--Architecture 1 \
-	--BaseAddress 0x1000000 \
+	--BaseAddress 0x8048000 \
 	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
 	-f ../mescc-tools-seed/M1.hex2 \
 	-o bin/M1 \
