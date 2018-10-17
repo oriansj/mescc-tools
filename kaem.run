@@ -31,7 +31,6 @@ mkdir -p bin
 	--Architecture 1 \
 	-f ../mescc-tools-seed/x86_defs.M1 \
 	-f ../mescc-tools-seed/libc-core.M1 \
-	-f ../mes-seed/libc+tcc-mes.M1 \
 	-f ../mescc-tools-seed/blood-elf.M1 \
 	-f ../mescc-tools-seed/blood-elf-footer.M1 \
 	-o ../mescc-tools-seed/blood-elf.hex2
