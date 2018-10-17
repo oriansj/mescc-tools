@@ -38,7 +38,7 @@ blood-elf: blood-elf.c functions/file_print.c functions/match.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c -o bin/blood-elf
 
 kaem: kaem.c | bin
-	$(CC) $(CFLAGS) kaem.c -o bin/kaem
+	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/numerate_number.c -o bin/kaem
 
 # Clean up after ourselves
 .PHONY: clean
@@ -129,6 +129,6 @@ DESTDIR:=
 PREFIX:=/usr/local
 bindir:=$(DESTDIR)$(PREFIX)/bin
 .PHONY: install
-install: M1 hex2 blood-elf
+install: M1 hex2 blood-elf kaem get_machine
 	mkdir -p $(bindir)
 	cp $^ $(bindir)

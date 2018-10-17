@@ -23,13 +23,16 @@ Added initial support for ARM
 Updated build.sh and kaem.run to the current mescc-tools syntax
 Reduced get_machine's build dependencies
 Cleaned up x86 elf headers
+Removed kaem's dependence on getopt
 
 ** Fixed
 Fixed broken test9 thanks to janneke
 Fixed wrong displacement calculations for ARM immediates
 Fixed typo in license header
+Fixed kaem.run to actually function and produce identical results
 
 ** Removed
+Removed final dependency on getopt
 
 * 0.5 - 2018-06-15
 ** Added
