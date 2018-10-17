@@ -19,11 +19,19 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <getopt.h>
+
 #define FALSE 0
+//CONSTANT FALSE 0
 #define TRUE 1
+//CONSTANT TRUE 1
 #define max_string 4096
+//CONSTANT max_string 4096
 #define max_args 256
+//CONSTANT max_args 256
+
+void file_print(char* s, FILE* f);
+char* numerate_number(int a);
+int match(char* a, char* b);
 
 char** tokens;
 int command_done;
@@ -39,7 +47,7 @@ void collect_comment(FILE* input)
 		c = fgetc(input);
 		if(-1 == c)
 		{
-			fprintf(stderr, "IMPROPERLY TERMINATED LINE COMMENT!\nABORTING HARD\n");
+			file_print("IMPROPERLY TERMINATED LINE COMMENT!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	} while('\n' != c);
@@ -53,12 +61,12 @@ int collect_string(FILE* input, int index, char* target)
 	{
 		c = fgetc(input);
 		if(-1 == c)
-		{ // We never should hit EOF while collecting a RAW string
-			fprintf(stderr, "IMPROPERLY TERMINATED RAW string!\nABORTING HARD\n");
+		{ /* We never should hit EOF while collecting a RAW string */
+			file_print("IMPROPERLY TERMINATED RAW string!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		else if('"' == c)
-		{// Made it to the end
+		{ /* Made it to the end */
 			c = 0;
 		}
 		target[index] = c;
@@ -77,32 +85,32 @@ char* collect_token(FILE* input)
 	{
 		c = fgetc(input);
 		if(-1 == c)
-		{// Deal with end of file
-			fprintf(stderr, "execution complete\n");
+		{ /* Deal with end of file */
+			file_print("execution complete\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if((' ' == c) || ('\t' == c))
-		{// space and tab are token seperators
+		{ /* space and tab are token seperators */
 			c = 0;
 		}
 		else if('\n' == c)
-		{// Command terminates at end of line
+		{ /* Command terminates at end of line */
 			c = 0;
 			command_done = 1;
 		}
 		else if('"' == c)
-		{// RAW strings are everything between a pair of ""
+		{ /* RAW strings are everything between a pair of "" */
 			i = collect_string(input, i, token);
 			c = 0;
 		}
 		else if('#' == c)
-		{// Line comments to aid the humans
+		{ /* Line comments to aid the humans */
 			collect_comment(input);
 			c = 0;
 			command_done = 1;
 		}
 		else if('\\' == c)
-		{// Support for end of line escapes, drops the char after
+		{ /* Support for end of line escapes, drops the char after */
 			fgetc(input);
 			c = 0;
 		}
@@ -111,7 +119,7 @@ char* collect_token(FILE* input)
 	} while (0 != c);
 
 	if(1 == i)
-	{// Nothing worth returning
+	{ /* Nothing worth returning */
 		free(token);
 		return NULL;
 	}
@@ -175,7 +183,7 @@ char* env_lookup(char* token, char** envp)
 char* find_executable(char* name, char* PATH)
 {
 	if(('.' == name[0]) || ('/' == name[0]))
-	{ // assume names that start with . or / are relative or absolute
+	{ /* assume names that start with . or / are relative or absolute */
 		return name;
 	}
 
@@ -230,7 +238,7 @@ void execute_command(FILE* script, char** envp)
 	{
 		char* result = collect_token(script);
 		if(0 != result)
-		{ // Not a comment string but an actual argument
+		{ /* Not a comment string but an actual argument */
 			tokens[i] = result;
 			i = i + 1;
 		}
@@ -238,116 +246,117 @@ void execute_command(FILE* script, char** envp)
 
 	if(VERBOSE && (0 < i))
 	{
-		fprintf(stdout, " +> ");
-		for(int j = 0; j < i; j = j + 1)
+		file_print(" +> ", stdout);
+		int j;
+		for(j = 0; j < i; j = j + 1)
 		{
-			fprintf(stdout, "%s ", tokens[j]);
+			file_print(tokens[j], stdout);
+			fputc(' ', stdout);
 		}
-		fprintf(stdout, "\n");
+		file_print("\n", stdout);
 	}
 
 	if(0 < i)
-	{ // Not a line comment
+	{ /* Not a line comment */
 		char* program = find_executable(tokens[0], PATH);
 		if(NULL == program)
 		{
-			fprintf(stderr, "Some weird shit went down with: %s\n", tokens[0]);
+			file_print(tokens[0], stderr);
+			file_print("Some weird shit went down with: ", stderr);
+			file_print("\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 
 		int f = fork();
 		if (f == -1)
 		{
-			fprintf(stderr,"fork() failure");
+			file_print("fork() failure", stderr);
 			exit(EXIT_FAILURE);
 		}
 		else if (f == 0)
-		{ // child
+		{ /* child */
 			/* execve() returns only on error */
 			execve(program, tokens, envp);
 			/* Prevent infinite loops */
 			_exit(EXIT_SUCCESS);
 		}
 
-		// Otherwise we are the parent
-		// And we should wait for it to complete
+		/* Otherwise we are the parent */
+		/* And we should wait for it to complete */
 		waitpid(f, &status, 0);
 
 		if(STRICT && (0 != status))
-		{ // Clearly the script hit an issue that should never have happened
-			fprintf(stderr, "Subprocess error %d\nABORTING HARD\n", status);
-			// stop to prevent damage
+		{ /* Clearly the script hit an issue that should never have happened */
+			file_print("Subprocess error ", stderr);
+			file_print(numerate_number(status), stderr);
+			file_print("\nABORTING HARD\n", stderr);
+			/* stop to prevent damage */
 			exit(EXIT_FAILURE);
 		}
-		// Then go again
+		/* Then go again */
 	}
 }
 
-#if !__MESC__
-static
-#endif
-struct option long_options[] = {
-	{"strict", no_argument, &STRICT, TRUE},
-	{"verbose", no_argument, &VERBOSE, TRUE},
-	{"file", required_argument, 0, 'f'},
-	{"help", no_argument, 0, 'h'},
-	{"version", no_argument, 0, 'v'},
-	{"nightmare-mode", no_argument, 0, 'n'},
-	{0, 0, 0, 0}
-};
 
 int main(int argc, char** argv, char** envp)
 {
-	VERBOSE = 0;
-	STRICT = 0;
+	VERBOSE = FALSE;
+	STRICT = FALSE;
 	char* filename = "kaem.run";
 	FILE* script = NULL;
 
-	int c;
-	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "f:h:n:V", long_options, &option_index)) != -1)
+	int i = 1;
+	while(i <= argc)
 	{
-		switch(c)
+		if(NULL == argv[i])
 		{
-			case 0: break;
-			case 'h':
-			{
-				fprintf(stdout, "kaem only accepts --help, --version, --verbose or no arguments\n");
-				exit(EXIT_SUCCESS);
-			}
-			case 'f':
-			{
-				filename = optarg;
-				break;
-			}
-			case 'n':
-			{
-				fprintf(stdout, "Begin nightmare");
-				envp = NULL;
-				break;
-			}
-			case 'V':
-			{
-				fprintf(stdout, "kaem version 0.1\n");
-				exit(EXIT_SUCCESS);
-			}
-			default:
-			{
-				fprintf(stderr, "Unknown option\n");
-				exit(EXIT_FAILURE);
-			}
+			i = i + 1;
+		}
+		else if(match(argv[i], "-h") || match(argv[i], "--help"))
+		{
+			file_print("kaem only accepts --help, --version, --verbose or no arguments\n", stdout);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[i], "-f") || match(argv[i], "--file"))
+		{
+			filename = argv[i + 1];
+			i = i + 2;
+		}
+		else if(match(argv[i], "n") || match(argv[i], "--nightmare-mode"))
+		{
+			file_print("Begin nightmare", stdout);
+			envp = NULL;
+			i = i + 1;
+		}
+		else if(match(argv[i], "-V") || match(argv[i], "--version"))
+		{
+			file_print("kaem version 0.1\n", stdout);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[i], "--verbose"))
+		{
+			VERBOSE = TRUE;
+			i = i + 1;
+		}
+		else if(match(argv[i], "--strict"))
+		{
+			STRICT = TRUE;
+			i = i + 1;
+		}
+		else
+		{
+			file_print("UNKNOWN ARGUMENT\n", stdout);
+			exit(EXIT_FAILURE);
 		}
 	}
 
-	#if __MESC__
-		script = open(filename, O_RDONLY);
-	#else
-		script = fopen(filename, "r");
-	#endif
+	script = fopen(filename, "r");
 
 	if(NULL == script)
 	{
-		fprintf(stderr, "The file: %s can not be opened!\n", filename);
+		file_print("The file: ", stderr);
+		file_print(filename, stderr);
+		file_print(" can not be opened!\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
