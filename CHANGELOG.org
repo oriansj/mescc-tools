@@ -30,6 +30,7 @@ Fixed broken test9 thanks to janneke
 Fixed wrong displacement calculations for ARM immediates
 Fixed typo in license header
 Fixed kaem.run to actually function and produce identical results
+Fixed regression caused by linux 4.17
 
 ** Removed
 Removed final dependency on getopt
