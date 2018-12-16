@@ -18,6 +18,8 @@
 ** Added
 Added template ELF headers for ARM
 Added initial support for ARM
+Added official hex0 seed for AMD64
+Added official hex1 seed for AMD64
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax
