@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-
 #define max_string 4096
 //CONSTANT max_string 4096
 #define TRUE 1
@@ -58,20 +57,66 @@ int ByteMode;
 int exec_enable;
 int ip;
 char* scratch;
-char* scratch2;
 
-int consume_token(FILE* source_file, char* s)
+int in_set(int c, char* s)
+{
+	while(0 != s[0])
+	{
+		if(c == s[0]) return TRUE;
+		s = s + 1;
+	}
+	return FALSE;
+}
+
+int consume_token(FILE* source_file)
 {
 	int i = 0;
 	int c = fgetc(source_file);
-	do
+	while(!in_set(c, " \t\n>"))
 	{
-		if(NULL != s) s[i] = c;
+		scratch[i] = c;
 		i = i + 1;
 		c = fgetc(source_file);
-	} while((' ' != c) && ('\t' != c) && ('\n' != c) && '>' != c);
+	}
 
 	return c;
+}
+
+int Throwaway_token(FILE* source_file)
+{
+	int c;
+	do
+	{
+		c = fgetc(source_file);
+	} while(!in_set(c, " \t\n>"));
+
+	return c;
+}
+
+int length(char* s)
+{
+	int i = 0;
+	while(0 != s[i]) i = i + 1;
+	return i;
+}
+
+void Clear_Scratch(char* s)
+{
+	do
+	{
+		s[0] = 0;
+		s = s + 1;
+	} while(0 != s[0]);
+}
+
+void Copy_String(char* a, char* b)
+{
+	while(0 != a[0])
+	{
+		b[0] = a[0];
+		a = a + 1;
+		b = b + 1;
+	}
 }
 
 unsigned GetTarget(char* c)
@@ -94,16 +139,19 @@ int storeLabel(FILE* source_file, int ip)
 {
 	struct entry* entry = calloc(1, sizeof(struct entry));
 
+	/* Ensure we have target address */
+	entry->target = ip;
+
 	/* Prepend to list */
 	entry->next = jump_table;
 	jump_table = entry;
 
 	/* Store string */
-	entry->name = calloc(max_string + 1, sizeof(char));
-	int c = consume_token(source_file, entry->name);
+	int c = consume_token(source_file);
+	entry->name = calloc(length(scratch) + 1, sizeof(char));
+	Copy_String(scratch, entry->name);
+	Clear_Scratch(scratch);
 
-	/* Ensure we have target address */
-	entry->target = ip;
 	return c;
 }
 
@@ -185,26 +233,25 @@ int Architectural_displacement(int target, int base)
 	exit(EXIT_FAILURE);
 }
 
-int ConsumePointer(char ch, FILE* source_file, char* s)
+void Update_Pointer(char ch)
 {
 	/* Calculate pointer size*/
-	if((37 == ch) || (38 == ch)) ip = ip + 4; /* Deal with % and & */
-	else if((64 == ch) || (36 == ch)) ip = ip + 2; /* Deal with @ and $ */
-	else if(33 == ch) ip = ip + 1; /* Deal with ! */
+	if(in_set(ch, "%&")) ip = ip + 4; /* Deal with % and & */
+	else if(in_set(ch, "@$")) ip = ip + 2; /* Deal with @ and $ */
+	else if('!' == ch) ip = ip + 1; /* Deal with ! */
 	else
 	{
 		file_print("storePointer given unknown\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-
-	return consume_token(source_file, s);
 }
 
 void storePointer(char ch, FILE* source_file)
 {
 	/* Get string of pointer */
-	memset (scratch, 0, max_string + 1);
-	int base_sep_p = (ConsumePointer(ch, source_file, scratch) == 62); /* '>' */
+	Clear_Scratch(scratch);
+	Update_Pointer(ch);
+	int base_sep_p = consume_token(source_file);
 
 	/* Lookup token */
 	int target = GetTarget(scratch);
@@ -212,25 +259,25 @@ void storePointer(char ch, FILE* source_file)
 
 	int base = ip;
 	/* Change relative base address to :<base> */
-	if (base_sep_p)
+	if ('>' == base_sep_p)
 	{
-		memset (scratch2, 0, max_string + 1);
-		consume_token (source_file, scratch2);
-		base = GetTarget (scratch2);
+		Clear_Scratch(scratch);
+		consume_token (source_file);
+		base = GetTarget (scratch);
 	}
 
 	displacement = Architectural_displacement(target, base);
 
 	/* output calculated difference */
-	if(33 == ch)
+	if('!' == ch)
 	{
 		if(40 == Architecture) outputPointer(displacement - 7, 1); /* Deal with ! */
 		else outputPointer(displacement, 1); /* Deal with ! */
 	}
-	else if(36 == ch) outputPointer(target, 2); /* Deal with $ */
-	else if(64 == ch) outputPointer(displacement, 2); /* Deal with @ */
-	else if(38 == ch) outputPointer(target, 4); /* Deal with & */
-	else if(37 == ch) outputPointer(displacement, 4);  /* Deal with % */
+	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
+	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
+	else if('&' == ch) outputPointer(target, 4); /* Deal with & */
+	else if('%' == ch) outputPointer(displacement, 4);  /* Deal with % */
 	else
 	{
 		file_print("storePointer reached impossible case: ch=", stderr);
@@ -243,7 +290,7 @@ void storePointer(char ch, FILE* source_file)
 void line_Comment(FILE* source_file)
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(!in_set(c, "\n\r"))
 	{
 		c = fgetc(source_file);
 	}
@@ -251,24 +298,24 @@ void line_Comment(FILE* source_file)
 
 int hex(int c, FILE* source_file)
 {
-	if (c >= '0' && c <= '9') return (c - 48);
-	else if (c >= 'a' && c <= 'z') return (c - 87);
-	else if (c >= 'A' && c <= 'Z') return (c - 55);
-	else if (c == '#' || c == ';') line_Comment(source_file);
+	if (in_set(c, "0123456789")) return (c - 48);
+	else if (in_set(c, "abcdef")) return (c - 87);
+	else if (in_set(c, "ABCDEF")) return (c - 55);
+	else if (in_set(c, "#;")) line_Comment(source_file);
 	return -1;
 }
 
 int octal(int c, FILE* source_file)
 {
-	if (c >= '0' && c <= '7') return (c - 48);
-	else if (c == '#' || c == ';') line_Comment(source_file);
+	if (in_set(c, "01234567")) return (c - 48);
+	else if (in_set(c, "#;")) line_Comment(source_file);
 	return -1;
 }
 
 int binary(int c, FILE* source_file)
 {
-	if (c == '0' || c == '1') return (c - 48);
-	else if (c == '#' || c == ';') line_Comment(source_file);
+	if (in_set(c, "01")) return (c - 48);
+	else if (in_set(c, "#;")) line_Comment(source_file);
 	return -1;
 }
 
@@ -356,18 +403,19 @@ void first_pass(struct input_files* input)
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
 		/* Check for and deal with label */
-		if(58 == c)
+		if(':' == c)
 		{
 			c = storeLabel(source_file, ip);
 		}
 
 		/* check for and deal with relative/absolute pointers to labels */
-		if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c))
+		if(in_set(c, "!@$%&"))
 		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 4byte pointers (% and &) */
-			c = ConsumePointer(c, source_file, NULL);
-			if (62 == c)
+			Update_Pointer(c);
+			c = Throwaway_token(source_file);
+			if ('>' == c)
 			{ /* deal with label>base */
-				c = consume_token (source_file, NULL);
+				c = Throwaway_token(source_file);
 			}
 		}
 		else process_byte(c, source_file, FALSE);
@@ -396,8 +444,8 @@ void second_pass(struct input_files* input)
 	int c;
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
-		if(58 == c) c = consume_token(source_file, NULL); /* Deal with : */
-		else if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c)) storePointer(c, source_file);  /* Deal with !, @, $, %  and & */
+		if(':' == c) c = Throwaway_token(source_file); /* Deal with : */
+		else if(in_set(c, "!@$%&")) storePointer(c, source_file);  /* Deal with !, @, $, %  and & */
 		else process_byte(c, source_file, TRUE);
 	}
 
@@ -417,7 +465,6 @@ int main(int argc, char **argv)
 	exec_enable = FALSE;
 	ByteMode = 16;
 	scratch = calloc(max_string + 1, sizeof(char));
-	scratch2 = calloc(max_string + 1, sizeof(char));
 
 	int option_index = 1;
 	while(option_index <= argc)
