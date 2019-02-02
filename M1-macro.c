@@ -21,16 +21,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#define max_string 4096
+
 //CONSTANT max_string 4096
-#define MACRO 1
+#define max_string 4096
 //CONSTANT MACRO 1
-#define STR 2
+#define MACRO 1
 //CONSTANT STR 2
-#define TRUE 1
+#define STR 2
+//CONSTANT NEWLINE 3
+#define NEWLINE 3
+
 //CONSTANT TRUE 1
-#define FALSE 0
+#define TRUE 1
 //CONSTANT FALSE 0
+#define FALSE 0
 
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
@@ -90,7 +94,24 @@ void purge_lineComment()
 	}
 }
 
-char* store_atom(char c)
+struct Token* append_newline(struct Token* head)
+{
+	if(NULL == head) return NULL;
+	if(NEWLINE == head->type)
+	{/* Don't waste whitespace*/
+		return head;
+	}
+
+	struct Token* lf = calloc(1, sizeof(struct Token));
+	lf->type = NEWLINE;
+	lf->next = head;
+	lf->Text = "\n";
+	lf->Expression = lf->Text;
+	return lf;
+}
+
+
+struct Token* store_atom(struct Token* head, char c)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
 	if(NULL == store)
@@ -105,9 +126,14 @@ char* store_atom(char c)
 		store[i] = ch;
 		ch = fgetc(source_file);
 		i = i + 1;
-	} while ((9 != ch) && (10 != ch) && (32 != ch) && (i <= max_string));
+	} while (('\t' != ch) && ('\n' != ch) && (' ' != ch) && (i <= max_string));
 
-	return store;
+	head->Text = store;
+	if('\n' == ch)
+	{
+		return append_newline(head);
+	}
+	return head;
 }
 
 char* store_string(char c)
@@ -152,34 +178,42 @@ struct Token* Tokenize_Line(struct Token* head)
 restart:
 		c = fgetc(source_file);
 
-		if((35 == c) || (59 == c))
+		if((';' == c) || ('#' == c))
 		{
 			purge_lineComment();
+			head = append_newline(head);
 			goto restart;
 		}
 
-		if((9 == c) || (10 == c) || (32 == c))
+		if(('\t' == c) || (' ' == c))
 		{
 			goto restart;
 		}
 
-		if(-1 == c)
+		if('\n' == c)
 		{
+			head = append_newline(head);
+			goto restart;
+		}
+
+		if(EOF == c)
+		{
+			head= append_newline(head);
 			goto done;
 		}
 
 		p = newToken();
-		if((34 == c) || (39 == c))
+		p->next = head;
+		if(('\'' == c) || ('"' == c))
 		{
 			p->Text = store_string(c);
 			p->type = STR;
 		}
 		else
 		{
-			p->Text = store_atom(c);
+			p = store_atom(p, c);
 		}
 
-		p->next = head;
 		head = p;
 	} while(TRUE);
 done:
@@ -192,7 +226,7 @@ void setExpression(struct Token* p, char *c, char *Exp)
 	for(i = p; NULL != i; i = i->next)
 	{
 		/* Leave macros alone */
-		if((i->type & MACRO))
+		if(MACRO == i->type)
 		{
 			if(match(i->Text, c))
 			{
@@ -217,9 +251,13 @@ void identify_macros(struct Token* p)
 	{
 		if(match(i->Text, "DEFINE"))
 		{
+			if(match("SYS_exit", i->next->Text))
+			{
+				fprintf(stderr,"inspect\n");
+			}
 			i->type = MACRO;
 			i->Text = i->next->Text;
-			if(i->next->next->type & STR)
+			if(STR == i->next->next->type)
 			{
 				i->Expression = i->next->next->Text + 1;
 			}
@@ -237,7 +275,7 @@ void line_macro(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if(i->type & MACRO)
+		if(MACRO == i->type)
 		{
 			setExpression(i->next, i->Text, i->Expression);
 		}
@@ -255,7 +293,7 @@ void hexify_string(struct Token* p)
 	while(0 < i)
 	{
 		i = i - 1;
-		d[i] = 0x30;
+		d[i] = '0';
 	}
 
 	while( i < max_string)
@@ -278,7 +316,7 @@ void process_string(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if(i->type & STR)
+		if(STR == i->type)
 		{
 			if('\'' == i->Text[0])
 			{
@@ -482,7 +520,9 @@ void eval_immediates(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if((NULL == i->Expression) && !(i->type & MACRO))
+		if(MACRO == i->type) continue;
+		else if(NEWLINE == i->type) continue;
+		else if(NULL == i->Expression)
 		{
 			int value;
 			if((1 == Architecture) || (2 == Architecture) || (40 == Architecture))
@@ -515,14 +555,17 @@ void print_hex(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if(i->type ^ MACRO)
+		if(NEWLINE == i->type)
 		{
-			fputc('\n', destination_file);
+			if(NULL == i->next) fputc('\n', destination_file);
+			else if((NEWLINE != i->next->type) && (MACRO != i->next->type)) fputc('\n', destination_file);
+		}
+		else if(i->type != MACRO)
+		{
 			file_print(i->Expression, destination_file);
+			if(NEWLINE != i->next->type) fputc(' ', destination_file);
 		}
 	}
-
-	fputc('\n', destination_file);
 }
 
 /* Standard C main program */

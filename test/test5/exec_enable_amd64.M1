@@ -67,3 +67,5 @@ DEFINE SYSCALL 0F05
 :message
 "needs a proper file name
 "
+
+:ELF_end

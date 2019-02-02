@@ -14,7 +14,7 @@
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
-set -x
+set -eux
 ./bin/M1 -f test/test3/defs -f test/test3/lisp.s --BigEndian --Architecture 0 -o test/test3/hold
 ./bin/hex2 -f test/test3/hold --BigEndian --Architecture 0 --BaseAddress 0 -o test/results/test3-binary
 
