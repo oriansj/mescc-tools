@@ -238,6 +238,7 @@ void Update_Pointer(char ch)
 	/* Calculate pointer size*/
 	if(in_set(ch, "%&")) ip = ip + 4; /* Deal with % and & */
 	else if(in_set(ch, "@$")) ip = ip + 2; /* Deal with @ and $ */
+	else if('~' == ch) ip = ip + 3; /* Deal with ~ */
 	else if('!' == ch) ip = ip + 1; /* Deal with ! */
 	else
 	{
@@ -276,6 +277,7 @@ void storePointer(char ch, FILE* source_file)
 	}
 	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
 	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
+	else if('~' == ch) outputPointer(displacement, 3); /* Deal with ~ */
 	else if('&' == ch) outputPointer(target, 4); /* Deal with & */
 	else if('%' == ch) outputPointer(displacement, 4);  /* Deal with % */
 	else
@@ -409,8 +411,8 @@ void first_pass(struct input_files* input)
 		}
 
 		/* check for and deal with relative/absolute pointers to labels */
-		if(in_set(c, "!@$%&"))
-		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 4byte pointers (% and &) */
+		if(in_set(c, "!@$~%&"))
+		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 3byte pointers ~; 4byte pointers (% and &) */
 			Update_Pointer(c);
 			c = Throwaway_token(source_file);
 			if ('>' == c)
@@ -445,7 +447,7 @@ void second_pass(struct input_files* input)
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
 		if(':' == c) c = Throwaway_token(source_file); /* Deal with : */
-		else if(in_set(c, "!@$%&")) storePointer(c, source_file);  /* Deal with !, @, $, %  and & */
+		else if(in_set(c, "!@$~%&")) storePointer(c, source_file);  /* Deal with !, @, $, ~, % and & */
 		else process_byte(c, source_file, TRUE);
 	}
 

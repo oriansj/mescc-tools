@@ -470,6 +470,11 @@ char* express_number(int value, char c)
 		number_of_bytes = 2;
 		value = value & 0xFFFF;
 	}
+	else if('~' == c)
+	{
+		number_of_bytes = 3;
+		value = value & 0xFFFFFF;
+	}
 	else if('%' == c)
 	{
 		number_of_bytes = 4;
