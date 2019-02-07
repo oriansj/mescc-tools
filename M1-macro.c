@@ -42,6 +42,7 @@ int string_length(char* a);
 char* numerate_number(int a);
 int numerate_string(char *a);
 int hex2char(int c);
+int in_set(int c, char* s);
 
 FILE* source_file;
 FILE* destination_file;
@@ -88,7 +89,7 @@ struct Token* reverse_list(struct Token* head)
 void purge_lineComment()
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(!in_set(c, "\n\r"))
 	{
 		c = fgetc(source_file);
 	}
@@ -126,7 +127,7 @@ struct Token* store_atom(struct Token* head, char c)
 		store[i] = ch;
 		ch = fgetc(source_file);
 		i = i + 1;
-	} while (('\t' != ch) && ('\n' != ch) && (' ' != ch) && (i <= max_string));
+	} while (!in_set(ch, "\t\n ") && (i <= max_string));
 
 	head->Text = store;
 	if('\n' == ch)
@@ -178,14 +179,14 @@ struct Token* Tokenize_Line(struct Token* head)
 restart:
 		c = fgetc(source_file);
 
-		if((';' == c) || ('#' == c))
+		if(in_set(c, ";#"))
 		{
 			purge_lineComment();
 			head = append_newline(head);
 			goto restart;
 		}
 
-		if(('\t' == c) || (' ' == c))
+		if(in_set(c, "\t "))
 		{
 			goto restart;
 		}
@@ -204,7 +205,7 @@ restart:
 
 		p = newToken();
 		p->next = head;
-		if(('\'' == c) || ('"' == c))
+		if(in_set(c, "'\""))
 		{
 			p->Text = store_string(c);
 			p->type = STR;
@@ -340,7 +341,7 @@ void preserve_other(struct Token* p)
 		{
 			char c = i->Text[0];
 
-			if(('!' == c) ||('@' == c) ||('$' == c) ||('%' == c) ||('&' == c) ||(':' == c))
+			if(in_set(c, "!@$~%&:"))
 			{
 				i->Expression = i->Text;
 			}

@@ -34,6 +34,7 @@ void file_print(char* s, FILE* f);
 int match(char* a, char* b);
 char* numerate_number(int a);
 int numerate_string(char *a);
+int in_set(int c, char* s);
 
 struct input_files
 {
@@ -57,16 +58,6 @@ int ByteMode;
 int exec_enable;
 int ip;
 char* scratch;
-
-int in_set(int c, char* s)
-{
-	while(0 != s[0])
-	{
-		if(c == s[0]) return TRUE;
-		s = s + 1;
-	}
-	return FALSE;
-}
 
 int consume_token(FILE* source_file)
 {
