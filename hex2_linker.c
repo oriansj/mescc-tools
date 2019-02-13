@@ -218,7 +218,33 @@ int Architectural_displacement(int target, int base)
 	if(0 == Architecture) return (target - base);
 	else if(1 == Architecture) return (target - base);
 	else if(2 == Architecture) return (target - base);
-	else if(40 == Architecture) return (target - base);
+	else if(40 == Architecture)
+	{
+		/* Note: Branch displacements on ARM are in number of instructions to skip, basically. */
+		if (target < 0)
+		{
+			file_print("Architectural_displacement of negative target is not implemented\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		if (base < 0)
+		{
+			file_print("Architectural_displacement of negative base is not implemented\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		if (target & 3)
+		{
+			file_print("Unaligned branch target, aborting\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		/* base already moved because of the opcode part of the branch instruction, so calculate from the previous position. */
+		base = base & ~3;
+		/* The "fetch" stage already moved forward by 8 from the
+		   beginning of the instruction because it is already
+		   prefetching the next instruction.
+		   Compensate for it by subtracting the space for
+		   two instructions (including the branch instruction). */
+		return ((target - base) >> 2) - 2;
+	}
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
@@ -261,11 +287,7 @@ void storePointer(char ch, FILE* source_file)
 	displacement = Architectural_displacement(target, base);
 
 	/* output calculated difference */
-	if('!' == ch)
-	{
-		if(40 == Architecture) outputPointer(displacement - 7, 1); /* Deal with ! */
-		else outputPointer(displacement, 1); /* Deal with ! */
-	}
+	if('!' == ch) outputPointer(displacement, 1);
 	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
 	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
 	else if('~' == ch) outputPointer(displacement, 3); /* Deal with ~ */
