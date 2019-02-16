@@ -58,6 +58,7 @@ int ByteMode;
 int exec_enable;
 int ip;
 char* scratch;
+int ALIGNED;
 
 int consume_token(FILE* source_file)
 {
@@ -218,8 +219,9 @@ int Architectural_displacement(int target, int base)
 	if(0 == Architecture) return (target - base);
 	else if(1 == Architecture) return (target - base);
 	else if(2 == Architecture) return (target - base);
-	else if(40 == Architecture)
+	else if(ALIGNED && (40 == Architecture))
 	{
+		ALIGNED = FALSE;
 		/* Note: Branch displacements on ARM are in number of instructions to skip, basically. */
 		if (target < 0)
 		{
@@ -243,8 +245,9 @@ int Architectural_displacement(int target, int base)
 		   prefetching the next instruction.
 		   Compensate for it by subtracting the space for
 		   two instructions (including the branch instruction). */
-		return ((target - base) >> 2) - 2;
+		return ((target - base) - 8);
 	}
+	else if(40 == Architecture) return (target - base);
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
@@ -399,6 +402,27 @@ void process_byte(char c, FILE* source_file, int write)
 	}
 }
 
+void pad_to_align(int write)
+{
+	if(40 == Architecture)
+	{
+		if(1 == (ip & 0x1))
+		{
+			ip = ip + 1;
+			if(write) fputc('\0', output);
+		}
+		if(2 == (ip & 0x2))
+		{
+			ip = ip + 2;
+			if(write)
+			{
+				fputc('\0', output);
+				fputc('\0', output);
+			}
+		}
+	}
+}
+
 void first_pass(struct input_files* input)
 {
 	if(NULL == input) return;
@@ -433,6 +457,15 @@ void first_pass(struct input_files* input)
 				c = Throwaway_token(source_file);
 			}
 		}
+		else if('<' == c)
+		{
+			pad_to_align(FALSE);
+		}
+		else if('^' == c)
+		{
+			/* Just ignore */
+			continue;
+		}
 		else process_byte(c, source_file, FALSE);
 	}
 	fclose(source_file);
@@ -461,6 +494,8 @@ void second_pass(struct input_files* input)
 	{
 		if(':' == c) c = Throwaway_token(source_file); /* Deal with : */
 		else if(in_set(c, "!@$~%&")) storePointer(c, source_file);  /* Deal with !, @, $, ~, % and & */
+		else if('<' == c) pad_to_align(TRUE);
+		else if('^' == c) ALIGNED = TRUE;
 		else process_byte(c, source_file, TRUE);
 	}
 
@@ -470,6 +505,7 @@ void second_pass(struct input_files* input)
 /* Standard C main program */
 int main(int argc, char **argv)
 {
+	ALIGNED = FALSE;
 	BigEndian = TRUE;
 	jump_table = NULL;
 	Architecture = 0;

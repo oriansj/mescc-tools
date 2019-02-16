@@ -331,6 +331,22 @@ void process_string(struct Token* p)
 	}
 }
 
+char* pad_nulls(int size, char* nil)
+{
+	if(0 == size) return nil;
+	size = size * 2;
+
+	char* s = calloc(size + 1, sizeof(char));
+
+	int i = 0;
+	while(i < size)
+	{
+		s[i] = '0';
+		i = i + 1;
+	}
+
+	return s;
+}
 
 void preserve_other(struct Token* p)
 {
@@ -341,9 +357,13 @@ void preserve_other(struct Token* p)
 		{
 			char c = i->Text[0];
 
-			if(in_set(c, "!@$~%&:"))
+			if(in_set(c, "!@$~%&:^"))
 			{
 				i->Expression = i->Text;
+			}
+			else if('<' == c)
+			{
+				i->Expression = pad_nulls(numerate_string(i->Text + 1), i->Text);
 			}
 			else
 			{
