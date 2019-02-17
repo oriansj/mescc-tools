@@ -90,7 +90,8 @@ test: test0-binary \
 	test8-binary \
 	test9-binary \
 	test10-binary \
-	test11-binary | results
+	test11-binary \
+	test12-binary | results
 	sha256sum -c test/test.answers
 
 test0-binary: results hex2 get_machine
@@ -128,6 +129,9 @@ test10-binary: results hex2 M1
 
 test11-binary: results hex2 M1 blood-elf
 	test/test11/hello.sh
+
+test12-binary: results hex2 M1 blood-elf
+	test/test12/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers

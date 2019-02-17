@@ -548,6 +548,7 @@ void eval_immediates(struct Token* p)
 	{
 		if(MACRO == i->type) continue;
 		else if(NEWLINE == i->type) continue;
+		else if('<' == i->Text[0]) continue;
 		else if(NULL == i->Expression)
 		{
 			int value;

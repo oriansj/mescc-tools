@@ -1,3 +1,4 @@
+#! /bin/sh
 ## Copyright (C) 2017 Jeremiah Orians
 ## This file is part of stage0.
 ##
@@ -14,38 +15,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-DEFINE SYSCALL_ALWAYS 000000EF
-DEFINE LOADI_ALWAYS A0E3
-DEFINE ADDI_PC_ALWAYS 8FE2
-DEFINE R0 0
-DEFINE R1 1
-DEFINE R2 2
-DEFINE R7 7
-
-:main
-
-!1 R0 '0' LOADI_ALWAYS
-!string2 R1 '0' ADDI_PC_ALWAYS
-!18 R2 '0' LOADI_ALWAYS
-!4 R7 '0' LOADI_ALWAYS
-SYSCALL_ALWAYS
-
-!1 R0 '0' LOADI_ALWAYS
-!string1 R1 '0' ADDI_PC_ALWAYS
-!18 R2 '0' LOADI_ALWAYS
-!4 R7 '0' LOADI_ALWAYS
-SYSCALL_ALWAYS
-
-!0 R0 '0' LOADI_ALWAYS
-!1 R7 '0' LOADI_ALWAYS
-SYSCALL_ALWAYS
-
-:ELF_data
-<
-:string1
-"Hello mescc-tools
-"
-<
-:string2
-"Hello tacos-tools
-"
+set -eux
+./bin/blood-elf -f test/test12/hello.M1 -o test/test12/footer.M1 || exit 1
+./bin/M1 --LittleEndian --Architecture 40 -f test/test12/hello.M1 -f test/test12/footer.M1 -o test/test12/hello.hex2 || exit 2
+./bin/hex2 --LittleEndian --Architecture 40 --BaseAddress 0x10000 -f elf_headers/elf32-ARM-debug.hex2 -f test/test12/hello.hex2 -o test/results/test12-binary --exec_enable || exit 3
+exit 0

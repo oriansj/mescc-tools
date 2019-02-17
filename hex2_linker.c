@@ -245,7 +245,7 @@ int Architectural_displacement(int target, int base)
 		   prefetching the next instruction.
 		   Compensate for it by subtracting the space for
 		   two instructions (including the branch instruction). */
-		return ((target - base) - 8);
+		return (((target - base) >> 2) - 2);
 	}
 	else if(40 == Architecture) return (target - base);
 
@@ -290,7 +290,11 @@ void storePointer(char ch, FILE* source_file)
 	displacement = Architectural_displacement(target, base);
 
 	/* output calculated difference */
-	if('!' == ch) outputPointer(displacement, 1);
+	if('!' == ch)
+	{
+		if(40 == Architecture) outputPointer(displacement - 7, 1);
+		else outputPointer(displacement, 1);
+	}
 	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
 	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
 	else if('~' == ch) outputPointer(displacement, 3); /* Deal with ~ */

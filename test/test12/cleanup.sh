@@ -1,3 +1,4 @@
+#! /bin/sh
 ## Copyright (C) 2017 Jeremiah Orians
 ## This file is part of stage0.
 ##
@@ -13,39 +14,6 @@
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
-
-DEFINE SYSCALL_ALWAYS 000000EF
-DEFINE LOADI_ALWAYS A0E3
-DEFINE ADDI_PC_ALWAYS 8FE2
-DEFINE R0 0
-DEFINE R1 1
-DEFINE R2 2
-DEFINE R7 7
-
-:main
-
-!1 R0 '0' LOADI_ALWAYS
-!string2 R1 '0' ADDI_PC_ALWAYS
-!18 R2 '0' LOADI_ALWAYS
-!4 R7 '0' LOADI_ALWAYS
-SYSCALL_ALWAYS
-
-!1 R0 '0' LOADI_ALWAYS
-!string1 R1 '0' ADDI_PC_ALWAYS
-!18 R2 '0' LOADI_ALWAYS
-!4 R7 '0' LOADI_ALWAYS
-SYSCALL_ALWAYS
-
-!0 R0 '0' LOADI_ALWAYS
-!1 R7 '0' LOADI_ALWAYS
-SYSCALL_ALWAYS
-
-:ELF_data
-<
-:string1
-"Hello mescc-tools
-"
-<
-:string2
-"Hello tacos-tools
-"
+rm -f test/test11/hello.hex2
+rm -f test/test11/footer.M1
+exit 0
