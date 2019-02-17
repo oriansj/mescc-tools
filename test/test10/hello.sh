@@ -15,7 +15,13 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-set -eux
+set -x
 ./bin/M1 --LittleEndian --Architecture 40 -f test/test10/exit_42.M1 -o test/test10/exit_42.hex2 || exit 1
 ./bin/hex2 --LittleEndian --Architecture 40 --BaseAddress 0x10000 -f elf_headers/elf32-ARM.hex2 -f test/test10/exit_42.hex2 -o test/results/test10-binary --exec_enable || exit 2
+if [ "$(./bin/get_machine)" = "armv7l" ]
+then
+	./test/results/test10-binary
+	r=$?
+	[ $r = 42 ] || exit 3
+fi
 exit 0
