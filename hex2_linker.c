@@ -238,16 +238,26 @@ int Architectural_displacement(int target, int base)
 			file_print("Unaligned branch target, aborting\n", stderr);
 			exit(EXIT_FAILURE);
 		}
-		/* base already moved because of the opcode part of the branch instruction, so calculate from the previous position. */
-		base = base & ~3;
-		/* The "fetch" stage already moved forward by 8 from the
-		   beginning of the instruction because it is already
-		   prefetching the next instruction.
-		   Compensate for it by subtracting the space for
-		   two instructions (including the branch instruction). */
-		return (((target - base) >> 2) - 2);
+		/*
+		 * The "fetch" stage already moved forward by 8 from the
+		 * beginning of the instruction because it is already
+		 * prefetching the next instruction.
+		 * Compensate for it by subtracting the space for
+		 * two instructions (including the branch instruction).
+		 * and the size of the aligned immediate.
+		 */
+		return (((target - base + (base & 3)) >> 2) - 2);
 	}
-	else if(40 == Architecture) return (target - base);
+	else if(40 == Architecture)
+	{
+		/*
+		 * The size of the offset is 8 according to the spec but that value is
+		 * based on the end of the immediate, which the documentation gets wrong
+		 * and needs to be adjusted to the size of the immediate.
+		 * Eg 1byte immediate => -8 + 1 = -7
+		 */
+		return ((target - base) - 8 + (3 & base));
+	}
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
@@ -279,22 +289,21 @@ void storePointer(char ch, FILE* source_file)
 	int displacement;
 
 	int base = ip;
+	displacement = Architectural_displacement(target, base);
+
 	/* Change relative base address to :<base> */
 	if ('>' == base_sep_p)
 	{
 		Clear_Scratch(scratch);
 		consume_token (source_file);
 		base = GetTarget (scratch);
-	}
 
-	displacement = Architectural_displacement(target, base);
+		/* Force universality of behavior */
+		displacement = (target - base);
+	}
 
 	/* output calculated difference */
-	if('!' == ch)
-	{
-		if(40 == Architecture) outputPointer(displacement - 7, 1);
-		else outputPointer(displacement, 1);
-	}
+	if('!' == ch) outputPointer(displacement, 1); /* Deal with ! */
 	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
 	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
 	else if('~' == ch) outputPointer(displacement, 3); /* Deal with ~ */
