@@ -289,7 +289,6 @@ void storePointer(char ch, FILE* source_file)
 	int displacement;
 
 	int base = ip;
-	displacement = Architectural_displacement(target, base);
 
 	/* Change relative base address to :<base> */
 	if ('>' == base_sep_p)
@@ -300,6 +299,10 @@ void storePointer(char ch, FILE* source_file)
 
 		/* Force universality of behavior */
 		displacement = (target - base);
+	}
+	else
+	{
+		displacement = Architectural_displacement(target, base);
 	}
 
 	/* output calculated difference */
