@@ -18,7 +18,7 @@
 set -x
 ./bin/M1 --LittleEndian --architecture armv7l -f test/test10/exit_42.M1 -o test/test10/exit_42.hex2 || exit 1
 ./bin/hex2 --LittleEndian --architecture armv7l --BaseAddress 0x10000 -f elf_headers/elf32-ARM.hex2 -f test/test10/exit_42.hex2 -o test/results/test10-binary --exec_enable || exit 2
-if [ "$(./bin/get_machine)" = "armv7l" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "armv7l" ]
 then
 	./test/results/test10-binary
 	r=$?

@@ -26,6 +26,7 @@ Added support for ^!label, ^@label and ^%label alignment calculations
 Added standard line error messages to hex2-linker
 Added standard line error messages to M1-macro
 Added --exact and --override to get_machine
+Added GET_MACHINE_FLAGS variable to tests to allow overriding
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax

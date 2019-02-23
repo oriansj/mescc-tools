@@ -18,7 +18,7 @@
 set -x
 ./bin/M1 -f test/test4/MES_defs.M1 -f test/test4/mini-libc-mes.M1 -f test/test4/hello.M1 --LittleEndian --architecture x86 -o test/test4/hold
 ./bin/hex2 -f elf_headers/elf32.hex2 -f test/test4/hold --LittleEndian --architecture x86 --BaseAddress 0x8048000 -o test/results/test4-binary --exec_enable
-if [ "$(./bin/get_machine)" = "x86" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ]
 then
 	out=$(./test/results/test4-binary 2>&1)
 	r=$?

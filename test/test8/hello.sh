@@ -15,7 +15,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-set -eux
+set -ex
 {
 	./bin/M1 -f test/test8/sample.M1 --LittleEndian --architecture amd64
 	./bin/M1 -f test/test8/sample.M1 --BigEndian --architecture amd64

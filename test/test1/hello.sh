@@ -15,11 +15,11 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-set -eux
+set -ex
 ./bin/M1 -f test/test1/hex.M1 --LittleEndian --architecture amd64 -o test/test1/hold
 ./bin/hex2 -f elf_headers/elf64.hex2 -f test/test1/hold --LittleEndian --architecture amd64 --BaseAddress 0x00600000 -o test/results/test1-binary --exec_enable
 
-if [ "$(./bin/get_machine)" = "amd64" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "amd64" ]
 then
 	./test/results/test1-binary < test/test1/hex0.hex0 > test/test1/proof1
 	r=$?
