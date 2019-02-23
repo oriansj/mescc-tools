@@ -50,6 +50,15 @@ int BigEndian;
 int BigBitEndian;
 int ByteMode;
 int Architecture;
+int linenumber;
+
+void line_error(char* filename, int linenumber)
+{
+	file_print(filename, stderr);
+	file_print(":", stderr);
+	file_print(numerate_number(linenumber), stderr);
+	file_print(" :", stderr);
+}
 
 struct Token
 {
@@ -57,9 +66,11 @@ struct Token
 	int type;
 	char* Text;
 	char* Expression;
+	char* filename;
+	int linenumber;
 };
 
-struct Token* newToken()
+struct Token* newToken(char* filename, int linenumber)
 {
 	struct Token* p;
 
@@ -69,6 +80,9 @@ struct Token* newToken()
 		file_print("calloc failed.\n", stderr);
 		exit (EXIT_FAILURE);
 	}
+
+	p->filename = filename;
+	p->linenumber = linenumber;
 
 	return p;
 }
@@ -95,15 +109,16 @@ void purge_lineComment()
 	}
 }
 
-struct Token* append_newline(struct Token* head)
+struct Token* append_newline(struct Token* head, char* filename)
 {
+	linenumber = linenumber + 1;
 	if(NULL == head) return NULL;
 	if(NEWLINE == head->type)
 	{/* Don't waste whitespace*/
 		return head;
 	}
 
-	struct Token* lf = calloc(1, sizeof(struct Token));
+	struct Token* lf = newToken(filename, linenumber);
 	lf->type = NEWLINE;
 	lf->next = head;
 	lf->Text = "\n";
@@ -112,7 +127,7 @@ struct Token* append_newline(struct Token* head)
 }
 
 
-struct Token* store_atom(struct Token* head, char c)
+struct Token* store_atom(struct Token* head, char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
 	if(NULL == store)
@@ -132,12 +147,12 @@ struct Token* store_atom(struct Token* head, char c)
 	head->Text = store;
 	if('\n' == ch)
 	{
-		return append_newline(head);
+		return append_newline(head, filename);
 	}
 	return head;
 }
 
-char* store_string(char c)
+char* store_string(char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
 	if(NULL == store)
@@ -154,11 +169,13 @@ char* store_string(char c)
 		ch = fgetc(source_file);
 		if(-1 == ch)
 		{
+			line_error(filename, linenumber);
 			file_print("Unmatched \"!\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		if(max_string == i)
 		{
+			line_error(filename, linenumber);
 			file_print("String: ", stderr);
 			file_print(store, stderr);
 			file_print(" exceeds max string size\n", stderr);
@@ -169,10 +186,11 @@ char* store_string(char c)
 	return store;
 }
 
-struct Token* Tokenize_Line(struct Token* head)
+struct Token* Tokenize_Line(struct Token* head, char* filename)
 {
 	int c;
 	struct Token* p;
+	linenumber = 1;
 
 	do
 	{
@@ -182,7 +200,7 @@ restart:
 		if(in_set(c, ";#"))
 		{
 			purge_lineComment();
-			head = append_newline(head);
+			head = append_newline(head, filename);
 			goto restart;
 		}
 
@@ -193,26 +211,26 @@ restart:
 
 		if('\n' == c)
 		{
-			head = append_newline(head);
+			head = append_newline(head, filename);
 			goto restart;
 		}
 
 		if(EOF == c)
 		{
-			head= append_newline(head);
+			head = append_newline(head, filename);
 			goto done;
 		}
 
-		p = newToken();
+		p = newToken(filename, linenumber);
 		p->next = head;
 		if(in_set(c, "'\""))
 		{
-			p->Text = store_string(c);
+			p->Text = store_string(c, filename);
 			p->type = STR;
 		}
 		else
 		{
-			p = store_atom(p, c);
+			p = store_atom(p, c, filename);
 		}
 
 		head = p;
@@ -231,6 +249,7 @@ void setExpression(struct Token* p, char *c, char *Exp)
 		{
 			if(match(i->Text, c))
 			{
+				line_error(i->filename, i->linenumber);
 				file_print("Multiple definitions for macro ", stderr);
 				file_print(c, stderr);
 				file_print("\n", stderr);
@@ -367,6 +386,7 @@ void preserve_other(struct Token* p)
 			}
 			else
 			{
+				line_error(i->filename, i->linenumber);
 				file_print("Recieved invalid other; ", stderr);
 				file_print(i->Text, stderr);
 				file_print("\n", stderr);
@@ -604,6 +624,7 @@ int main(int argc, char **argv)
 	destination_file = stdout;
 	BigBitEndian = TRUE;
 	ByteMode = 16;
+	char* filename;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -642,7 +663,8 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
-			source_file = fopen(argv[option_index + 1], "r");
+			filename = argv[option_index + 1];
+			source_file = fopen(filename, "r");
 
 			if(NULL == source_file)
 			{
@@ -652,7 +674,7 @@ int main(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 
-			head = Tokenize_Line(head);
+			head = Tokenize_Line(head, filename);
 			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-o") || match(argv[option_index], "--output"))
