@@ -625,6 +625,7 @@ int main(int argc, char **argv)
 	BigBitEndian = TRUE;
 	ByteMode = 16;
 	char* filename;
+	char* arch;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -643,9 +644,19 @@ int main(int argc, char **argv)
 			BigEndian = FALSE;
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "-A") || match(argv[option_index], "--Architecture"))
+		else if(match(argv[option_index], "-A") || match(argv[option_index], "--architecture"))
 		{
-			Architecture = numerate_string(argv[option_index + 1]);
+			arch = argv[option_index + 1];
+			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = 0;
+			else if(match("x86", arch)) Architecture = 1;
+			else if(match("amd64", arch)) Architecture = 2;
+			else if(match("armv7l", arch)) Architecture = 40;
+			else
+			{
+				file_print("Unknown architecture: ", stderr);
+				file_print(arch, stderr);
+				file_print(" know values are: knight-native, knight-posix, x86, amd64 and armv7l", stderr);
+			}
 			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
@@ -658,7 +669,7 @@ int main(int argc, char **argv)
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
 			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) ", stderr);
-			file_print("[--Architecture 12345]\nArchitecture 0: Knight; 1: x86; 2: AMD64; 40: armv7", stderr);
+			file_print("[--architecture name]\nArchitectures: knight-native, knight-posix, x86, amd64 and armv7\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))

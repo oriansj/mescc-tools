@@ -16,8 +16,8 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-./bin/M1 -f test/test1/hex.M1 --LittleEndian --Architecture 2 -o test/test1/hold
-./bin/hex2 -f elf_headers/elf64.hex2 -f test/test1/hold --LittleEndian --Architecture 2 --BaseAddress 0x00600000 -o test/results/test1-binary --exec_enable
+./bin/M1 -f test/test1/hex.M1 --LittleEndian --architecture amd64 -o test/test1/hold
+./bin/hex2 -f elf_headers/elf64.hex2 -f test/test1/hold --LittleEndian --architecture amd64 --BaseAddress 0x00600000 -o test/results/test1-binary --exec_enable
 
 if [ "$(./bin/get_machine)" = "x86_64" ]
 then

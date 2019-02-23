@@ -31,6 +31,7 @@ Updated build.sh and kaem.run to the current mescc-tools syntax
 Reduced get_machine's build dependencies
 Cleaned up x86 elf headers
 Removed kaem's dependence on getopt
+Replaced --Architecture with --architecture
 
 ** Fixed
 Fixed broken test9 thanks to janneke
@@ -42,6 +43,7 @@ Removed false newline added in numerate_number for zero case
 
 ** Removed
 Removed final dependency on getopt
+Removed need to know architecture numbers as that was a bad idea
 
 * 0.5 - 2018-06-15
 ** Added
