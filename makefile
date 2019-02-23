@@ -41,7 +41,7 @@ exec_enable: exec_enable.c | bin
 	$(CC) $(CFLAGS) functions/file_print.c exec_enable.c -o bin/exec_enable
 
 get_machine: get_machine.c | bin
-	$(CC) $(CFLAGS) functions/file_print.c get_machine.c -o bin/get_machine
+	$(CC) $(CFLAGS) functions/file_print.c functions/match.c get_machine.c -o bin/get_machine
 
 blood-elf: blood-elf.c functions/file_print.c functions/match.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c -o bin/blood-elf

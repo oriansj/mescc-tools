@@ -25,6 +25,7 @@ Added support for < alignment padding
 Added support for ^!label, ^@label and ^%label alignment calculations
 Added standard line error messages to hex2-linker
 Added standard line error messages to M1-macro
+Added --exact and --override to get_machine
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax
@@ -32,6 +33,7 @@ Reduced get_machine's build dependencies
 Cleaned up x86 elf headers
 Removed kaem's dependence on getopt
 Replaced --Architecture with --architecture
+changed get_machine's default output to filter machine names into known families
 
 ** Fixed
 Fixed broken test9 thanks to janneke

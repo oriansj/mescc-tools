@@ -19,7 +19,7 @@ set -eux
 ./bin/M1 -f test/test7/hex1_amd64.M1 --LittleEndian --architecture amd64 -o test/test7/hold
 ./bin/hex2 -f elf_headers/elf64.hex2 -f test/test7/hold --LittleEndian --architecture amd64 --BaseAddress 0x00600000 -o test/results/test7-binary --exec_enable
 
-if [ "$(./bin/get_machine)" = "x86_64" ]
+if [ "$(./bin/get_machine)" = "amd64" ]
 then
 	./test/results/test7-binary test/test7/hex1.hex1 > test/test7/proof
 	r=$?
