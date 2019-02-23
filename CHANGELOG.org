@@ -23,6 +23,7 @@ Added official hex1 seed for AMD64
 Added support for <Number null padding in M1 files
 Added support for < alignment padding
 Added support for ^!label, ^@label and ^%label alignment calculations
+Added standard line error messages to hex2
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax
@@ -36,6 +37,7 @@ Fixed wrong displacement calculations for ARM immediates
 Fixed typo in license header
 Fixed kaem.run to actually function and produce identical results
 Fixed regression caused by linux 4.17
+Removed false newline added in numerate_number for zero case
 
 ** Removed
 Removed final dependency on getopt

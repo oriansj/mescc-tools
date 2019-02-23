@@ -58,7 +58,17 @@ int ByteMode;
 int exec_enable;
 int ip;
 char* scratch;
+char* filename;
+int linenumber;
 int ALIGNED;
+
+void line_error()
+{
+	file_print(filename, stderr);
+	file_print(":", stderr);
+	file_print(numerate_number(linenumber), stderr);
+	file_print(" :", stderr);
+}
 
 int consume_token(FILE* source_file)
 {
@@ -223,19 +233,12 @@ int Architectural_displacement(int target, int base)
 	{
 		ALIGNED = FALSE;
 		/* Note: Branch displacements on ARM are in number of instructions to skip, basically. */
-		if (target < 0)
-		{
-			file_print("Architectural_displacement of negative target is not implemented\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		if (base < 0)
-		{
-			file_print("Architectural_displacement of negative base is not implemented\n", stderr);
-			exit(EXIT_FAILURE);
-		}
 		if (target & 3)
 		{
-			file_print("Unaligned branch target, aborting\n", stderr);
+			line_error();
+			file_print("error: Unaligned branch target: ", stderr);
+			file_print(scratch, stderr);
+			file_print(", aborting\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		/*
@@ -272,6 +275,7 @@ void Update_Pointer(char ch)
 	else if('!' == ch) ip = ip + 1; /* Deal with ! */
 	else
 	{
+		line_error();
 		file_print("storePointer given unknown\n", stderr);
 		exit(EXIT_FAILURE);
 	}
@@ -314,7 +318,8 @@ void storePointer(char ch, FILE* source_file)
 	else if('%' == ch) outputPointer(displacement, 4);  /* Deal with % */
 	else
 	{
-		file_print("storePointer reached impossible case: ch=", stderr);
+		line_error();
+		file_print("error: storePointer reached impossible case: ch=", stderr);
 		fputc(ch, stderr);
 		file_print("\n", stderr);
 		exit(EXIT_FAILURE);
@@ -328,6 +333,7 @@ void line_Comment(FILE* source_file)
 	{
 		c = fgetc(source_file);
 	}
+	linenumber = linenumber + 1;
 }
 
 int hex(int c, FILE* source_file)
@@ -336,6 +342,7 @@ int hex(int c, FILE* source_file)
 	else if (in_set(c, "abcdef")) return (c - 87);
 	else if (in_set(c, "ABCDEF")) return (c - 55);
 	else if (in_set(c, "#;")) line_Comment(source_file);
+	else if ('\n' == c) linenumber = linenumber + 1;
 	return -1;
 }
 
@@ -343,6 +350,7 @@ int octal(int c, FILE* source_file)
 {
 	if (in_set(c, "01234567")) return (c - 48);
 	else if (in_set(c, "#;")) line_Comment(source_file);
+	else if ('\n' == c) linenumber = linenumber + 1;
 	return -1;
 }
 
@@ -350,6 +358,7 @@ int binary(int c, FILE* source_file)
 {
 	if (in_set(c, "01")) return (c - 48);
 	else if (in_set(c, "#;")) line_Comment(source_file);
+	else if ('\n' == c) linenumber = linenumber + 1;
 	return -1;
 }
 
@@ -443,7 +452,9 @@ void first_pass(struct input_files* input)
 {
 	if(NULL == input) return;
 	first_pass(input->next);
-	FILE* source_file = fopen(input->filename, "r");
+	filename = input->filename;
+	linenumber = 1;
+	FILE* source_file = fopen(filename, "r");
 
 	if(NULL == source_file)
 	{
@@ -491,7 +502,9 @@ void second_pass(struct input_files* input)
 {
 	if(NULL == input) return;
 	second_pass(input->next);
-	FILE* source_file = fopen(input->filename, "r");
+	filename = input->filename;
+	linenumber = 1;
+	FILE* source_file = fopen(filename, "r");
 
 	/* Something that should never happen */
 	if(NULL == source_file)
