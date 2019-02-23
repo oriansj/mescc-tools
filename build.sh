@@ -53,7 +53,7 @@ $MESCC_TOOLS_SEED/M1-0 \
 	-f blood-elf.M1 \
 	-f blood-elf-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o blood-elf.hex2 || exit 3
 
 # Resolve all linkages
@@ -61,7 +61,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f elf_headers/elf32-debug.hex2 \
 	-f blood-elf.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/blood-elf-0 \
 	--exec_enable || exit 4
@@ -93,7 +93,7 @@ $MESCC_TOOLS_SEED/M1-0 \
 	-f M1-macro.M1 \
 	-f M1-macro-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o M1-macro.hex2 || exit 7
 
 # Resolve all linkages
@@ -101,7 +101,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f elf_headers/elf32-debug.hex2 \
 	-f M1-macro.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/M1-0 \
 	--exec_enable || exit 8
@@ -132,7 +132,7 @@ $MESCC_TOOLS_SEED/M1-0 \
 	-f hex2_linker.M1 \
 	-f hex2_linker-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o hex2_linker.hex2|| exit 11
 
 # Resolve all linkages
@@ -140,7 +140,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f elf_headers/elf32-debug.hex2 \
 	-f hex2_linker.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/hex2-0 \
 	--exec_enable || exit 12
@@ -163,7 +163,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f blood-elf.M1 \
 	-f blood-elf-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o blood-elf.hex2 || exit 14
 
 # Resolve all linkages
@@ -171,7 +171,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f elf_headers/elf32-debug.hex2 \
 	-f blood-elf.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/blood-elf \
 	--exec_enable || exit 15
@@ -189,7 +189,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f M1-macro.M1 \
 	-f M1-macro-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o M1-macro.hex2 || exit 17
 
 # Resolve all linkages
@@ -197,7 +197,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f elf_headers/elf32-debug.hex2 \
 	-f M1-macro.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/M1 \
 	--exec_enable || exit 18
@@ -215,7 +215,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f hex2_linker.M1 \
 	-f hex2_linker-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o hex2_linker.hex2|| exit 20
 
 # Resolve all linkages
@@ -223,7 +223,7 @@ $MESCC_TOOLS_SEED/hex2-0 \
 	-f elf_headers/elf32-debug.hex2 \
 	-f hex2_linker.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/hex2 \
 	--exec_enable || exit 21
@@ -258,7 +258,7 @@ $M2/bin/M2-Planet \
 	-f get_machine.M1 \
 	-f get_machine-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o get_machine.hex2 || exit 24
 
 # Resolve all linkages
@@ -266,7 +266,7 @@ $M2/bin/M2-Planet \
 	-f elf_headers/elf32-debug.hex2 \
 	-f get_machine.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/get_machine \
 	--exec_enable || exit 25
@@ -293,7 +293,7 @@ $M2/bin/M2-Planet \
 	-f exec_enable.M1 \
 	-f exec_enable-footer.M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-o exec_enable.hex2 || exit 28
 
 # Resolve all linkages
@@ -301,7 +301,7 @@ $M2/bin/M2-Planet \
 	-f elf_headers/elf32-debug.hex2 \
 	-f exec_enable.hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-o bin/exec_enable \
 	--exec_enable || exit 29

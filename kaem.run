@@ -28,7 +28,7 @@ mkdir -p bin
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-f ../mescc-tools-seed/x86_defs.M1 \
 	-f ../mescc-tools-seed/libc-core.M1 \
 	-f ../mescc-tools-seed/blood-elf.M1 \
@@ -38,7 +38,7 @@ mkdir -p bin
 # Link
 /usr/bin/env hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
 	-f ../mescc-tools-seed/blood-elf.hex2 \
@@ -54,7 +54,7 @@ mkdir -p bin
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-f ../mescc-tools-seed/x86_defs.M1 \
 	-f ../mescc-tools-seed/libc-core.M1 \
 	-f ../mescc-tools-seed/hex2.M1 \
@@ -64,7 +64,7 @@ mkdir -p bin
 # Link
 /usr/bin/env hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
 	-f ../mescc-tools-seed/hex2.hex2 \
@@ -80,7 +80,7 @@ mkdir -p bin
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	-f ../mescc-tools-seed/x86_defs.M1 \
 	-f ../mescc-tools-seed/libc-core.M1 \
 	-f ../mescc-tools-seed/M1.M1 \
@@ -90,7 +90,7 @@ mkdir -p bin
 # Link
 ./bin/hex2 \
 	--LittleEndian \
-	--Architecture 1 \
+	--architecture x86 \
 	--BaseAddress 0x8048000 \
 	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
 	-f ../mescc-tools-seed/M1.hex2 \

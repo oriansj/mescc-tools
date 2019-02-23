@@ -271,10 +271,6 @@ void identify_macros(struct Token* p)
 	{
 		if(match(i->Text, "DEFINE"))
 		{
-			if(match("SYS_exit", i->next->Text))
-			{
-				fprintf(stderr,"inspect\n");
-			}
 			i->type = MACRO;
 			i->Text = i->next->Text;
 			if(STR == i->next->next->type)
