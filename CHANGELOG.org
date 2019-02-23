@@ -40,6 +40,7 @@ Fixed typo in license header
 Fixed kaem.run to actually function and produce identical results
 Fixed regression caused by linux 4.17
 Removed false newline added in numerate_number for zero case
+Fixed broken bootstrap script
 
 ** Removed
 Removed final dependency on getopt

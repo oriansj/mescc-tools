@@ -77,6 +77,7 @@ $M2/bin/M2-Planet \
 	-f functions/match.c \
 	-f functions/numerate_number.c \
 	-f functions/string.c \
+	-f functions/in_set.c \
 	-f M1-macro.c \
 	--debug \
 	-o M1-macro.M1 || exit 5
@@ -115,6 +116,7 @@ $M2/bin/M2-Planet \
 	-f $M2/functions/calloc.c \
 	-f functions/match.c \
 	-f functions/numerate_number.c \
+	-f functions/in_set.c \
 	-f $M2/functions/stat.c \
 	-f hex2_linker.c \
 	--debug \
