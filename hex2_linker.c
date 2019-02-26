@@ -30,6 +30,15 @@
 #define FALSE 0
 //CONSTANT FALSE 0
 
+// CONSTANT KNIGHT 0
+#define KNIGHT 0
+// CONSTANT X86 1
+#define X86 1
+// CONSTANT AMD64 2
+#define AMD64 2
+// CONSTANT ARMV7L 40
+#define ARMV7L 40
+
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
 char* numerate_number(int a);
@@ -226,10 +235,10 @@ void outputPointer(int displacement, int number_of_bytes)
 
 int Architectural_displacement(int target, int base)
 {
-	if(0 == Architecture) return (target - base);
-	else if(1 == Architecture) return (target - base);
-	else if(2 == Architecture) return (target - base);
-	else if(ALIGNED && (40 == Architecture))
+	if(KNIGHT == Architecture) return (target - base);
+	else if(X86 == Architecture) return (target - base);
+	else if(AMD64 == Architecture) return (target - base);
+	else if(ALIGNED && (ARMV7L == Architecture))
 	{
 		ALIGNED = FALSE;
 		/* Note: Branch displacements on ARM are in number of instructions to skip, basically. */
@@ -251,7 +260,7 @@ int Architectural_displacement(int target, int base)
 		 */
 		return (((target - base + (base & 3)) >> 2) - 2);
 	}
-	else if(40 == Architecture)
+	else if(ARMV7L == Architecture)
 	{
 		/*
 		 * The size of the offset is 8 according to the spec but that value is
@@ -429,7 +438,7 @@ void process_byte(char c, FILE* source_file, int write)
 
 void pad_to_align(int write)
 {
-	if(40 == Architecture)
+	if(ARMV7L == Architecture)
 	{
 		if(1 == (ip & 0x1))
 		{
@@ -537,7 +546,7 @@ int main(int argc, char **argv)
 	ALIGNED = FALSE;
 	BigEndian = TRUE;
 	jump_table = NULL;
-	Architecture = 0;
+	Architecture = KNIGHT;
 	Base_Address = 0;
 	struct input_files* input = NULL;
 	output = stdout;
@@ -572,10 +581,10 @@ int main(int argc, char **argv)
 		else if(match(argv[option_index], "-A") || match(argv[option_index], "--architecture"))
 		{
 			arch = argv[option_index + 1];
-			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = 0;
-			else if(match("x86", arch)) Architecture = 1;
-			else if(match("amd64", arch)) Architecture = 2;
-			else if(match("armv7l", arch)) Architecture = 40;
+			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = KNIGHT;
+			else if(match("x86", arch)) Architecture = X86;
+			else if(match("amd64", arch)) Architecture = AMD64;
+			else if(match("armv7l", arch)) Architecture = ARMV7L;
 			else
 			{
 				file_print("Unknown architecture: ", stderr);

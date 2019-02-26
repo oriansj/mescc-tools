@@ -36,6 +36,15 @@
 //CONSTANT FALSE 0
 #define FALSE 0
 
+// CONSTANT KNIGHT 0
+#define KNIGHT 0
+// CONSTANT X86 1
+#define X86 1
+// CONSTANT AMD64 2
+#define AMD64 2
+// CONSTANT ARMV7L 40
+#define ARMV7L 40
+
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
 int string_length(char* a);
@@ -568,7 +577,7 @@ void eval_immediates(struct Token* p)
 		else if(NULL == i->Expression)
 		{
 			int value;
-			if((1 == Architecture) || (2 == Architecture) || (40 == Architecture))
+			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture))
 			{
 				value = numerate_string(i->Text + 1);
 				if(('0' == i->Text[1]) || (0 != value))
@@ -576,7 +585,7 @@ void eval_immediates(struct Token* p)
 					i->Expression = express_number(value, i->Text[0]);
 				}
 			}
-			else if(0 == Architecture)
+			else if(KNIGHT == Architecture)
 			{
 				value = numerate_string(i->Text);
 				if(('0' == i->Text[0]) || (0 != value))
@@ -616,7 +625,7 @@ int main(int argc, char **argv)
 {
 	BigEndian = TRUE;
 	struct Token* head = NULL;
-	Architecture = 0;
+	Architecture = KNIGHT;
 	destination_file = stdout;
 	BigBitEndian = TRUE;
 	ByteMode = 16;
@@ -643,10 +652,10 @@ int main(int argc, char **argv)
 		else if(match(argv[option_index], "-A") || match(argv[option_index], "--architecture"))
 		{
 			arch = argv[option_index + 1];
-			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = 0;
-			else if(match("x86", arch)) Architecture = 1;
-			else if(match("amd64", arch)) Architecture = 2;
-			else if(match("armv7l", arch)) Architecture = 40;
+			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = KNIGHT;
+			else if(match("x86", arch)) Architecture = X86;
+			else if(match("amd64", arch)) Architecture = AMD64;
+			else if(match("armv7l", arch)) Architecture = ARMV7L;
 			else
 			{
 				file_print("Unknown architecture: ", stderr);
