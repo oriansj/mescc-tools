@@ -23,7 +23,9 @@ set -ex
 	./bin/M1 -f test/test8/sample.M1 --BigEndian --architecture x86
 } >| test/test8/proof
 
-out=$(sha256sum -c test/test8/proof.answer)
+. ../../sha256.sh
+
+out=sha256_check test/test8/proof.answer
 [ "$out" = "test/test8/proof: OK" ] || exit 2
 
 ./bin/hex2 -f test/test8/proof --BigEndian --architecture knight-native --BaseAddress 0 -o test/results/test8-binary

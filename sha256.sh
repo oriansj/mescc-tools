@@ -1,6 +1,4 @@
-#! /usr/bin/env bash
-# Copyright © 2017 Jan Nieuwenhuizen <janneke@gnu.org>
-# Copyright © 2017 Jeremiah Orians
+#! /bin/sh
 # Copyright (C) 2019 ng0 <ng0@n0.is>
 #
 # This file is part of mescc-tools
@@ -19,25 +17,20 @@
 # along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-[ -e bin ] || mkdir -p bin
-[ -f bin/M1 ] || exit 1
-[ -f bin/hex2 ] || exit 2
-[ -f bin/blood-elf ] || exit 3
-#[ -f bin/kaem ] || exit 4
-[ -f bin/get_machine ] || exit 5
-[ -f bin/exec_enable ] || exit 6
-[ -e test/results ] || mkdir -p test/results
-./test/test0/hello.sh
-./test/test1/hello.sh
-./test/test2/hello.sh
-./test/test3/hello.sh
-./test/test4/hello.sh
-./test/test5/hello.sh
-./test/test6/hello.sh
-./test/test7/hello.sh
-./test/test8/hello.sh
-./test/test9/hello.sh
-./test/test10/hello.sh
-./test/test11/hello.sh
-. sha256.sh
-sha256_check test/test.answers
+# It's bad to rely on the uname here, but it's a start.
+# What this does is to consider the major implementations of
+# sha256sum tools and their differences and call them
+# accordingly.
+sha256_check()
+{
+    if [ -n "$(uname -a | grep -q 'Linux')" -o -n "$(uname -a | grep -q 'GNU')" ]; then
+        sha256sum -c "$1"
+    elif [ -n "$(uname -a | grep -q 'NetBSD')" ]; then
+        sum -a SHA256 -n -c "$1"
+    elif [ -n "$(uname -a | grep -q 'FreeBSD')" ]; then
+        sha256 -r -c "$1"
+    else
+        echo "Unsupported sha256 tool, please send a patch to support it"
+        exit 77
+    fi
+}

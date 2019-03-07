@@ -18,12 +18,14 @@ set -eux
 ./bin/M1 -f test/test3/defs -f test/test3/lisp.s --BigEndian --architecture knight-native -o test/test3/hold
 ./bin/hex2 -f test/test3/hold --BigEndian --architecture knight-native --BaseAddress 0 -o test/results/test3-binary
 
+. ../../sha256.sh
+
 if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "knight*" ]
 then
 	./test/results/test3-binary < test/test3/example.s >| test/test3/proof
 	r=$?
 	[ $r = 0 ] || exit 1
-	out=$(sha256sum -c test/test3/proof.answer)
+	out=sha256_check test/test3/proof.answer
 	[ "$out" = "test/test3/proof: OK" ] || exit 2
 fi
 exit 0
