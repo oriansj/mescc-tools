@@ -16,21 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
-set -eux
+set -ex
 # It's bad to rely on the uname here, but it's a start.
 # What this does is to consider the major implementations of
 # sha256sum tools and their differences and call them
 # accordingly.
 sha256_check()
 {
-    if [ -n "$(uname -a | grep -q 'Linux')" -o -n "$(uname -a | grep -q 'GNU')" ]; then
-        sha256sum -c "$1"
-    elif [ -n "$(uname -a | grep -q 'NetBSD')" ]; then
-        sum -a SHA256 -n -c "$1"
-    elif [ -n "$(uname -a | grep -q 'FreeBSD')" ]; then
-        sha256 -r -c "$1"
-    else
-        echo "Unsupported sha256 tool, please send a patch to support it"
-        exit 77
-    fi
+	if [ "$(./bin/get_machine --OS)" = "Linux" ]; then
+		sha256sum -c "$1"
+	elif [ "$(./bin/get_machine --OS)" = "NetBSD" ]; then
+		sum -a SHA256 -n -c "$1"
+	elif [ "$(./bin/get_machine --OS)" = "FreeBSD" ]; then
+		sha256 -r -c "$1"
+	else
+		echo "Unsupported sha256 tool, please send a patch to support it"
+		exit 77
+	fi
 }

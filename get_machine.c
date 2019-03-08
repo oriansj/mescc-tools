@@ -35,6 +35,10 @@ int main(int argc, char **argv)
 	int override = FALSE;
 	char* override_string;
 	int option_index = 1;
+
+	struct utsname* unameData = calloc(1, sizeof(struct utsname));
+	uname(unameData);
+
 	while(option_index <= argc)
 	{
 		if(NULL == argv[option_index])
@@ -52,6 +56,12 @@ int main(int argc, char **argv)
 			override_string = argv[option_index + 1];
 			option_index = option_index + 2;
 		}
+		else if(match(argv[option_index], "--OS"))
+		{
+			file_print(unameData->sysname, stdout);
+			fputc('\n', stdout);
+			exit(EXIT_SUCCESS);
+		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
 			file_print("get_machine 0.1\n", stdout);
@@ -64,8 +74,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	struct utsname* unameData = calloc(1, sizeof(struct utsname));
-	uname(unameData);
 	if(override) file_print(override_string, stdout);
 	else if(!exact)
 	{
