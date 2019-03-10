@@ -47,7 +47,7 @@ blood-elf: blood-elf.c functions/file_print.c functions/match.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c -o bin/blood-elf
 
 kaem: kaem.c | bin
-	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/numerate_number.c -o bin/kaem
+	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c -o bin/kaem
 
 # Clean up after ourselves
 .PHONY: clean
