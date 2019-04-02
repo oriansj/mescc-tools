@@ -26,7 +26,7 @@ then
 	./test/results/test2-binary < test/test2/hex0.hex0 > test/test2/proof
 	r=$?
 	[ $r = 0 ] || exit 1
-	out=$(sha256_check -c test/test2/proof.answer)
+	out=$(sha256_check test/test2/proof.answer)
 	[ "$out" = "test/test2/proof: OK" ] || exit 2
 fi
 exit 0
