@@ -17,7 +17,7 @@
 # Prevent rebuilding
 VPATH = bin:test:test/results
 
-all: M1 hex2 exec_enable get_machine blood-elf kaem
+all: M1 hex2 exec_enable get_machine blood-elf kaem catm
 
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
@@ -48,6 +48,9 @@ blood-elf: blood-elf.c functions/file_print.c functions/match.c | bin
 
 kaem: kaem.c | bin
 	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c -o bin/kaem
+
+catm: catm.c functions/file_print.c | bin
+	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
 
 # Clean up after ourselves
 .PHONY: clean
