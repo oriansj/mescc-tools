@@ -48,8 +48,10 @@ int main(int argc, char** argv)
 	for(i = 2; i <= argc ; i =  i + 1)
 	{
 		input = open(argv[i], 0, 0);
+keep:
 		bytes = read(input, buffer, BUFFER_SIZE);
 		write(output, buffer, bytes);
+		if(BUFFER_SIZE == bytes) goto keep;
 	}
 
 	free(buffer);
