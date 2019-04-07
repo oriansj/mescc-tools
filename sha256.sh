@@ -1,5 +1,6 @@
 #! /bin/sh
 # Copyright (C) 2019 ng0 <ng0@n0.is>
+# Copyright (C) 2019 Jeremiah Orians
 #
 # This file is part of mescc-tools
 #
@@ -24,7 +25,7 @@ set -ex
 sha256_check()
 {
 	if [ "$(./bin/get_machine --OS)" = "Linux" ]; then
-		sha256sum -c "$1"
+		LANG=C sha256sum -c "$1"
 	elif [ "$(./bin/get_machine --OS)" = "NetBSD" ]; then
 		sum -a SHA256 -n -c "$1"
 	elif [ "$(./bin/get_machine --OS)" = "FreeBSD" ]; then

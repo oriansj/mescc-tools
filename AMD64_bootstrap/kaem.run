@@ -45,6 +45,18 @@ ld ../bin/hex0-0.o -o ../bin/hex0-0
 
 
 ################################
+#            catm              #
+################################
+
+# Should you wish to build the catm via the NASM sources run:
+# nasm -felf64 catm_AMD64.S -o ../bin/catm-0.o
+# ld ../bin/catm-0.o -o ../bin/catm-0
+# otherwise you can use the hex0 we built in the previous step to build catm
+../bin/hex0 catm_AMD64.hex0 ../bin/catm
+# Its sha256sum SHOULD be 4a19f6dfd152548f6cfa6719fa1b2e45a47b8ed37ec835c05428ecb8c0fe9d40
+
+
+################################
 #            hex1              #
 ################################
 
@@ -75,7 +87,7 @@ ld ../bin/hex0-0.o -o ../bin/hex0-0
 
 # Should you wish to verify the self-host
 # If if you run:
-# cat ../elf_headers/elf64.hex2 hex2_AMD64.hex2 >| hold
+# catm hold ../elf_headers/elf64.hex2 hex2_AMD64.hex2
 # ../bin/hex2 hold temp1
 # ./temp1 hold temp2
 # they both should have exactly the same checksum as the hex0 binary (unless you changed the hex0 code in that input file)
