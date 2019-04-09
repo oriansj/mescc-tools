@@ -456,7 +456,222 @@ Set_Expression_Next:
 Process_String:
 	ret
 
+
+;; Eval_Immediates function
+;; Recieves List in RAX
+;; Updates the list in place; does not modify registers
+;; Uses RBX for I->TEXT[0], RCX for I->TEXT[1] and RDX for I
 Eval_Immediates:
+	push rax                    ; Protect RAX
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	mov rdx, rax                ; I = HEAD
+Eval_Immediates_Loop:
+	;; Check for MACRO
+	mov rax, [rdx+8]            ; I->TYPE
+	cmp rax, 1                  ; IF MACRO == I-TYPE
+	je Eval_Immediates_Next     ; Skip to next
+
+	;; Check for NULL EXPRESSION
+	mov rax, [rdx+24]           ; I->EXPRESSION
+	cmp rax, 0                  ; IF NULL == I->EXPRESSION
+	jne Eval_Immediates_Next    ; Skip to next
+
+	;; Check if number
+	mov rax, [rdx+16]           ; I->TEXT
+	mov bl, [rax]               ; I->TEXT[0]
+	movzx rbx, bl               ; Extend to use
+	add rax, 1                  ; I->TEXT + 1
+	mov cl, [rax]               ; I->TEXT[1]
+	movzx rcx, cl               ; Extend to use
+	call numerate_string        ; Convert string to INT
+	cmp rax, 0                  ; IF 0 == numerate_number(I->TEXT + 1)
+	jne Eval_Immediates_value   ; Has a value
+
+	;; Last chance for Immediate
+	cmp rcx, 48                 ; If '0' == I->TEXT[1]
+	jne Eval_Immediates_Next    ; Skip to next
+
+Eval_Immediates_value:
+	call express_number         ; Convert value to hex string
+	mov [rdx+24], rax           ; I->EXPRESSION = express_number(value, I-TEXT[0])
+
+Eval_Immediates_Next:
+	mov rdx, [rdx]              ; I = I->NEXT
+	cmp rdx, 0                  ; IF NULL == I
+	jne Eval_Immediates_Loop    ; Otherwise keep looping
+
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	pop rax                     ; Restore RAX
+	ret
+
+
+;; numerate_string function
+;; Recieves CHAR* in RAX
+	;; Returns value of CHAR* in RAX
+	;; Uses RAX for VALUE, RBX for S and RCX for CH
+numerate_string:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	push rsi                    ; Protect RSI
+	mov rbx, rax                ; put S in correct place
+	mov rax, 0                  ; Initialize to Zero
+numerate_string_loop:
+	mov cl, [rbx+1]             ; S[1]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 120                ; IF 'x' == S[1]
+	je numerate_hex             ; Deal with hex input
+
+	;; Assume decimal input
+	mov rsi, 0                  ; Assume no negation
+	mov cl, [rbx]               ; S[0]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 45                 ; IF '-' == S[0]
+	jne numerate_decimal        ; Skip negation
+
+	mov rsi, 1                  ; Set FLAG
+	add rbx, 1                  ; S = S + 1
+
+numerate_decimal:
+	mov cl, [rbx]               ; S[0]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 0                  ; IF NULL == S[0]
+	je numerate_decimal_done    ; We are done
+
+	imul rax, 10                ; VALUE = VALUE * 10
+	sub rcx, 48                 ; CH = CH - '0'
+	cmp rcx, 9                  ; Check for illegal
+	jg numerate_string_fail     ; If CH > '9'
+	cmp rcx, 0                  ; Check for illegal
+	jl numerate_string_fail     ; IF CH < 0
+	add rax, rcx                ; VALUE = VALUE + CH
+	add rbx, 1                  ; S = S + 1
+	jmp numerate_decimal        ; Keep looping
+
+numerate_decimal_done:
+	cmp rsi, 1                  ; Check if need to negate
+	jne numerate_string_done    ; Nope
+
+	imul rax, -1                ; VALUE = VALUE * -1
+	jmp numerate_string_done    ; Done
+
+numerate_hex:
+	add rbx, 2                  ; S = S + 2
+numerate_hex_loop:
+	mov cl, [rbx]               ; S[0]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 0                  ; IF NULL == S[0]
+	je numerate_string_done     ; We are done
+
+	shl rax, 4                  ; VALUE = VALUE << 4
+	sub rcx, 48                 ; CH = CH - '0'
+	cmp rcx, 10                 ; IF 10 >= CH
+	jl numerate_hex_digit       ; NO
+	sub rcx, 7                  ; Push A-F into range
+numerate_hex_digit:
+	cmp rcx, 15                 ; Check for illegal
+	jg numerate_string_fail     ; If CH > 'F'
+	cmp rcx, 0                  ; Check for illegal
+	jl numerate_string_fail     ; IF CH < 0
+	add rax, rcx                ; VALUE = VALUE + CH
+	add rbx, 1                  ; S = S + 1
+	jmp numerate_hex_loop       ; Keep looping
+
+numerate_string_fail:
+	mov rax, 0                  ; return ZERO
+
+numerate_string_done:
+	pop rsi                     ; Restore RSI
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+;; express_number function
+;; Recieves INT in RAX and CHAR in RBX
+;; Allocates a string and expresses the value in hex
+;; Returns string in RAX
+;; Uses RAX for VALUE, RBX for S and RCX for CH
+express_number:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	mov rcx, rbx                ; Put CH in right place
+	mov rbx, rax                ; Protect VALUE
+	cmp rcx, 37                 ; IF '%' == CH
+	jne express_number2         ; Otherwise try @
+
+	mov rax, 9                  ; We need 3bytes
+	call malloc                 ; Get S pointer
+	xchg rax, rbx               ; Put S and VALUE in place
+	push rbx                    ; Protect S
+	call hex32                  ; Store 32bits
+	jmp express_number_done     ; done
+
+express_number2:
+	cmp rcx, 64                 ; IF '@' == CH
+	jne express_number1         ; Othrewise try !
+
+	mov rax, 5                  ; We need 3bytes
+	call malloc                 ; Get S pointer
+	xchg rax, rbx               ; Put S and VALUE in place
+	push rbx                    ; Protect S
+	call hex16                  ; Store 16bits
+	jmp express_number_done     ; done
+
+express_number1:
+	mov rax, 3                  ; We need 3bytes
+	call malloc                 ; Get S pointer
+	xchg rax, rbx               ; Put S and VALUE in place
+	push rbx                    ; Protect S
+	call hex8                   ; Store 8bit
+
+express_number_done:
+	pop rax                     ; Restore S
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+;; HEX to ascii routine
+;; Recieves INT in RAX and CHAR* in RBX
+;; Stores ascii of INT in CHAR*
+;; Returns only modifying RAX
+hex64:
+	push rax                    ; Protect top 32
+	call hex32                  ; Store it
+	pop rax                     ; do top 32
+	shr rax, 32                 ; do bottom 32 first
+hex32:
+	push rax                    ; Protect top 16
+	call hex16                  ; Store it
+	pop rax                     ; do top 16
+	shr rax, 16                 ; do bottom 16 first
+hex16:
+	push rax                    ; Protect top byte
+	call hex8                   ; Store it
+	pop rax                     ; do high byte
+	shr rax, 8                  ; do bottom byte first
+hex8:
+	push rax                    ; Protect bottom nibble
+	shr rax, 4                  ; do high nibble first
+	call hex4                   ; Store it
+	pop rax                     ; do low nibble
+hex4:
+	and rax, 0xf                ; isolate nibble
+	add al,'0'                  ; convert to ascii
+	cmp al,'9'                  ; valid digit?
+	jbe hex1                    ; yes
+	add al,7                    ; use alpha range
+hex1:
+	mov [ebx], al               ; store result
+	add ebx, 1                  ; next position
 	ret
 
 
