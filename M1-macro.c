@@ -310,29 +310,28 @@ void line_macro(struct Token* p)
 void hexify_string(struct Token* p)
 {
 	char* table = "0123456789ABCDEF";
-	int i = ((string_length(p->Text + 1)/4) + 1) * 8;
+	int i = string_length(p->Text);
 
-	char* d = calloc(max_string, sizeof(char));
+	char* d = calloc(((i << 2) + 4), sizeof(char));
 	p->Expression = d;
+	char* S = p->Text;
 
-	while(0 < i)
+	if(KNIGHT == Architecture)
 	{
-		i = i - 1;
-		d[i] = '0';
+		i = ((((i - 1) >> 2) + 1) << 3);
+		while( 0 < i)
+		{
+			i = i - 1;
+			d[i] = '0';
+		}
 	}
 
-	while( i < max_string)
+	while( 0 != S[0])
 	{
-		if(0 == p->Text[i+1])
-		{
-			i = max_string;
-		}
-		else
-		{
-			d[2*i]  = table[p->Text[i+1] / 16];
-			d[2*i + 1] = table[p->Text[i+1] % 16];
-			i = i + 1;
-		}
+		S = S + 1;
+		d[0] = table[S[0] >> 4];
+		d[1] = table[S[0] & 0xF];
+		d = d + 2;
 	}
 }
 

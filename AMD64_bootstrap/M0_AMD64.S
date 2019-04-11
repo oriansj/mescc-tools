@@ -188,9 +188,6 @@ Store_String:
 	mov rbx, rcx                ; Protect terminator
 	mov rdx, rax                ; Protect string pointer
 Store_String_Loop:
-;	Sanity check
-;	mov rax, rcx
-;	call fputc
 	mov [rdx], cl               ; write byte
 	call fgetc                  ; read next char
 	movzx rax, al               ; Zero extend it
@@ -220,9 +217,6 @@ Store_Atom:
 	mov rbx, terminators        ; Get pointer to "\n\t "
 	mov rdx, rax                ; Protect string pointer
 Store_Atom_loop:
-;	Sanity check
-;	mov rax, rcx
-;	call fputc
 	mov [rdx], cl               ; write byte
 	call fgetc                  ; read next char
 	movzx rax, al               ; Zero extend it
@@ -237,6 +231,7 @@ Store_Atom_loop:
 	pop rbx                     ; Restore RBX
 	mov rax, rdx                ; return HEAD
 	ret
+
 
 ;; In_Set function
 ;; Recieves Char C in RAX and CHAR* in RBX
@@ -453,7 +448,89 @@ Set_Expression_Next:
 	pop rax                     ; Restore RAX
 	ret
 
+
+;; Process_String function
+;; Recieves List in RAX
+;; Update the list in place; does not modify registers
+;; Uses RBX for I->TEXT, RCX for I and RDX for S
 Process_String:
+	push rax                    ; Protect RAX
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	mov rcx, rax                ; I = HEAD
+Process_String_loop:
+	mov rax, [rcx+8]            ; I->TYPE
+	cmp rax, 2                  ; IF STRING == I->TYPE
+	jne Process_String_Next     ; Skip to next
+
+	mov rbx, [rcx+16]           ; I->TEXT
+	mov al, [rbx]               ; I->TEXT[0]
+	movzx rax, al               ; make it useful
+	cmp rax, 39                 ; IF '\'' == I->TEXT[0]
+	jne Process_String_Raw      ; Deal with '"'
+
+	;; Deal with '\''
+	add rbx, 1                  ; I->TEXT + 1
+	mov [rcx+24], rbx           ; I->EXPRESSION = I->TEXT + 1
+	jmp Process_String_Next     ; Move on to next
+
+Process_String_Raw:
+	mov rax, rbx                ; Get length of I->TEXT
+	call string_length          ; Do it
+	shr rax, 2                  ; LENGTH = LENGTH >> 2
+	add rax, 1                  ; LENGTH = LENGTH + 1
+	shl rax, 3                  ; LENGTH = LENGTH << 3
+	call malloc                 ; Get string
+	mov rdx, rbx                ; S = I->TEXT
+	add rdx, 1                  ; S = S + 1
+	mov [rcx+24], rax           ; I->EXPRESSION = hexify
+	mov rbx, rax                ; Put hexify buffer in rbx
+
+Process_String_Raw_Loop:
+	mov al, [rdx]               ; Read 1 chars
+	movzx rax, al               ; Make it useful
+	add rdx, 1                  ; S = S + 1
+	cmp al, 0                   ; Check for NULL
+	pushf                       ; Protect condition
+	call hex8                   ; write them all
+	popf                        ; restore condition
+	jne Process_String_Raw_Loop ; Keep looping
+
+Process_String_Next:
+	mov rcx, [rcx]              ; I = I->NEXT
+	cmp rcx, 0                  ; IF NULL == I
+	jne Process_String_loop     ; Otherwise keep looping
+
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	pop rax                     ; Restore RAX
+	ret
+
+
+;; string_length function
+;; Recieves CHAR* in RAX
+;; Returns INT in RAX
+;; Uses RAX for CH, RBX for S and RCX for INDEX
+string_length:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rbx, rax                ; Set S
+	mov rcx, 0                  ; INDEX = 0
+string_length_loop:
+	mov al, [rbx+rcx]           ; S[0]
+	movzx rax, al               ; make it useful
+	cmp rax, 0                  ; IF NULL == S[0]
+	je string_length_done       ; Stop
+
+	add rcx, 1                  ; INDEX = INDEX + 1
+	jmp string_length_loop      ; Keep going
+
+string_length_done:
+	mov rax, rcx                ; RETURN INDEX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
 	ret
 
 
@@ -511,8 +588,8 @@ Eval_Immediates_Next:
 
 ;; numerate_string function
 ;; Recieves CHAR* in RAX
-	;; Returns value of CHAR* in RAX
-	;; Uses RAX for VALUE, RBX for S and RCX for CH
+;; Returns value of CHAR* in RAX
+;; Uses RAX for VALUE, RBX for S, RCX for CH and RSI for NEGATIVE?
 numerate_string:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -610,7 +687,7 @@ express_number:
 	call malloc                 ; Get S pointer
 	xchg rax, rbx               ; Put S and VALUE in place
 	push rbx                    ; Protect S
-	call hex32                  ; Store 32bits
+	call hex32l                 ; Store 32bits
 	jmp express_number_done     ; done
 
 express_number2:
@@ -621,7 +698,7 @@ express_number2:
 	call malloc                 ; Get S pointer
 	xchg rax, rbx               ; Put S and VALUE in place
 	push rbx                    ; Protect S
-	call hex16                  ; Store 16bits
+	call hex16l                 ; Store 16bits
 	jmp express_number_done     ; done
 
 express_number1:
@@ -643,17 +720,17 @@ express_number_done:
 ;; Recieves INT in RAX and CHAR* in RBX
 ;; Stores ascii of INT in CHAR*
 ;; Returns only modifying RAX
-hex64:
+hex64l:
 	push rax                    ; Protect top 32
-	call hex32                  ; Store it
+	call hex32l                  ; Store it
 	pop rax                     ; do top 32
 	shr rax, 32                 ; do bottom 32 first
-hex32:
+hex32l:
 	push rax                    ; Protect top 16
-	call hex16                  ; Store it
+	call hex16l                  ; Store it
 	pop rax                     ; do top 16
 	shr rax, 16                 ; do bottom 16 first
-hex16:
+hex16l:
 	push rax                    ; Protect top byte
 	call hex8                   ; Store it
 	pop rax                     ; do high byte
@@ -704,6 +781,11 @@ Preserve_Other_Next:
 	pop rax                     ; Restore RAX
 	ret
 
+
+;; Print_Hex function
+;; Recieves list in RAX
+;; walks the list and prints the I->EXPRESSION for all nodes followed by newline
+;; Uses RBX for I
 Print_Hex:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -714,7 +796,6 @@ Print_Hex_Loop:
 	je Print_Hex_Next           ; Skip
 
 	mov rax, [rbx + 24]         ; Using EXPRESSION
-;	mov rax, [rbx + 16]         ; Using TEXT
 	call File_Print             ; Print it
 	mov rax, 10                 ; NEWLINE
 	call fputc                  ; Append it
@@ -728,7 +809,10 @@ Print_Hex_Next:
 	pop rbx                     ; Restore RBX
 	ret
 
-	;; Recieves CHAR* in RAX and calls fputc for every non-null char
+
+;; File_Print function
+;; Recieves CHAR* in RAX
+;; calls fputc for every non-null char
 File_Print:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -750,11 +834,14 @@ File_Print_Done:
 	pop rbx                     ; Restore RBX
 	ret
 
+
+;; fputc function
+;; recieves CHAR in RAX and FILE* in R14
+;; writes char and returns
 fputc:
 	push rax                    ; We are writing rax
 	lea rsi, [rsp]              ; Get stack address
-;	mov rdi, r14                ; Write to target file
-	mov rdi, 1					; Temp write to stdout
+	mov rdi, r14                ; Write to target file
 	mov rax, 1                  ; the syscall number for write
 	push rdx                    ; Protect RDX
 	mov rdx, 1                  ; set the size of chars we want
