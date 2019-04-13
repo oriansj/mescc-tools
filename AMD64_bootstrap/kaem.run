@@ -91,3 +91,24 @@ ld ../bin/hex0-0.o -o ../bin/hex0-0
 # ../bin/hex2 hold temp1
 # ./temp1 hold temp2
 # they both should have exactly the same checksum as the hex0 binary (unless you changed the hex0 code in that input file)
+
+
+################################
+#             M0               #
+################################
+
+# Should you wish to build the M0 via the NASM sources run:
+# nasm -felf64 M0_AMD64.S -o ../bin/M0-0.o
+# ld ../bin/M0-0.o -o ../bin/M0-0
+# otherwise you can use the hex1 we built in the previous step to bootstrap hex2
+../bin/catm hold ../elf_headers/elf64.hex2 M0_AMD64.hex2
+../bin/hex2 hold ../bin/M0
+# Its sha256sum SHOULD be 01449d093fe336cec23056f6607c8652066ca0a6ce72c6f2b3b20a50ebdea893
+
+# Should you wish to verify the self-host
+# If if you run:
+# ../bin/M0 M0_AMD64.M1 hold
+# catm hold2 ../elf_headers/elf64.hex2 hold
+# ../bin/hex2 hold2 temp1
+# ./temp1 M0_AMD64.M1 temp2
+# they both should have exactly the same checksum as the hex0 binary (unless you changed the hex0 code in that input file)
