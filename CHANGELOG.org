@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.6 - 2019-04-14
+** Added
 Added template ELF headers for ARM
 Added initial support for ARM
 Added official hex0 seed for AMD64
