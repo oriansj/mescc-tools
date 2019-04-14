@@ -39,6 +39,7 @@ Added catm hex0 prototype to eliminate bootstrap dependencies down to hex0
 Added M0 NASM prototype to simplify build
 Added M0 M1 prototype to reduce bootstrap dependency
 Added M0 hex2 prototype to eliminate bootstrap dependencies down to hex2
+Verified ARM port to support M2-Planet
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax
