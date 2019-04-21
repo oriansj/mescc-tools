@@ -314,7 +314,7 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "-h") || match(argv[i], "--help"))
 		{
-			file_print("kaem only accepts --help, --version, --verbose or no arguments\n", stdout);
+			file_print("kaem only accepts --help, --file, --verbose, --version, --verbose, --nightmare-mode or no arguments\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
@@ -330,7 +330,7 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
 		{
-			file_print("kaem version 0.1\n", stdout);
+			file_print("kaem version 0.6.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "--verbose"))

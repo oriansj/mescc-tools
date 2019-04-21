@@ -608,7 +608,7 @@ int main(int argc, char **argv)
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
 			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian)", stderr);
-			file_print(" [--BaseAddress 12345] [--architecture name]\nArchitecture", stderr);
+			file_print(" [--BaseAddress 12345] [--architecture name]\nArchitecture:", stderr);
 			file_print(" knight-native, knight-posix, x86, amd64 and armv7\n", stderr);
 			file_print("To leverage octal or binary input: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
@@ -642,7 +642,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("hex2 0.3\n", stdout);
+			file_print("hex2 0.6.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

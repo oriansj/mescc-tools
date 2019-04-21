@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 		{
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
-			file_print(" -f FILENAME1 {-f FILENAME2}\n", stderr);
+			file_print(" --file FILENAME1 {--file FILENAME2} --output FILENAME\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("blood-elf 0.1\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			file_print("blood-elf 0.6.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

@@ -64,7 +64,14 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("get_machine 0.1\n", stdout);
+			file_print("get_machine 0.6.0\n", stdout);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
+		{
+			file_print("If you want exact architecture use --exact\n", stderr);
+			file_print("If you want to know the Operating system use --OS\n", stderr);
+			file_print("If you wish to override the output to anything you want use --override\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else
