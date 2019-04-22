@@ -16,6 +16,7 @@
 
 * Current
 ** Added
+Added support for AMD64 dwarf footers in blood-elf via --64
 
 ** Changed
 
