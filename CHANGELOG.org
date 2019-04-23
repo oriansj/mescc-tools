@@ -17,6 +17,7 @@
 * Current
 ** Added
 Added support for AMD64 dwarf footers in blood-elf via --64
+Added hex0 for i386 in NASM, M1 and hex0
 
 ** Changed
 
