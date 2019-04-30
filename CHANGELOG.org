@@ -19,6 +19,7 @@
 Added support for AMD64 dwarf footers in blood-elf via --64
 Added hex0 for i386 in NASM, M1 and hex0
 Added hex1 for i386 in NASM, M1, hex1 and hex0
+Added first generation AARCH64 elf header
 
 ** Changed
 

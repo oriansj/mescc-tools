@@ -44,6 +44,9 @@
 #define AMD64 2
 // CONSTANT ARMV7L 40
 #define ARMV7L 40
+// CONSTANT AARM64 80
+#define AARM64 80
+
 
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
@@ -576,7 +579,7 @@ void eval_immediates(struct Token* p)
 		else if(NULL == i->Expression)
 		{
 			int value;
-			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture))
+			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture))
 			{
 				value = numerate_string(i->Text + 1);
 				if(('0' == i->Text[1]) || (0 != value))
@@ -655,11 +658,13 @@ int main(int argc, char **argv)
 			else if(match("x86", arch)) Architecture = X86;
 			else if(match("amd64", arch)) Architecture = AMD64;
 			else if(match("armv7l", arch)) Architecture = ARMV7L;
+			else if(match("aarch64", arch)) Architecture = AARM64;
 			else
 			{
 				file_print("Unknown architecture: ", stderr);
 				file_print(arch, stderr);
-				file_print(" know values are: knight-native, knight-posix, x86, amd64 and armv7l", stderr);
+				file_print(" know values are: knight-native, knight-posix, x86, amd64, armv7l and aarch64", stderr);
+				exit(EXIT_FAILURE);
 			}
 			option_index = option_index + 2;
 		}

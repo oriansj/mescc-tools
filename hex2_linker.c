@@ -38,6 +38,9 @@
 #define AMD64 2
 // CONSTANT ARMV7L 40
 #define ARMV7L 40
+// CONSTANT AARM64 80
+#define AARM64 80
+
 
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
@@ -270,6 +273,10 @@ int Architectural_displacement(int target, int base)
 		 */
 		return ((target - base) - 8 + (3 & base));
 	}
+	else if (AARM64 == Architecture)
+	{
+		return ((target - base) - 8 + (3 & base));
+	}
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
@@ -438,7 +445,7 @@ void process_byte(char c, FILE* source_file, int write)
 
 void pad_to_align(int write)
 {
-	if(ARMV7L == Architecture)
+	if((ARMV7L == Architecture) || (AARM64 == Architecture))
 	{
 		if(1 == (ip & 0x1))
 		{
@@ -585,6 +592,7 @@ int main(int argc, char **argv)
 			else if(match("x86", arch)) Architecture = X86;
 			else if(match("amd64", arch)) Architecture = AMD64;
 			else if(match("armv7l", arch)) Architecture = ARMV7L;
+			else if(match("aarch64", arch)) Architecture = AARM64;
 			else
 			{
 				file_print("Unknown architecture: ", stderr);
