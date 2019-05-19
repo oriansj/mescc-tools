@@ -13,3 +13,19 @@ Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: tools for binary bootstrapping
  The tools included provide very minimal functionality tools used in
  very early bootstrap of a toolchain.
+ .
+ blood-elf: generate ELF debug tables in M1-macro format from M1-macro
+ assembly files
+ .
+ exec_enable: mark files as executable
+ .
+ get_machine: identify running hardware architecture
+ .
+ kaem: run shell scripts without a shell
+ .
+ hex2_linker: The trivially bootstrappable linker that is designed to
+ be introspectable by humans and should you so desire assemble hex
+ programs that you write.
+ .
+ M1-macro: The universal Macro assembler that can target any
+ reasonable hardware architecture.
