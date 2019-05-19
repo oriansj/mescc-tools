@@ -1,20 +1,20 @@
 /* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
 /* Copyright (C) 2017 Jeremiah Orians
  * Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
- * This file is part of MES
+ * This file is part of mescc-tools
  *
- * MES is free software: you can redistribute it and/or modify
+ * mescc-tools is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * MES is distributed in the hope that it will be useful,
+ * mescc-tools is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+ * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -31,6 +31,7 @@
 //CONSTANT TRUE 1
 #define FALSE 0
 //CONSTANT FALSE 0
+int BITSIZE;
 
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
@@ -138,9 +139,17 @@ void output_debug(struct entry* node, int stage)
 		{
 			file_print(":ELF_str_", output);
 			file_print(i->name, output);
-			file_print("\n\x22", output);
+			file_print("\n\"", output);
 			file_print(i->name, output);
-			file_print("\x22\n", output);
+			file_print("\"\n", output);
+		}
+		else if(64 == BITSIZE)
+		{
+			file_print("%ELF_str_", output);
+			file_print(i->name, output);
+			file_print(">ELF_str\n!2\n!0\n@1\n&", output);
+			file_print(i->name, output);
+			file_print(" %0\n%10000\n%0\n", output);
 		}
 		else
 		{
@@ -174,6 +183,7 @@ int main(int argc, char **argv)
 	struct entry* input = NULL;
 	output = stdout;
 	char* output_file = "";
+	BITSIZE = 32;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -186,8 +196,13 @@ int main(int argc, char **argv)
 		{
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
-			file_print(" -f FILENAME1 {-f FILENAME2}\n", stderr);
+			file_print(" --file FILENAME1 {--file FILENAME2} --output FILENAME\n", stderr);
 			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[option_index], "--64"))
+		{
+			BITSIZE = 64;
+			option_index = option_index + 1;
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
@@ -213,7 +228,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("blood-elf 0.1\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			file_print("blood-elf 0.6.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
@@ -237,7 +252,8 @@ int main(int argc, char **argv)
 
 	file_print(":ELF_str\n!0\n", output);
 	output_debug(jump_table, TRUE);
-	file_print("%0\n:ELF_sym\n%0\n%0\n%0\n!0\n!0\n@1\n", output);
+	if(64 == BITSIZE) file_print("%0\n:ELF_sym\n%0\n!0\n!0\n@1\n%0 %0\n%0 %0\n", output);
+	else file_print("%0\n:ELF_sym\n%0\n%0\n%0\n!0\n!0\n@1\n", output);
 	output_debug(jump_table, FALSE);
 	file_print("\n:ELF_end\n", output);
 

@@ -1,3 +1,28 @@
+## Copyright (C) 2017 Jeremiah Orians
+## This file is part of mescc-tools.
+##
+## mescc-tools is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## mescc-tools is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
+
+The master repository for this work is located at:
+https://savannah.nongnu.org/projects/mescc-tools
+
+# If you wish to contribute:
+pull requests can be made at https://github.com/oriansj/mescc-tools
+and https://gitlab.com/janneke/mescc-tools
+or patches/diffs can be sent via email to Jeremiah (at) pdp10 [dot] guru
+or join us on freenode's #bootstrappable
+
 These are a collection of tools written for use in bootstrapping
 
 # blood-elf

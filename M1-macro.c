@@ -1,36 +1,49 @@
 /* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
 /* Copyright (C) 2016 Jeremiah Orians
  * Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
- * This file is part of stage0.
+ * This file is part of mescc-tools.
  *
- * stage0 is free software: you can redistribute it and/or modify
+ * mescc-tools is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * stage0 is distributed in the hope that it will be useful,
+ * mescc-tools is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+ * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#define max_string 4096
+
 //CONSTANT max_string 4096
-#define MACRO 1
+#define max_string 4096
 //CONSTANT MACRO 1
-#define STR 2
+#define MACRO 1
 //CONSTANT STR 2
-#define TRUE 1
+#define STR 2
+//CONSTANT NEWLINE 3
+#define NEWLINE 3
+
 //CONSTANT TRUE 1
-#define FALSE 0
+#define TRUE 1
 //CONSTANT FALSE 0
+#define FALSE 0
+
+// CONSTANT KNIGHT 0
+#define KNIGHT 0
+// CONSTANT X86 1
+#define X86 1
+// CONSTANT AMD64 2
+#define AMD64 2
+// CONSTANT ARMV7L 40
+#define ARMV7L 40
 
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
@@ -38,6 +51,7 @@ int string_length(char* a);
 char* numerate_number(int a);
 int numerate_string(char *a);
 int hex2char(int c);
+int in_set(int c, char* s);
 
 FILE* source_file;
 FILE* destination_file;
@@ -45,6 +59,15 @@ int BigEndian;
 int BigBitEndian;
 int ByteMode;
 int Architecture;
+int linenumber;
+
+void line_error(char* filename, int linenumber)
+{
+	file_print(filename, stderr);
+	file_print(":", stderr);
+	file_print(numerate_number(linenumber), stderr);
+	file_print(" :", stderr);
+}
 
 struct Token
 {
@@ -52,9 +75,11 @@ struct Token
 	int type;
 	char* Text;
 	char* Expression;
+	char* filename;
+	int linenumber;
 };
 
-struct Token* newToken()
+struct Token* newToken(char* filename, int linenumber)
 {
 	struct Token* p;
 
@@ -64,6 +89,9 @@ struct Token* newToken()
 		file_print("calloc failed.\n", stderr);
 		exit (EXIT_FAILURE);
 	}
+
+	p->filename = filename;
+	p->linenumber = linenumber;
 
 	return p;
 }
@@ -84,13 +112,31 @@ struct Token* reverse_list(struct Token* head)
 void purge_lineComment()
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(!in_set(c, "\n\r"))
 	{
 		c = fgetc(source_file);
 	}
 }
 
-char* store_atom(char c)
+struct Token* append_newline(struct Token* head, char* filename)
+{
+	linenumber = linenumber + 1;
+	if(NULL == head) return NULL;
+	if(NEWLINE == head->type)
+	{/* Don't waste whitespace*/
+		return head;
+	}
+
+	struct Token* lf = newToken(filename, linenumber);
+	lf->type = NEWLINE;
+	lf->next = head;
+	lf->Text = "\n";
+	lf->Expression = lf->Text;
+	return lf;
+}
+
+
+struct Token* store_atom(struct Token* head, char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
 	if(NULL == store)
@@ -105,12 +151,17 @@ char* store_atom(char c)
 		store[i] = ch;
 		ch = fgetc(source_file);
 		i = i + 1;
-	} while ((9 != ch) && (10 != ch) && (32 != ch) && (i <= max_string));
+	} while (!in_set(ch, "\t\n ") && (i <= max_string));
 
-	return store;
+	head->Text = store;
+	if('\n' == ch)
+	{
+		return append_newline(head, filename);
+	}
+	return head;
 }
 
-char* store_string(char c)
+char* store_string(char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
 	if(NULL == store)
@@ -127,11 +178,13 @@ char* store_string(char c)
 		ch = fgetc(source_file);
 		if(-1 == ch)
 		{
+			line_error(filename, linenumber);
 			file_print("Unmatched \"!\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		if(max_string == i)
 		{
+			line_error(filename, linenumber);
 			file_print("String: ", stderr);
 			file_print(store, stderr);
 			file_print(" exceeds max string size\n", stderr);
@@ -142,44 +195,53 @@ char* store_string(char c)
 	return store;
 }
 
-struct Token* Tokenize_Line(struct Token* head)
+struct Token* Tokenize_Line(struct Token* head, char* filename)
 {
 	int c;
 	struct Token* p;
+	linenumber = 1;
 
 	do
 	{
 restart:
 		c = fgetc(source_file);
 
-		if((35 == c) || (59 == c))
+		if(in_set(c, ";#"))
 		{
 			purge_lineComment();
+			head = append_newline(head, filename);
 			goto restart;
 		}
 
-		if((9 == c) || (10 == c) || (32 == c))
+		if(in_set(c, "\t "))
 		{
 			goto restart;
 		}
 
-		if(-1 == c)
+		if('\n' == c)
 		{
+			head = append_newline(head, filename);
+			goto restart;
+		}
+
+		if(EOF == c)
+		{
+			head = append_newline(head, filename);
 			goto done;
 		}
 
-		p = newToken();
-		if((34 == c) || (39 == c))
+		p = newToken(filename, linenumber);
+		p->next = head;
+		if(in_set(c, "'\""))
 		{
-			p->Text = store_string(c);
+			p->Text = store_string(c, filename);
 			p->type = STR;
 		}
 		else
 		{
-			p->Text = store_atom(c);
+			p = store_atom(p, c, filename);
 		}
 
-		p->next = head;
 		head = p;
 	} while(TRUE);
 done:
@@ -192,8 +254,16 @@ void setExpression(struct Token* p, char *c, char *Exp)
 	for(i = p; NULL != i; i = i->next)
 	{
 		/* Leave macros alone */
-		if((i->type & MACRO))
+		if(MACRO == i->type)
 		{
+			if(match(i->Text, c))
+			{
+				line_error(i->filename, i->linenumber);
+				file_print("Multiple definitions for macro ", stderr);
+				file_print(c, stderr);
+				file_print("\n", stderr);
+				exit(EXIT_FAILURE);
+			}
 			continue;
 		}
 		else if(match(i->Text, c))
@@ -212,7 +282,7 @@ void identify_macros(struct Token* p)
 		{
 			i->type = MACRO;
 			i->Text = i->next->Text;
-			if(i->next->next->type & STR)
+			if(STR == i->next->next->type)
 			{
 				i->Expression = i->next->next->Text + 1;
 			}
@@ -230,7 +300,7 @@ void line_macro(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if(i->type & MACRO)
+		if(MACRO == i->type)
 		{
 			setExpression(i->next, i->Text, i->Expression);
 		}
@@ -240,29 +310,28 @@ void line_macro(struct Token* p)
 void hexify_string(struct Token* p)
 {
 	char* table = "0123456789ABCDEF";
-	int i = ((string_length(p->Text + 1)/4) + 1) * 8;
+	int i = string_length(p->Text);
 
-	char* d = calloc(max_string, sizeof(char));
+	char* d = calloc(((i << 2) + 4), sizeof(char));
 	p->Expression = d;
+	char* S = p->Text;
 
-	while(0 < i)
+	if(KNIGHT == Architecture)
 	{
-		i = i - 1;
-		d[i] = 0x30;
+		i = ((((i - 1) >> 2) + 1) << 3);
+		while( 0 < i)
+		{
+			i = i - 1;
+			d[i] = '0';
+		}
 	}
 
-	while( i < max_string)
+	while( 0 != S[0])
 	{
-		if(0 == p->Text[i+1])
-		{
-			i = max_string;
-		}
-		else
-		{
-			d[2*i]  = table[p->Text[i+1] / 16];
-			d[2*i + 1] = table[p->Text[i+1] % 16];
-			i = i + 1;
-		}
+		S = S + 1;
+		d[0] = table[S[0] >> 4];
+		d[1] = table[S[0] & 0xF];
+		d = d + 2;
 	}
 }
 
@@ -271,7 +340,7 @@ void process_string(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if(i->type & STR)
+		if(STR == i->type)
 		{
 			if('\'' == i->Text[0])
 			{
@@ -285,6 +354,22 @@ void process_string(struct Token* p)
 	}
 }
 
+char* pad_nulls(int size, char* nil)
+{
+	if(0 == size) return nil;
+	size = size * 2;
+
+	char* s = calloc(size + 1, sizeof(char));
+
+	int i = 0;
+	while(i < size)
+	{
+		s[i] = '0';
+		i = i + 1;
+	}
+
+	return s;
+}
 
 void preserve_other(struct Token* p)
 {
@@ -295,12 +380,17 @@ void preserve_other(struct Token* p)
 		{
 			char c = i->Text[0];
 
-			if(('!' == c) ||('@' == c) ||('$' == c) ||('%' == c) ||('&' == c) ||(':' == c))
+			if(in_set(c, "!@$~%&:^"))
 			{
 				i->Expression = i->Text;
 			}
+			else if('<' == c)
+			{
+				i->Expression = pad_nulls(numerate_string(i->Text + 1), i->Text);
+			}
 			else
 			{
+				line_error(i->filename, i->linenumber);
 				file_print("Recieved invalid other; ", stderr);
 				file_print(i->Text, stderr);
 				file_print("\n", stderr);
@@ -425,6 +515,11 @@ char* express_number(int value, char c)
 		number_of_bytes = 2;
 		value = value & 0xFFFF;
 	}
+	else if('~' == c)
+	{
+		number_of_bytes = 3;
+		value = value & 0xFFFFFF;
+	}
 	else if('%' == c)
 	{
 		number_of_bytes = 4;
@@ -475,10 +570,13 @@ void eval_immediates(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if((NULL == i->Expression) && !(i->type & MACRO))
+		if(MACRO == i->type) continue;
+		else if(NEWLINE == i->type) continue;
+		else if('<' == i->Text[0]) continue;
+		else if(NULL == i->Expression)
 		{
 			int value;
-			if((1 == Architecture) || (2 == Architecture))
+			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture))
 			{
 				value = numerate_string(i->Text + 1);
 				if(('0' == i->Text[1]) || (0 != value))
@@ -486,7 +584,7 @@ void eval_immediates(struct Token* p)
 					i->Expression = express_number(value, i->Text[0]);
 				}
 			}
-			else if(0 == Architecture)
+			else if(KNIGHT == Architecture)
 			{
 				value = numerate_string(i->Text);
 				if(('0' == i->Text[0]) || (0 != value))
@@ -508,14 +606,17 @@ void print_hex(struct Token* p)
 	struct Token* i;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if(i->type ^ MACRO)
+		if(NEWLINE == i->type)
 		{
-			fputc('\n', destination_file);
+			if(NULL == i->next) fputc('\n', destination_file);
+			else if((NEWLINE != i->next->type) && (MACRO != i->next->type)) fputc('\n', destination_file);
+		}
+		else if(i->type != MACRO)
+		{
 			file_print(i->Expression, destination_file);
+			if(NEWLINE != i->next->type) fputc(' ', destination_file);
 		}
 	}
-
-	fputc('\n', destination_file);
 }
 
 /* Standard C main program */
@@ -523,10 +624,12 @@ int main(int argc, char **argv)
 {
 	BigEndian = TRUE;
 	struct Token* head = NULL;
-	Architecture = 0;
+	Architecture = KNIGHT;
 	destination_file = stdout;
 	BigBitEndian = TRUE;
 	ByteMode = 16;
+	char* filename;
+	char* arch;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -545,9 +648,19 @@ int main(int argc, char **argv)
 			BigEndian = FALSE;
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "-A") || match(argv[option_index], "--Architecture"))
+		else if(match(argv[option_index], "-A") || match(argv[option_index], "--architecture"))
 		{
-			Architecture = numerate_string(argv[option_index + 1]);
+			arch = argv[option_index + 1];
+			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = KNIGHT;
+			else if(match("x86", arch)) Architecture = X86;
+			else if(match("amd64", arch)) Architecture = AMD64;
+			else if(match("armv7l", arch)) Architecture = ARMV7L;
+			else
+			{
+				file_print("Unknown architecture: ", stderr);
+				file_print(arch, stderr);
+				file_print(" know values are: knight-native, knight-posix, x86, amd64 and armv7l", stderr);
+			}
 			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
@@ -559,12 +672,15 @@ int main(int argc, char **argv)
 		{
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
-			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) [--BaseAddress 12345] [--Architecture 12345]\nArchitecture 0: Knight; 1: x86; 2: AMD64", stderr);
+			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) ", stderr);
+			file_print("[--architecture name]\nArchitectures: knight-native, knight-posix, x86, amd64 and armv7\n", stderr);
+			file_print("To leverage octal or binary output: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
-			source_file = fopen(argv[option_index + 1], "r");
+			filename = argv[option_index + 1];
+			source_file = fopen(filename, "r");
 
 			if(NULL == source_file)
 			{
@@ -574,7 +690,7 @@ int main(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 
-			head = Tokenize_Line(head);
+			head = Tokenize_Line(head, filename);
 			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-o") || match(argv[option_index], "--output"))
@@ -597,7 +713,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("M1 0.3\n", stdout);
+			file_print("M1 0.6.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

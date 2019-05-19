@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+## Copyright (C) 2017 Jeremiah Orians
+## This file is part of mescc-tools.
+##
+## mescc-tools is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## mescc-tools is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
+
+# kaem build file for bootstrapping
+# Build bin folder for binaries
+mkdir -p bin
+
+################################
+#         ROOT BINARY          #
+################################
+
+# nasm bootstrap of the hex0 root binary
+# Feel free to substitute with any method you choose
+nasm -felf64 hex0_AMD64.S -o ../bin/hex0-0.o
+ld ../bin/hex0-0.o -o ../bin/hex0-0
+
+
+################################
+#            hex0              #
+################################
+
+# Using the bootstrap seed to build our root hex0
+../bin/hex0-0 hex0_AMD64.hex0 ../bin/hex0
+# Its sha256sum SHOULD be 31fc63c69773a23e91682feee3ea7f39de325529fc04ea6c9c35e1f717b27f9f
+
+# Should you wish to verify the self-host
+# If if you run:
+# ../bin/hex0 hex0_AMD64.hex0 temp1
+# ./temp1 hex0_AMD64.hex0 temp2
+# they both should have exactly the same checksum as the hex0 binary (unless you changed the hex0 code in that input file)
+
+
+################################
+#            catm              #
+################################
+
+# Should you wish to build the catm via the NASM sources run:
+# nasm -felf64 catm_AMD64.S -o ../bin/catm-0.o
+# ld ../bin/catm-0.o -o ../bin/catm-0
+# otherwise you can use the hex0 we built in the previous step to build catm
+../bin/hex0 catm_AMD64.hex0 ../bin/catm
+# Its sha256sum SHOULD be 4a19f6dfd152548f6cfa6719fa1b2e45a47b8ed37ec835c05428ecb8c0fe9d40
+
+
+################################
+#            hex1              #
+################################
+
+# Should you wish to build the hex1 via the NASM sources run:
+# nasm -felf64 hex1_AMD64.S -o ../bin/hex1-0.o
+# ld ../bin/hex1-0.o -o ../bin/hex1-0
+# otherwise you can use the hex0 we built in the previous step to bootstrap hex1
+../bin/hex0 hex1_AMD64.hex0 ../bin/hex1
+# Its sha256sum SHOULD be 3016dd6413c2b8caeb9ae7062a8b24c32299dcfebee28151198ba64b40e69849
+
+# Should you wish to verify the self-host
+# If if you run:
+# ../bin/hex1 hex1_AMD64.hex1 temp1
+# ./temp1 hex1_AMD64.hex1 temp2
+# they both should have exactly the same checksum as the hex0 binary (unless you changed the hex0 code in that input file)
+
+
+################################
+#            hex2              #
+################################
+
+# Should you wish to build the hex2 via the NASM sources run:
+# nasm -felf64 hex2_AMD64.S -o ../bin/hex2-0.o
+# ld ../bin/hex2-0.o -o ../bin/hex2-0
+# otherwise you can use the hex1 we built in the previous step to bootstrap hex2
+../bin/hex1 hex2_AMD64.hex1 ../bin/hex2
+# Its sha256sum SHOULD be d24f392141a79e5c2ffbce3d3a2b5c1da89dfee781043e7b6efaa47144267dfb
+
+# Should you wish to verify the self-host
+# If if you run:
+# catm hold ../elf_headers/elf64.hex2 hex2_AMD64.hex2
+# ../bin/hex2 hold temp1
+# ./temp1 hold temp2
+# they both should have exactly the same checksum as the hex0 binary (unless you changed the hex0 code in that input file)
+
+
+################################
+#             M0               #
+################################
+
+# Should you wish to build the M0 via the NASM sources run:
+# nasm -felf64 M0_AMD64.S -o ../bin/M0-0.o
+# ld ../bin/M0-0.o -o ../bin/M0-0
+# otherwise you can use the hex1 we built in the previous step to bootstrap hex2
+../bin/catm hold ../elf_headers/elf64.hex2 M0_AMD64.hex2
+../bin/hex2 hold ../bin/M0
+# Its sha256sum SHOULD be 01449d093fe336cec23056f6607c8652066ca0a6ce72c6f2b3b20a50ebdea893
+
+# Should you wish to verify the self-host
+# If if you run:
+# ../bin/M0 M0_AMD64.M1 hold
+# catm hold2 ../elf_headers/elf64.hex2 hold
+# ../bin/hex2 hold2 temp1
+# ./temp1 M0_AMD64.M1 temp2
+# they both should have exactly the same checksum as the hex0 binary (unless you changed the hex0 code in that input file)

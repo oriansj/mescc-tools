@@ -1,20 +1,20 @@
 /* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
 /* Copyright (C) 2017 Jeremiah Orians
  * Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
- * This file is part of MES
+ * This file is part of mescc-tools
  *
- * MES is free software: you can redistribute it and/or modify
+ * mescc-tools is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * MES is distributed in the hope that it will be useful,
+ * mescc-tools is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+ * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-
 #define max_string 4096
 //CONSTANT max_string 4096
 #define TRUE 1
@@ -31,10 +30,20 @@
 #define FALSE 0
 //CONSTANT FALSE 0
 
+// CONSTANT KNIGHT 0
+#define KNIGHT 0
+// CONSTANT X86 1
+#define X86 1
+// CONSTANT AMD64 2
+#define AMD64 2
+// CONSTANT ARMV7L 40
+#define ARMV7L 40
+
 void file_print(char* s, FILE* f);
 int match(char* a, char* b);
 char* numerate_number(int a);
 int numerate_string(char *a);
+int in_set(int c, char* s);
 
 struct input_files
 {
@@ -58,20 +67,67 @@ int ByteMode;
 int exec_enable;
 int ip;
 char* scratch;
-char* scratch2;
+char* filename;
+int linenumber;
+int ALIGNED;
 
-int consume_token(FILE* source_file, char* s)
+void line_error()
+{
+	file_print(filename, stderr);
+	file_print(":", stderr);
+	file_print(numerate_number(linenumber), stderr);
+	file_print(" :", stderr);
+}
+
+int consume_token(FILE* source_file)
 {
 	int i = 0;
 	int c = fgetc(source_file);
-	do
+	while(!in_set(c, " \t\n>"))
 	{
-		if(NULL != s) s[i] = c;
+		scratch[i] = c;
 		i = i + 1;
 		c = fgetc(source_file);
-	} while((' ' != c) && ('\t' != c) && ('\n' != c) && '>' != c);
+	}
 
 	return c;
+}
+
+int Throwaway_token(FILE* source_file)
+{
+	int c;
+	do
+	{
+		c = fgetc(source_file);
+	} while(!in_set(c, " \t\n>"));
+
+	return c;
+}
+
+int length(char* s)
+{
+	int i = 0;
+	while(0 != s[i]) i = i + 1;
+	return i;
+}
+
+void Clear_Scratch(char* s)
+{
+	do
+	{
+		s[0] = 0;
+		s = s + 1;
+	} while(0 != s[0]);
+}
+
+void Copy_String(char* a, char* b)
+{
+	while(0 != a[0])
+	{
+		b[0] = a[0];
+		a = a + 1;
+		b = b + 1;
+	}
 }
 
 unsigned GetTarget(char* c)
@@ -94,16 +150,19 @@ int storeLabel(FILE* source_file, int ip)
 {
 	struct entry* entry = calloc(1, sizeof(struct entry));
 
+	/* Ensure we have target address */
+	entry->target = ip;
+
 	/* Prepend to list */
 	entry->next = jump_table;
 	jump_table = entry;
 
 	/* Store string */
-	entry->name = calloc(max_string + 1, sizeof(char));
-	int c = consume_token(source_file, entry->name);
+	int c = consume_token(source_file);
+	entry->name = calloc(length(scratch) + 1, sizeof(char));
+	Copy_String(scratch, entry->name);
+	Clear_Scratch(scratch);
 
-	/* Ensure we have target address */
-	entry->target = ip;
 	return c;
 }
 
@@ -176,59 +235,100 @@ void outputPointer(int displacement, int number_of_bytes)
 
 int Architectural_displacement(int target, int base)
 {
-	if(0 == Architecture) return (target - base);
-	else if(1 == Architecture) return (target - base);
-	else if(2 == Architecture) return (target - base);
+	if(KNIGHT == Architecture) return (target - base);
+	else if(X86 == Architecture) return (target - base);
+	else if(AMD64 == Architecture) return (target - base);
+	else if(ALIGNED && (ARMV7L == Architecture))
+	{
+		ALIGNED = FALSE;
+		/* Note: Branch displacements on ARM are in number of instructions to skip, basically. */
+		if (target & 3)
+		{
+			line_error();
+			file_print("error: Unaligned branch target: ", stderr);
+			file_print(scratch, stderr);
+			file_print(", aborting\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		/*
+		 * The "fetch" stage already moved forward by 8 from the
+		 * beginning of the instruction because it is already
+		 * prefetching the next instruction.
+		 * Compensate for it by subtracting the space for
+		 * two instructions (including the branch instruction).
+		 * and the size of the aligned immediate.
+		 */
+		return (((target - base + (base & 3)) >> 2) - 2);
+	}
+	else if(ARMV7L == Architecture)
+	{
+		/*
+		 * The size of the offset is 8 according to the spec but that value is
+		 * based on the end of the immediate, which the documentation gets wrong
+		 * and needs to be adjusted to the size of the immediate.
+		 * Eg 1byte immediate => -8 + 1 = -7
+		 */
+		return ((target - base) - 8 + (3 & base));
+	}
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
-int ConsumePointer(char ch, FILE* source_file, char* s)
+void Update_Pointer(char ch)
 {
 	/* Calculate pointer size*/
-	if((37 == ch) || (38 == ch)) ip = ip + 4; /* Deal with % and & */
-	else if((64 == ch) || (36 == ch)) ip = ip + 2; /* Deal with @ and $ */
-	else if(33 == ch) ip = ip + 1; /* Deal with ! */
+	if(in_set(ch, "%&")) ip = ip + 4; /* Deal with % and & */
+	else if(in_set(ch, "@$")) ip = ip + 2; /* Deal with @ and $ */
+	else if('~' == ch) ip = ip + 3; /* Deal with ~ */
+	else if('!' == ch) ip = ip + 1; /* Deal with ! */
 	else
 	{
+		line_error();
 		file_print("storePointer given unknown\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-
-	return consume_token(source_file, s);
 }
 
 void storePointer(char ch, FILE* source_file)
 {
 	/* Get string of pointer */
-	memset (scratch, 0, max_string + 1);
-	int base_sep_p = (ConsumePointer(ch, source_file, scratch) == 62); /* '>' */
+	Clear_Scratch(scratch);
+	Update_Pointer(ch);
+	int base_sep_p = consume_token(source_file);
 
 	/* Lookup token */
 	int target = GetTarget(scratch);
 	int displacement;
 
 	int base = ip;
+
 	/* Change relative base address to :<base> */
-	if (base_sep_p)
+	if ('>' == base_sep_p)
 	{
-		memset (scratch2, 0, max_string + 1);
-		consume_token (source_file, scratch2);
-		base = GetTarget (scratch2);
+		Clear_Scratch(scratch);
+		consume_token (source_file);
+		base = GetTarget (scratch);
+
+		/* Force universality of behavior */
+		displacement = (target - base);
 	}
-
-	displacement = Architectural_displacement(target, base);
-
-	/* output calculated difference */
-	if(33 == ch) outputPointer(displacement, 1); /* Deal with ! */
-	else if(36 == ch) outputPointer(target, 2); /* Deal with $ */
-	else if(64 == ch) outputPointer(displacement, 2); /* Deal with @ */
-	else if(38 == ch) outputPointer(target, 4); /* Deal with & */
-	else if(37 == ch) outputPointer(displacement, 4);  /* Deal with % */
 	else
 	{
-		file_print("storePointer reached impossible case: ch=", stderr);
+		displacement = Architectural_displacement(target, base);
+	}
+
+	/* output calculated difference */
+	if('!' == ch) outputPointer(displacement, 1); /* Deal with ! */
+	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
+	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
+	else if('~' == ch) outputPointer(displacement, 3); /* Deal with ~ */
+	else if('&' == ch) outputPointer(target, 4); /* Deal with & */
+	else if('%' == ch) outputPointer(displacement, 4);  /* Deal with % */
+	else
+	{
+		line_error();
+		file_print("error: storePointer reached impossible case: ch=", stderr);
 		fputc(ch, stderr);
 		file_print("\n", stderr);
 		exit(EXIT_FAILURE);
@@ -238,32 +338,36 @@ void storePointer(char ch, FILE* source_file)
 void line_Comment(FILE* source_file)
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(!in_set(c, "\n\r"))
 	{
 		c = fgetc(source_file);
 	}
+	linenumber = linenumber + 1;
 }
 
 int hex(int c, FILE* source_file)
 {
-	if (c >= '0' && c <= '9') return (c - 48);
-	else if (c >= 'a' && c <= 'z') return (c - 87);
-	else if (c >= 'A' && c <= 'Z') return (c - 55);
-	else if (c == '#' || c == ';') line_Comment(source_file);
+	if (in_set(c, "0123456789")) return (c - 48);
+	else if (in_set(c, "abcdef")) return (c - 87);
+	else if (in_set(c, "ABCDEF")) return (c - 55);
+	else if (in_set(c, "#;")) line_Comment(source_file);
+	else if ('\n' == c) linenumber = linenumber + 1;
 	return -1;
 }
 
 int octal(int c, FILE* source_file)
 {
-	if (c >= '0' && c <= '7') return (c - 48);
-	else if (c == '#' || c == ';') line_Comment(source_file);
+	if (in_set(c, "01234567")) return (c - 48);
+	else if (in_set(c, "#;")) line_Comment(source_file);
+	else if ('\n' == c) linenumber = linenumber + 1;
 	return -1;
 }
 
 int binary(int c, FILE* source_file)
 {
-	if (c == '0' || c == '1') return (c - 48);
-	else if (c == '#' || c == ';') line_Comment(source_file);
+	if (in_set(c, "01")) return (c - 48);
+	else if (in_set(c, "#;")) line_Comment(source_file);
+	else if ('\n' == c) linenumber = linenumber + 1;
 	return -1;
 }
 
@@ -332,11 +436,34 @@ void process_byte(char c, FILE* source_file, int write)
 	}
 }
 
+void pad_to_align(int write)
+{
+	if(ARMV7L == Architecture)
+	{
+		if(1 == (ip & 0x1))
+		{
+			ip = ip + 1;
+			if(write) fputc('\0', output);
+		}
+		if(2 == (ip & 0x2))
+		{
+			ip = ip + 2;
+			if(write)
+			{
+				fputc('\0', output);
+				fputc('\0', output);
+			}
+		}
+	}
+}
+
 void first_pass(struct input_files* input)
 {
 	if(NULL == input) return;
 	first_pass(input->next);
-	FILE* source_file = fopen(input->filename, "r");
+	filename = input->filename;
+	linenumber = 1;
+	FILE* source_file = fopen(filename, "r");
 
 	if(NULL == source_file)
 	{
@@ -351,19 +478,29 @@ void first_pass(struct input_files* input)
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
 		/* Check for and deal with label */
-		if(58 == c)
+		if(':' == c)
 		{
 			c = storeLabel(source_file, ip);
 		}
 
 		/* check for and deal with relative/absolute pointers to labels */
-		if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c))
-		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 4byte pointers (% and &) */
-			c = ConsumePointer(c, source_file, NULL);
-			if (62 == c)
+		if(in_set(c, "!@$~%&"))
+		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 3byte pointers ~; 4byte pointers (% and &) */
+			Update_Pointer(c);
+			c = Throwaway_token(source_file);
+			if ('>' == c)
 			{ /* deal with label>base */
-				c = consume_token (source_file, NULL);
+				c = Throwaway_token(source_file);
 			}
+		}
+		else if('<' == c)
+		{
+			pad_to_align(FALSE);
+		}
+		else if('^' == c)
+		{
+			/* Just ignore */
+			continue;
 		}
 		else process_byte(c, source_file, FALSE);
 	}
@@ -374,7 +511,9 @@ void second_pass(struct input_files* input)
 {
 	if(NULL == input) return;
 	second_pass(input->next);
-	FILE* source_file = fopen(input->filename, "r");
+	filename = input->filename;
+	linenumber = 1;
+	FILE* source_file = fopen(filename, "r");
 
 	/* Something that should never happen */
 	if(NULL == source_file)
@@ -391,8 +530,10 @@ void second_pass(struct input_files* input)
 	int c;
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
-		if(58 == c) c = consume_token(source_file, NULL); /* Deal with : */
-		else if((33 == c) || (64 == c) || (36 == c) || (37 == c) || (38 == c)) storePointer(c, source_file);  /* Deal with !, @, $, %  and & */
+		if(':' == c) c = Throwaway_token(source_file); /* Deal with : */
+		else if(in_set(c, "!@$~%&")) storePointer(c, source_file);  /* Deal with !, @, $, ~, % and & */
+		else if('<' == c) pad_to_align(TRUE);
+		else if('^' == c) ALIGNED = TRUE;
 		else process_byte(c, source_file, TRUE);
 	}
 
@@ -402,9 +543,10 @@ void second_pass(struct input_files* input)
 /* Standard C main program */
 int main(int argc, char **argv)
 {
+	ALIGNED = FALSE;
 	BigEndian = TRUE;
 	jump_table = NULL;
-	Architecture = 0;
+	Architecture = KNIGHT;
 	Base_Address = 0;
 	struct input_files* input = NULL;
 	output = stdout;
@@ -412,7 +554,7 @@ int main(int argc, char **argv)
 	exec_enable = FALSE;
 	ByteMode = 16;
 	scratch = calloc(max_string + 1, sizeof(char));
-	scratch2 = calloc(max_string + 1, sizeof(char));
+	char* arch;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -436,9 +578,19 @@ int main(int argc, char **argv)
 			exec_enable = TRUE;
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "-A") || match(argv[option_index], "--Architecture"))
+		else if(match(argv[option_index], "-A") || match(argv[option_index], "--architecture"))
 		{
-			Architecture = numerate_string(argv[option_index + 1]);
+			arch = argv[option_index + 1];
+			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = KNIGHT;
+			else if(match("x86", arch)) Architecture = X86;
+			else if(match("amd64", arch)) Architecture = AMD64;
+			else if(match("armv7l", arch)) Architecture = ARMV7L;
+			else
+			{
+				file_print("Unknown architecture: ", stderr);
+				file_print(arch, stderr);
+				file_print(" know values are: knight-native, knight-posix, x86, amd64 and armv7l", stderr);
+			}
 			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
@@ -456,9 +608,9 @@ int main(int argc, char **argv)
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
 			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian)", stderr);
-			file_print(" [--BaseAddress 12345] [--Architecture 12345]\nArchitecture", stderr);
-			file_print(" 0: Knight; 1: x86; 2: AMD64\nTo leverage octal or binary", stderr);
-			file_print(" input: --octal, --binary\n", stderr);
+			file_print(" [--BaseAddress 12345] [--architecture name]\nArchitecture:", stderr);
+			file_print(" knight-native, knight-posix, x86, amd64 and armv7\n", stderr);
+			file_print("To leverage octal or binary input: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
@@ -490,7 +642,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("hex2 0.3\n", stdout);
+			file_print("hex2 0.6.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

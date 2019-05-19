@@ -1,7 +1,7 @@
 ## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
-## stage0 is free software: you an redistribute it and/or modify
+## stage0 is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
@@ -17,6 +17,16 @@
 ## Self Bootstrapping Hex Assembler written in Hex
 ## And a shitload of comments
 ## That can be converted to assembly and compiled
+
+## If you were linked to this file and have come to assume that the elf header
+## is indicative of a dependency of on linux, unix or even operating systems you
+## would be mistaken, this is not the bootstrap work that is hardware native,
+## that work would be located here: http://git.savannah.nongnu.org/cgit/stage0.git
+## This repository is for solely providing tools enabling one to arbitrary verify
+## All of the steps and the binaries produced for arbitrary hardware platforms on
+## Any arbitrary hardware platform they choose.
+## This of course being an example of an arbitrary Linux bootstrap for those not
+## Comfortable with native hardware bootstraps and need a simple example to follow
 
 ## ELF Header
 7F 45 4C 46        ## e_ident[EI_MAG0-3] ELF's magic number

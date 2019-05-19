@@ -1,86 +1,98 @@
 #!/usr/bin/env bash
+## Copyright (C) 2017 Jeremiah Orians
+## This file is part of mescc-tools.
+##
+## mescc-tools is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## mescc-tools is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
+
 # kaem build file for bootstrapping
+# Build bin folder for binaries
+mkdir -p bin
 
 # First build blood-elf
 # Generate elf footer for debugging
 /usr/bin/env blood-elf \
-	-f ../mes/stage0/x86.M1 \
 	-f ../mescc-tools-seed/blood-elf.M1 \
-	-f ../mes-seed/libc+tcc-mes.M1 \
-	-o blood-elf-blood-elf-footer.M1
+	-o ../mescc-tools-seed/blood-elf-footer.M1
 
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture 1 \
-	-f ../mes/stage0/x86.M1 \
-	-f ../mes-seed/crt1.M1 \
-	-f ../mes-seed/libc+tcc-mes.M1 \
+	--architecture x86 \
+	-f ../mescc-tools-seed/x86_defs.M1 \
+	-f ../mescc-tools-seed/libc-core.M1 \
 	-f ../mescc-tools-seed/blood-elf.M1 \
-	-f blood-elf-blood-elf-footer.M1 \
-	-o blood-elf.hex2
+	-f ../mescc-tools-seed/blood-elf-footer.M1 \
+	-o ../mescc-tools-seed/blood-elf.hex2
 
 # Link
 /usr/bin/env hex2 \
 	--LittleEndian \
-	--Architecture 1 \
-	--BaseAddress 0x1000000 \
-	-f ../mes/stage0/elf32-header.hex2 \
-	-f blood-elf.hex2 \
-	-o blood-elf \
+	--architecture x86 \
+	--BaseAddress 0x8048000 \
+	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
+	-f ../mescc-tools-seed/blood-elf.hex2 \
+	-o bin/blood-elf \
 	--exec_enable
 
 # Secondly build hex2-linker
 # use our newly generated blood-elf to create the elf footer
-./blood-elf \
+./bin/blood-elf \
 	-f ../mescc-tools-seed/hex2.M1 \
-	-o hex2-elf-footer.M1
+	-o ../mescc-tools-seed/hex2-footer.M1
 
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture 1 \
-	-f ../mes/stage0/x86.M1 \
-	-f ../mes-seed/crt1.M1 \
-	-f ../mes-seed/libc+tcc-mes.M1 \
+	--architecture x86 \
+	-f ../mescc-tools-seed/x86_defs.M1 \
+	-f ../mescc-tools-seed/libc-core.M1 \
 	-f ../mescc-tools-seed/hex2.M1 \
-	-f hex2-elf-footer.M1 \
-	-o hex2.hex2
+	-f ../mescc-tools-seed/hex2-footer.M1 \
+	-o ../mescc-tools-seed/hex2.hex2
 
 # Link
 /usr/bin/env hex2 \
 	--LittleEndian \
-	--Architecture 1 \
-	--BaseAddress 0x1000000 \
-	-f ../mes/stage0/elf32-header.hex2 \
-	-f hex2.hex2 \
-	-o hex2 \
+	--architecture x86 \
+	--BaseAddress 0x8048000 \
+	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
+	-f ../mescc-tools-seed/hex2.hex2 \
+	-o bin/hex2 \
 	--exec_enable
 
 # Finally build M1-macro
 # Generate elf footer for debugging
-./blood-elf \
+./bin/blood-elf \
 	-f ../mescc-tools-seed/M1.M1 \
-	-f ../mes-seed/libc+tcc-mes.M1 \
-	-o M1-blood-elf-footer.M1
+	-o ../mescc-tools-seed/M1-footer.M1
 
 # Assemble
 /usr/bin/env M1 \
 	--LittleEndian \
-	--Architecture 1 \
-	-f ../mes/stage0/x86.M1 \
-	-f ../mes-seed/crt1.M1 \
-	-f ../mes-seed/libc+tcc-mes.M1 \
+	--architecture x86 \
+	-f ../mescc-tools-seed/x86_defs.M1 \
+	-f ../mescc-tools-seed/libc-core.M1 \
 	-f ../mescc-tools-seed/M1.M1 \
-	-f M1-blood-elf-footer.M1 \
-	-o M1.hex2
+	-f ../mescc-tools-seed/M1-footer.M1 \
+	-o ../mescc-tools-seed/M1.hex2
 
 # Link
-./hex2 \
+./bin/hex2 \
 	--LittleEndian \
-	--Architecture 1 \
-	--BaseAddress 0x1000000 \
-	-f ../mes/stage0/elf32-header.hex2 \
-	-f M1.hex2 \
-	-o M1 \
+	--architecture x86 \
+	--BaseAddress 0x8048000 \
+	-f ../mescc-tools-seed/ELF-i386-debug.hex2 \
+	-f ../mescc-tools-seed/M1.hex2 \
+	-o bin/M1 \
 	--exec_enable

@@ -1,29 +1,45 @@
+/* Copyright (C) 2016 Jeremiah Orians
+ * This file is part of mescc-tools.
+ *
+ * mescc-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * mescc-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+void file_print(char* s, FILE* f);
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
 	/************************************************
-	 * Note that the leading 0 makes it Octal       *
-	 * not base 10 or base 16.                      *
-	 * hex numbers begin with 0x                    *
-	 * 777 indicates that we want read, write and   *
-	 * execute permissions applied to the file      *
-	 * For the owner, group and all users           *
+	 * 493 in decimal is 755 in Octal, which is the *
+	 * value we need to set the execute and read    *
+	 * bits for all users and the write bit for the *
+	 * Owner of the files                           *
 	 ************************************************/
-	int m = 0755;
+	int m = 493;
 
 	if(2 != argc)
 	{
-		printf("arg count\n");
+		file_print("arg count\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	if(0 != chmod(argv[1], m))
 	{
-		printf("Unable to change permissions\n");
+		file_print("Unable to change permissions\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 

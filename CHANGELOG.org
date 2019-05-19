@@ -1,29 +1,78 @@
 ## Copyright (C) 2017 Jeremiah Orians
-## This file is part of stage0.
+## This file is part of mescc-tools
 ##
-## stage0 is free software: you an redistribute it and/or modify
+## mescc-tools is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
 ##
-## stage0 is distributed in the hope that it will be useful,
+## mescc-tools is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
-## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
 * Current
 ** Added
+Added support for AMD64 dwarf footers in blood-elf via --64
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.6 - 2019-04-14
+** Added
+Added template ELF headers for ARM
+Added initial support for ARM
+Added official hex0 seed for AMD64
+Added official hex1 seed for AMD64
+Added support for <Number null padding in M1 files
+Added support for < alignment padding
+Added support for ^!label, ^@label and ^%label alignment calculations
+Added standard line error messages to hex2-linker
+Added standard line error messages to M1-macro
+Added --exact and --override to get_machine
+Added GET_MACHINE_FLAGS variable to tests to allow overriding
+Backported M2-Planet's support for Octal and binary
+Added support for *BSDs to test the results of the build using sha256.sh (thanks to ng0)
+Added official hex2 seed for AMD64
+Added NASM versions of AMD64 bootstrap pieces for improve introspection of bootstrap
+Added kaem.run script supporting intial phase of AMD64 bootstrap
+Added catm C prototype to eliminate the dependency on cat and the shell supporting >
+Added catm NASM prototype to simplify build
+Added catm M1 prototype to reduce bootstrap dependency
+Added catm hex0 prototype to eliminate bootstrap dependencies down to hex0
+Added M0 NASM prototype to simplify build
+Added M0 M1 prototype to reduce bootstrap dependency
+Added M0 hex2 prototype to eliminate bootstrap dependencies down to hex2
+Verified ARM port to support M2-Planet
 
 ** Changed
 Updated build.sh and kaem.run to the current mescc-tools syntax
+Reduced get_machine's build dependencies
+Cleaned up x86 elf headers
+Removed kaem's dependence on getopt
+Replaced --Architecture with --architecture
+changed get_machine's default output to filter machine names into known families
+Reduced M1 null padding of strings to a single null for all architectures except Knight
+Updated AMD64 bootstrap kaem.run to include steps from hex0 to M0
 
 ** Fixed
 Fixed broken test9 thanks to janneke
+Fixed wrong displacement calculations for ARM immediates
+Fixed typo in license header
+Fixed kaem.run to actually function and produce identical results
+Fixed regression caused by linux 4.17
+Removed false newline added in numerate_number for zero case
+Fixed broken bootstrap script
 
 ** Removed
+Removed final dependency on getopt
+Removed need to know architecture numbers as that was a bad idea
 
 * 0.5 - 2018-06-15
 ** Added

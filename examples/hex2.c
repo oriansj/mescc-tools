@@ -1,263 +1,288 @@
-/* Copyright (C) 2016 Jeremiah Orians
- * This file is part of stage0.
+/* -*- c-file-style: "linux";indent-tabs-mode:t -*- */
+/* Copyright (C) 2017 Jeremiah Orians
+ * Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
+ * This file is part of mescc-tools
  *
- * stage0 is free software: you can redistribute it and/or modify
+ * mescc-tools is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * stage0 is distributed in the hope that it will be useful,
+ * mescc-tools is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+ * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
-#define max_string 60
+#include <unistd.h>
+#include <sys/stat.h>
 
-FILE* source_file;
-bool toggle;
-uint8_t holder;
-uint32_t ip;
+#define max_string 4096
+#define TRUE 1
+#define FALSE 0
+
+void file_print(char* s, FILE* f);
+int match(char* a, char* b);
 
 struct entry
 {
-	uint32_t target;
-	char name[max_string + 1];
+	struct entry* next;
+	unsigned target;
+	char* name;
 };
 
-char temp[max_string + 1];
-struct entry table[256];
+FILE* output;
+FILE* input;
+struct entry* jump_table;
+int ip;
+char* scratch;
 
-uint32_t GetTarget(char* c)
+int in_set(int c, char* s)
 {
-	int i = -1;
-	do
+	while(0 != s[0])
 	{
-		i = i + 1;
-	} while (0 != strncmp(table[i].name, c, max_string));
-
-	return table[i].target;
+		if(c == s[0]) return TRUE;
+		s = s + 1;
+	}
+	return FALSE;
 }
 
-void storeLabel()
+int consume_token()
 {
-	int c = fgetc(source_file);
 	int i = 0;
-	int index = -1;
-
-	do
+	int c = fgetc(input);
+	while(!in_set(c, " \t\n>"))
 	{
-		index = index + 1;
-	} while(0 != table[index].name[0]);
-
-	while((' ' != c) && ('\t' != c) && ('\n' != c))
-	{
-		table[index].name[i] = c;
+		scratch[i] = c;
 		i = i + 1;
-		c = fgetc(source_file);
+		c = fgetc(input);
 	}
 
-	table[index].target = ip;
+	return c;
+}
+
+int Throwaway_token()
+{
+	int c;
+	do
+	{
+		c = fgetc(input);
+	} while(!in_set(c, " \t\n>"));
+
+	return c;
+}
+
+int length(char* s)
+{
+	int i = 0;
+	while(0 != s[i]) i = i + 1;
+	return i;
+}
+
+void Clear_Scratch(char* s)
+{
+	do
+	{
+		s[0] = 0;
+		s = s + 1;
+	} while(0 != s[0]);
+}
+
+void Copy_String(char* a, char* b)
+{
+	while(0 != a[0])
+	{
+		b[0] = a[0];
+		a = a + 1;
+		b = b + 1;
+	}
+}
+
+unsigned GetTarget(char* c)
+{
+	struct entry* i;
+	for(i = jump_table; NULL != i; i = i->next)
+	{
+		if(match(c, i->name))
+		{
+			return i->target;
+		}
+	}
+	exit(EXIT_FAILURE);
+}
+
+int storeLabel()
+{
+	struct entry* entry = calloc(1, sizeof(struct entry));
+
+	/* Ensure we have target address */
+	entry->target = ip;
+
+	/* Prepend to list */
+	entry->next = jump_table;
+	jump_table = entry;
+
+	/* Store string */
+	int c = consume_token();
+	entry->name = calloc(length(scratch) + 1, sizeof(char));
+	Copy_String(scratch, entry->name);
+	Clear_Scratch(scratch);
+
+	return c;
+}
+
+void outputPointer(int displacement, int number_of_bytes)
+{
+	unsigned value = displacement;
+
+	while(number_of_bytes > 0)
+	{
+		unsigned byte = value % 256;
+		value = value / 256;
+		fputc(byte, output);
+		number_of_bytes = number_of_bytes - 1;
+	}
+}
+
+void Update_Pointer(char ch)
+{
+	/* Calculate pointer size*/
+	if(in_set(ch, "%&")) ip = ip + 4; /* Deal with % and & */
+	else if(in_set(ch, "@$")) ip = ip + 2; /* Deal with @ and $ */
+	else if('!' == ch) ip = ip + 1; /* Deal with ! */
 }
 
 void storePointer(char ch)
 {
-	if(38 == ch)
-	{
-		ip = ip + 4;
-	}
-	else
-	{
-		ip = ip + 2;
-	}
-	int c = fgetc(source_file);
-	int i = 0;
+	/* Get string of pointer */
+	Clear_Scratch(scratch);
+	Update_Pointer(ch);
+	int base_sep_p = consume_token();
 
-	while(0 != temp[i])
-	{
-		temp[i] = 0;
-		i = i+1;
-	}
+	/* Lookup token */
+	int target = GetTarget(scratch);
+	int displacement;
 
-	i = 0;
-
-	while((' ' != c) && ('\t' != c) && ('\n' != c))
+	int base = ip;
+	/* Change relative base address to :<base> */
+	if ('>' == base_sep_p)
 	{
-		temp[i] = c;
-		i = i + 1;
-		c = fgetc(source_file);
+		Clear_Scratch(scratch);
+		consume_token();
+		base = GetTarget (scratch);
 	}
 
-	int target = GetTarget(temp);
-	uint8_t first, second;
-	if(36 == ch)
-	{ /* Deal with $ */
-		first = target/256;
-		second = target%256;
-		printf("%c%c", first, second );
-	}
-	else if(64 == ch)
-	{ /* Deal with @ */
-		first = (target - ip + 4)/256;
-		second = (target - ip + 4)%256;
-		printf("%c%c", first, second );
-	}
-	else if(38 == ch)
-	{
-		uint8_t third, fourth;
-		first = target >> 24;
-		second = (target >> 16)%256;
-		third = (target >> 8)%256;
-		fourth = target%256;
-		printf("%c%c%c%c", first, second, third, fourth);
-	}
+	displacement = (target - base);
+
+	/* output calculated difference */
+	if('!' == ch) outputPointer(displacement, 1); /* Deal with ! */
+	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
+	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
+	else if('&' == ch) outputPointer(target, 4); /* Deal with & */
+	else if('%' == ch) outputPointer(displacement, 4);  /* Deal with % */
 }
 
 void line_Comment()
 {
-	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	int c = fgetc(input);
+	while(!in_set(c, "\n\r"))
 	{
-		c = fgetc(source_file);
+		c = fgetc(input);
 	}
 }
 
-int8_t hex(int c)
+int hex(int c)
 {
-	switch(c)
-	{
-		case '0' ... '9':
-		{
-			return (c - 48);
-		}
-		case 'a' ... 'z':
-		{
-			return (c - 87);
-		}
-		case 'A' ... 'Z':
-		{
-			return (c - 55);
-		}
-		case 35:
-		case 59:
-		{
-			line_Comment();
-			return -1;
-		}
-		default: return -1;
-	}
+	if (in_set(c, "0123456789")) return (c - 48);
+	else if (in_set(c, "abcdef")) return (c - 87);
+	else if (in_set(c, "ABCDEF")) return (c - 55);
+	else if (in_set(c, "#;")) line_Comment();
+	return -1;
+}
 
+int hold;
+int toggle;
+void process_byte(char c, int write)
+{
+	if(0 <= hex(c))
+	{
+		if(toggle)
+		{
+			if(write) fputc(((hold * 16)) + hex(c), output);
+			ip = ip + 1;
+			hold = 0;
+		}
+		else
+		{
+			hold = hex(c);
+		}
+		toggle = !toggle;
+	}
 }
 
 void first_pass()
 {
 	int c;
-	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
+	for(c = fgetc(input); EOF != c; c = fgetc(input))
 	{
 		/* Check for and deal with label */
-		if(58 == c)
+		if(':' == c)
 		{
-			storeLabel();
+			c = storeLabel();
 		}
 
-		/* check for and deal with relative pointers to labels */
-		if((64 == c) || (36 == c))
-		{ /* deal with @ and $ */
-			while((' ' != c) && ('\t' != c) && ('\n' != c))
-			{
-				c = fgetc(source_file);
-			}
-			ip = ip + 2;
-		}
-		else if(38 == c)
-		{ /* deal with & */
-			while((' ' != c) && ('\t' != c) && ('\n' != c))
-			{
-				c = fgetc(source_file);
-			}
-			ip = ip + 4;
-		}
-		else
-		{
-			if(0 <= hex(c))
-			{
-				if(toggle)
-				{
-					ip = ip + 1;
-				}
-
-				toggle = !toggle;
+		/* check for and deal with relative/absolute pointers to labels */
+		if(in_set(c, "!@$%&"))
+		{ /* deal with 1byte pointer !; 2byte pointers (@ and $); 4byte pointers (% and &) */
+			Update_Pointer(c);
+			c = Throwaway_token();
+			if ('>' == c)
+			{ /* deal with label>base */
+				c = Throwaway_token();
 			}
 		}
+		else process_byte(c, FALSE);
 	}
+	fclose(input);
 }
 
 void second_pass()
 {
 	int c;
-	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
+	for(c = fgetc(input); EOF != c; c = fgetc(input))
 	{
-		if(58 == c)
-		{ /* Deal with : */
-			while((' ' != c) && ('\t' != c) && ('\n' != c))
-			{
-				c = fgetc(source_file);
-			}
-		}
-		else if((64 == c) || (36 == c) || (38 == c))
-		{ /* Deal with @, $ and & */
-			storePointer(c);
-		}
-		else
-		{
-			if(0 <= hex(c))
-			{
-				if(toggle)
-				{
-					printf("%c",((holder * 16)) + hex(c));
-					ip = ip + 1;
-					holder = 0;
-				}
-				else
-				{
-					holder = hex(c);
-				}
-
-				toggle = !toggle;
-			}
-		}
+		if(':' == c) c = Throwaway_token(); /* Deal with : */
+		else if(in_set(c, "!@$%&")) storePointer(c);  /* Deal with !, @, $, %  and & */
+		else process_byte(c, TRUE);
 	}
+
+	fclose(input);
 }
 
 /* Standard C main program */
 int main(int argc, char **argv)
 {
-	/* Make sure we have a program tape to run */
-	if (argc < 2)
-	{
-		fprintf(stderr, "Usage: %s $FileName\nWhere $FileName is the name of the paper tape of the program being run\n", argv[0]);
-		return EXIT_FAILURE;
-	}
+	jump_table = NULL;
+	input = fopen(argv[1], "r");
+	output = fopen(argv[2], "w");
+	scratch = calloc(max_string + 1, sizeof(char));
 
-	source_file = fopen(argv[1], "r");
-
-	toggle = false;
-	ip = 0;
-	holder = 0;
-
+	/* Get all of the labels */
+	ip = 0x8048000;
+	toggle = FALSE;
+	hold = 0;
 	first_pass();
-	rewind(source_file);
-	toggle = false;
-	ip = 0;
-	holder = 0;
+
+	/* Fix all the references*/
+	rewind(input);
+	ip = 0x8048000;
+	toggle = FALSE;
+	hold = 0;
 	second_pass();
 
 	return EXIT_SUCCESS;
