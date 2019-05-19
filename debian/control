@@ -1,6 +1,6 @@
 Source: mescc-tools
 Section: devel
-Priority: extra
+Priority: optional
 Maintainer: Vagrant Cascadian <vagrant@debian.org>
 Build-Depends: debhelper-compat (=12),
 Standards-Version: 4.1.5
