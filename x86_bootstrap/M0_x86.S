@@ -49,7 +49,7 @@ _start:
 
 	pop ebx                     ;·Get·the·actual·output name
 	mov ecx, 577                ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
-	mov edx, 448                ; Prepare file as RWX for owner only (700 in octal)
+	mov edx, 384                ; Prepare file as RW for owner only (600 in octal)
 	mov eax, 5                  ;·the·syscall·number·for·open()
 	int 0x80                    ; Now open that damn file
 	cmp eax, 0                  ; Check for missing output
