@@ -21,7 +21,7 @@ Added hex0 for i386 in NASM, M1 and hex0
 Added hex1 for i386 in NASM, M1, hex1 and hex0
 Added first generation AARCH64 elf header
 Added hex2 for i386 in NASM, M1, hex2 and hex1
-Added M0 for i386 in NASM
+Added M0 for i386 in NASM, M1 and hex2
 
 ** Changed
 
