@@ -306,7 +306,7 @@ DEFINE TEST_RAX_RAX 4885C0
 
 :Get_table_target
 	CALLI32 %Read_byte          # Get single char label
-	SHL8_RAX !2                 # Each label in table takes 4 bytes to store
+	SHL8_RAX !3                 # Each label in table takes 8 bytes to store
 	ADDI32_to_RAX &table        # Calculate offset
 	RET
 

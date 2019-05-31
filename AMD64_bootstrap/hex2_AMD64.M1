@@ -43,6 +43,7 @@ DEFINE COPY_RAX_to_R14 4989C6
 DEFINE COPY_RAX_to_RDX 4889C2
 DEFINE COPY_RAX_to_RDI 4889C7
 DEFINE JE32 0F84
+DEFINE JG32 0F8F
 DEFINE JL32 0F8C
 DEFINE JMP32 E9
 DEFINE JNE32 0F85
@@ -112,8 +113,8 @@ DEFINE ZERO_EXTEND_BL 480FB6DB
 	CALLI32 %malloc             ; Get current HEAP
 	COPY_RAX_to_RDI             ; Using current
 	COPY_RAX_to_R12             ; Setup MALLOC
-	ADDI32_to_RDI %81920        ; Create space for temp
-	CALLI32 %malloc             ; Give ourselves 81920 bytes to work with
+	ADDI32_to_RDI %8192000      ; Create space for temp
+	CALLI32 %malloc             ; Give ourselves 8192000 bytes to work with
 
 	POP_RAX                     ;·Get·the·number·of·arguments
 	POP_RDI                     ;·Get·the·program·name
@@ -128,6 +129,11 @@ DEFINE ZERO_EXTEND_BL 480FB6DB
 	LOADI32_RDX %448            ; Prepare file as RWX for owner only (700 in octal)
 	LOADI32_RAX %2              ;·the·syscall·number·for·open()
 	SYSCALL                     ; Now open that damn file
+	CMP_RAX_Immediate8 !0       ; Check for missing output
+	JG32 %_start_out            ; Have real input
+	LOADI32_RAX %1              ; Use stdout
+
+:_start_out
 	COPY_RAX_to_R10             ; Preserve the file pointer we were given
 
 	CALLI32 %ClearScratch       ; Zero scratch

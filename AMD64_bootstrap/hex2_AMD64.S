@@ -54,6 +54,11 @@ _start:
 	mov rdx, 448                ; Prepare file as RWX for owner only (700 in octal)
 	mov rax, 2                  ;·the·syscall·number·for·open()
 	syscall                     ; Now open that damn file
+	cmp rax, 0                  ; Check for missing output
+	jg _start_out               ; Have real input
+	mov rax, 1                  ; Use stdout
+
+_start_out:
 	mov r10, rax                ; Preserve the file pointer we were given
 
 	call ClearScratch           ; Zero scratch

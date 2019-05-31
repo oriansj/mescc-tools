@@ -38,8 +38,8 @@
 	E8 %malloc                  ; CALLI32 %malloc             ; Get current HEAP
 	4889C7                      ; COPY_RAX_to_RDI             ; Using current
 	4989C4                      ; COPY_RAX_to_R12             ; Setup MALLOC
-	4881C7 00400100             ; ADDI32_to_RDI %81920        ; Create space for temp
-	E8 %malloc                  ; CALLI32 %malloc             ; Give ourselves 81920 bytes to work with
+	4881C7 00007D00             ; ADDI32_to_RDI %8192000      ; Create space for temp
+	E8 %malloc                  ; CALLI32 %malloc             ; Give ourselves 8192000 bytes to work with
 
 	58                          ; POP_RAX                     ;·Get·the·number·of·arguments
 	5F                          ; POP_RDI                     ;·Get·the·program·name
@@ -54,6 +54,11 @@
 	BA C0010000                 ; LOADI32_RDX %448            ; Prepare file as RWX for owner only (700 in octal)
 	48C7C0 02000000             ; LOADI32_RAX %2              ;·the·syscall·number·for·open()
 	0F05                        ; SYSCALL                     ; Now open that damn file
+	4883F8 00                   ; CMP_RAX_Immediate8 !0       ; Check for missing output
+	0F8F %_start_out            ; JG32 %_start_out            ; Have real input
+	48C7C0 01000000             ; LOADI32_RAX %1              ; Use stdout
+
+:_start_out
 	4989C2                      ; COPY_RAX_to_R10             ; Preserve the file pointer we were given
 
 	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Zero scratch

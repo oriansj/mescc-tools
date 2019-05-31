@@ -257,7 +257,7 @@ print_chars:
 
 Get_table_target:
 	call Read_byte              ; Get single char label
-	shl rax, 2                  ; Each label in table takes 4 bytes to store
+	shl rax, 3                  ; Each label in table takes 8 bytes to store
 	add rax, table              ; Calculate offset
 	ret
 

@@ -307,7 +307,7 @@
 
 :x # :Get_table_target
 	E8 %u               ; CALLI32 %Read_byte # Get single char label
-	48C1E0 02           ; SHL8_RAX !2 # Each label in table takes 4 bytes to store
+	48C1E0 03           ; SHL8_RAX !3 # Each label in table takes 8 bytes to store
 	4805 5D036000       ; ADDI32_to_RAX &table # Calculate offset
 	C3                  ; RET
 
