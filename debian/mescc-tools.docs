@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cp CHANGELOG.org debian/mescc-tools/usr/share/doc/mescc-tools/changelog
+cp 'Generating M0 Definitions.org' debian/mescc-tools/usr/share/doc/mescc-tools/Generating_M0_Definitions.org
+
+cat <<EOF
+README.md
+HACKING
+EOF
