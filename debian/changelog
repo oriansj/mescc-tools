@@ -1,5 +1,5 @@
-mescc-tools (0.6.1-1~0) UNRELEASED; urgency=low
+mescc-tools (0.6.1-1) experimental; urgency=low
 
   * Initial release.
 
- -- Vagrant Cascadian <vagrant@debian.org>  Fri, 06 Jul 2018 15:05:39 -0700
+ -- Vagrant Cascadian <vagrant@debian.org>  Sun, 02 Jun 2019 17:02:32 -0700
