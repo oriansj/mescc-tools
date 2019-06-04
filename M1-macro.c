@@ -117,6 +117,7 @@ void purge_lineComment()
 	int c = fgetc(source_file);
 	while(!in_set(c, "\n\r"))
 	{
+		if(EOF == c) break;
 		c = fgetc(source_file);
 	}
 }

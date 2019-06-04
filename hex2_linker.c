@@ -347,6 +347,7 @@ void line_Comment(FILE* source_file)
 	int c = fgetc(source_file);
 	while(!in_set(c, "\n\r"))
 	{
+		if(EOF == c) break;
 		c = fgetc(source_file);
 	}
 	linenumber = linenumber + 1;
