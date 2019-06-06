@@ -336,10 +336,10 @@ In_Set_False:
 	ret
 
 alphas:
-	db 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 0    ; "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
+	db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", 0
 
 symbols:
-	db 60, 61, 62, 124, 38, 33, 45, 0     ; "<=>|&!-"
+	db "<=>|&!-", 0
 
 strings:
 	db 34, 39, 0
@@ -734,7 +734,7 @@ declare_function:
 	mov rbx, 0                  ; NULL
 	mov rcx, [global_function_list] ; global_function_list
 	call sym_declare            ; sym_declare(global_token->prev->s, NULL, global_function_list);
-	mov [fn_function], rax      ; function = sym_declare(global_token->prev->s, NULL, global_function_list);
+	mov [function], rax         ; function = sym_declare(global_token->prev->s, NULL, global_function_list);
 	mov [global_function_list], rax ; global_function_list = function
 
 	call collect_arguments      ; collect all of the function arguments
@@ -757,14 +757,14 @@ declare_function_full:
 	mov rax, declare_function_string_0 ; "# Defining function "
 	call emit_out               ; emit it
 
-	mov rax, [fn_function]      ; function
+	mov rax, [function]         ; function
 	mov rax, [rax+16]           ; function->s
 	call emit_out               ; emit it
 
 	mov rax, declare_function_string_1 ; "\n:FUNCTION_"
 	call emit_out               ; emit it
 
-	mov rax, [fn_function]      ; function
+	mov rax, [function]         ; function
 	mov rax, [rax+16]           ; function->s
 	call emit_out               ; emit it
 
@@ -838,12 +838,12 @@ collect_arguments_loop:
 	mov rax, [global_token]     ; Using global_token
 	mov rax, [rax+16]           ; global_token->S
 	mov rbx, rcx                ; put type_size in the right place
-	mov rcx, [fn_function]      ; Using function
+	mov rcx, [function]         ; Using function
 	mov rcx, [rcx+32]           ; function->args
 	call sym_declare            ; sym_declare(global_token->s, type_size, function->arguments);
 	mov rcx, rax                ; put a in a safe place
 
-	mov rax, [fn_function]      ; Using function
+	mov rax, [function]         ; Using function
 	mov rax, [rax+32]           ; function->args
 	cmp rax, 0                  ; IF function->args == NULL
 	jne collect_arguments_another ; otherwise it isn't the first
@@ -855,7 +855,7 @@ collect_arguments_loop:
 
 collect_arguments_another:
 	;; deal with the case of non-first arguments
-	mov rax, [fn_function]      ; Using function
+	mov rax, [function]         ; Using function
 	mov rax, [rax+32]           ; function->args
 	mov rax, [rax+32]           ; function->args->depth
 	sub rax, 4                  ; function->args->depth - 4
@@ -866,7 +866,7 @@ collect_arguments_next:
 	mov rax, [rax]              ; global_token->next
 	mov [global_token], rax     ; global_token = global_token->next
 
-	mov rax, [fn_function]      ; Using function
+	mov rax, [function]         ; Using function
 	mov [rax+32], rcx           ; function->args = a
 
 collect_arguments_common:
@@ -1066,7 +1066,7 @@ statement_continue:
 	jmp statement_done          ; Be done
 
 statement_else:
-;	call expression
+	call expression             ; Collect expression
 	mov rax, statement_string_4 ; Using "ERROR in statement\nMissing ;\n"
 	mov rbx, semicolon          ; Using ";"
 	call require_match          ; make sure we have it
@@ -1097,7 +1097,7 @@ recursive_statement:
 	mov rax, [rax]              ; global_token->next
 	mov [global_token], rax     ; global_token = global_token->next
 
-	mov rcx, [fn_function]      ; Using function
+	mov rcx, [function]         ; Using function
 	mov rcx, [rcx+8]            ; frame = function->locals
 
 recursive_statement_loop:
@@ -1125,7 +1125,7 @@ recursive_statement_cleanup:
 	je recursive_statement_done ; and be done
 
 	;; Deal with cleanup
-	mov rbx, [fn_function]      ; Using function
+	mov rbx, [function]         ; Using function
 	mov rbx, [rbx+8]            ; i = function->locals
 	mov rax, recursive_statement_string_1 ; Using "POP_ebx\t# _recursive_statement_locals\n"
 
@@ -1139,7 +1139,7 @@ recursive_statement_locals:
 	jmp recursive_statement_locals ; keep going
 
 recursive_statement_done:
-	mov rax, [fn_function]      ; Using function
+	mov rax, [function]         ; Using function
 	mov [rax+8], rcx            ; function->locals = frame
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
@@ -1166,16 +1166,16 @@ return_result:
 	mov al, [rax]               ; global_token->S[0]
 	movzx rax, al               ; make it useful
 	cmp rax, 59                 ; If global_token->S[0] == ';'
-	jne return_result_cleanup   ; Go straight to cleanup
+	je return_result_cleanup    ; Go straight to cleanup
 
-;	call expression             ; get the expression we are returning
+	call expression             ; get the expression we are returning
 
 return_result_cleanup:
 	mov rax, return_result_string_0 ; Using "ERROR in return_result\nMISSING ;\n"
 	mov rbx, semicolon          ; Using ";"
 	call require_match          ; Make sure we have it
 
-	mov rbx, [fn_function]      ; Using function
+	mov rbx, [function]         ; Using function
 	mov rbx, [rbx+8]            ; function->locals
 	mov rax, return_result_string_1 ; Using "POP_ebx\t# _return_result_locals\n"
 return_result_locals:
@@ -1196,6 +1196,647 @@ return_result_done:
 return_result_string_0: db "ERROR in return_result", 10, "MISSING ;", 10, 0
 return_result_string_1: db "POP_ebx", 9, "# _return_result_locals", 10, 0
 return_result_string_2: db "RETURN", 10, 0
+
+
+;; expression function
+;; Recieves Nothing
+;; Returns Nothing
+;; Walks global_token and updates output_list
+;; Uses RAX and RBX for match and RCX for char* store
+expression:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	call bitwise_expr           ; Collect bitwise expressions
+
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, equal              ; "="
+	call match                  ; IF global_token->S == "="
+	cmp rax, 0                  ; We have to deal with assignment
+	jne expression_done         ; Looks like nope
+
+	;; Deal with possible assignment
+	mov rcx, expression_string_1 ; Assume "STORE_CHAR\n" by default
+	mov rbx, global_token       ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, close_bracket      ; Using "]"
+	call match                  ; IF global_token->S == "]"
+	cmp rax, 0                  ; Then we might have a char
+	jne expression_int          ; Otherwise INT
+
+	mov rbx, [current_target]   ; Using current_target
+	mov rbx, [rbx+40]           ; current_target->NAME
+	mov rax, type_char_indirect_name ; Using "char*"
+	call match                  ; Intensional inefficency because I feel like it
+	cmp rax, 0                  ; IF current_target->NAME == "char*"
+	jne expression_int          ; Do char anyway
+
+	jmp expression_common       ; Looks like we have to use "STORE_CHAR\n"
+
+expression_int:
+	mov rcx, expression_string_0 ; Use "STORE_INTEGER\n"
+
+expression_common:
+	mov rax, expression         ; Passing expression
+	call common_recursion       ; Recurse
+	mov rax, rcx                ; Using Store
+	call emit_out               ; Emit it
+	mov rax, 0                  ; Using NULL
+	mov [current_target], rax   ; current_target = NULL
+
+expression_done:
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+expression_string_0: db "STORE_INTEGER", 10, 0
+expression_string_1: db "STORE_CHAR", 10, 0
+
+
+;; bitwise_expr function
+;; Recieves nothing
+;; Returns nothing
+;; Walks global_token list and updates output list
+;; Just calls other functions
+bitwise_expr:
+	call relational_expr        ; Walk up the tree
+	call bitwise_expr_stub      ; Let general recursion do the work
+	ret
+
+
+	;; bitwise_expr_stub function
+	;; Recieves nothing
+	;; Returns Nothing
+	;; Just calls general_recursion a bunch
+	;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
+bitwise_expr_stub:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+;; relational_expr function
+;; Recieves nothing
+;; Returns Nothing
+;; Walks global_token list and updates output list
+;; just calls other function
+relational_expr:
+	call additive_expr          ; Walk up the tree
+	call relational_expr_stub   ; Recurse
+	ret
+
+
+	;; relational_expr_stub function
+	;; Recieves nothing
+	;; Returns Nothing
+	;; Just calls general_recursion a bunch
+	;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
+relational_expr_stub:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+;; additive_expr function
+;; Recieves nothing
+;; Returns Nothing
+;; Walks global_token list and updates output list
+;; just calls other function
+additive_expr:
+	call postfix_expr           ; Walk up the tree
+	call additive_expr_stub     ; Recurse
+	ret
+
+
+	;; additive_expr_stub function
+	;; Recieves nothing
+	;; Returns Nothing
+	;; Just calls general_recursion a bunch
+	;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
+additive_expr_stub:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+;; postfix_expr function
+;; Recieves nothing
+;; Returns Nothing
+;; Walks global_token list and updates output list
+;; just calls other function
+postfix_expr:
+	call primary_expr           ; Walk up the tree
+	call postfix_expr_stub      ; Recurse
+	ret
+
+
+	;; postfix_expr_stub function
+	;; Recieves nothing
+	;; Returns Nothing
+	;; Just calls general_recursion a bunch
+	;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
+postfix_expr_stub:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+
+	;; primary_expr function
+	;; Recieves nothing
+	;; Returns nothing
+primary_expr:
+	push rbx                    ; Protect RBX
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	mov al, [rax]               ; global_token->S[0]
+	movzx rax, al               ; Make it useful
+	cmp rax, 34                 ; Using '"'
+	jne primary_expr_var        ; Otherwise try a variable
+
+	;; Deal with strings
+	call primary_expr_string    ; Handle that string
+	jmp primary_expr_done       ; Be done
+
+primary_expr_var:
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	mov al, [rax]               ; global_token->S[0]
+	movzx rax, al               ; Make it useful
+	mov rbx, primary_expr_string_6 ; Using "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+	call In_Set                 ; See if we have a match
+	cmp rax, 1                  ; IF match
+	jne primary_expr_num        ; otherwise try number
+
+	;; Deal with variables
+	call primary_expr_variable  ; Deal with variable
+	jmp primary_expr_done       ; Be done
+
+primary_expr_num:
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	mov al, [rax]               ; global_token->S[0]
+	movzx rax, al               ; Make it useful
+	mov rbx, primary_expr_string_7 ; Using "0123456789"
+	call In_Set                 ; See if we have a match
+	cmp rax, 1                  ; IF match
+	jne primary_expr_fail       ; otherwise we failed hard
+
+	;; Deal with numbers
+	call primary_expr_number    ; Collect the number
+	jmp primary_expr_done       ; Be done
+
+primary_expr_fail:
+	;; looks like we hit bad input
+	;; abort before it gets bad
+	call primary_expr_failure   ; No match means failure
+primary_expr_done:
+	pop rbx                     ; Restore RBX
+	ret
+
+primary_expr_string_0: db "LOAD_IMMEDIATE_eax %0", 10, 0
+primary_expr_string_1: db "SUBTRACT_eax_from_ebx_into_ebx", 10, "MOVE_ebx_to_eax", 10, 0
+primary_expr_string_2: db "LOAD_IMMEDIATE_eax %1", 10, 0
+primary_expr_string_3: db "XOR_ebx_eax_into_eax", 10, 0
+primary_expr_string_4: db "NOT_eax", 10, 0
+primary_expr_string_5: db "Error in Primary expression", 10, "Didn't get )", 10, 0
+primary_expr_string_6: db "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_", 0
+primary_expr_string_7:db "0123456789", 0
+
+
+	;; primary_expr_variable function
+	;; Recieves nothing
+	;; Returns nothing
+	;; Walks global and updates output
+	;; Uses RAX for struct token_list* a and RCX for char* S
+primary_expr_variable:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rax, [global_token]     ; Using global_token
+	mov rcx, [rax+16]           ; S = global_token->S
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, rcx                ; Using S
+	mov rbx, [global_constant_list] ; Using global_constant_list
+	call sym_lookup             ; sym_lookup(s, global_constant_list)
+	cmp rax, 0                  ; IF NULL == sym_lookup(s, global_constant_list)
+	je primary_expr_variable_local ; Try locals next
+
+	;; Deal with constant load
+	mov rbx, [rax+32]              ; a->ARGS
+	mov rax, primary_expr_variable_string_2 ; Using "LOAD_IMMEDIATE_eax %"
+	call emit_out               ; Emit it
+
+	mov rax, [rbx+16]           ; a->ARGS->S
+	call emit_out               ; Emit it
+
+	mov rax, primary_expr_variable_string_1 ; Using "\n"
+	call emit_out               ; Emit it
+	jmp primary_expr_variable_done ; Be done
+
+primary_expr_variable_local:
+	mov rax, rcx                ; Using S
+	mov rbx, [function]         ; Using function
+	mov rbx, [rbx+8]            ; function->locals
+	call sym_lookup             ; sym_lookup(s, function->locals)
+	cmp rax, 0                  ; IF NULL == sym_lookup(s, global_constant_list)
+	je primary_expr_variable_arguments ; try arguments next
+
+	;; Deal with local load
+	call variable_load          ; Collect it
+	jmp primary_expr_variable_done ; Be done
+
+primary_expr_variable_arguments:
+	mov rax, rcx                ; Using S
+	mov rbx, [function]         ; Using function
+	mov rbx, [rbx+32]           ; function->args
+	call sym_lookup             ; sym_lookup(s, function->args)
+	cmp rax, 0                  ; IF NULL == sym_lookup(s, global_constant_list)
+	je primary_expr_variable_function ; try functions next
+
+	;; Deal with argument load
+	call variable_load          ; Collect it
+	jmp primary_expr_variable_done ; Be done
+
+primary_expr_variable_function:
+	mov rax, rcx                ; Using S
+	mov rbx, [global_function_list] ; Using global_function_list
+	call sym_lookup             ; sym_lookup(s, global_function_list)
+	cmp rax, 0                  ; IF NULL == sym_lookup(s, global_function_list)
+	je primary_expr_variable_global ; try globals next
+
+	;; Deal with functions
+	call function_load          ; Deal with the function
+	jmp primary_expr_variable_done ; Be done
+
+primary_expr_variable_global:
+mov rax, rcx                ; Using S
+	mov rbx, [global_symbol_list] ; Using global_symbol_list
+	call sym_lookup             ; sym_lookup(s, global_symbol_list)
+	cmp rax, 0                  ; IF NULL == sym_lookup(s, global_symbol_list)
+	je primary_expr_variable_error ; Give up
+
+	;; Deal with globals
+	call global_load               ; Collect that global
+	jmp primary_expr_variable_done ; Be done
+
+primary_expr_variable_error:
+	mov r14, 2                  ; write to standard error
+;	call line_error             ; Write useful debug info
+	mov rax, rcx                ; put S in the right place
+	call File_Print             ; print it
+
+	mov rax, primary_expr_variable_string_0 ; Ending string
+	call File_Print             ; print it
+	call Exit_Failure           ; Abort Hard
+
+primary_expr_variable_done:
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+primary_expr_variable_string_0: db " is not a defined symbol", 10, 0
+primary_expr_variable_string_1: db 10, 0
+primary_expr_variable_string_2: db "LOAD_IMMEDIATE_eax %", 0
+
+
+;; variable_load function
+;; Recieves struct token_list* A in RAX
+;; Returns nothing
+;; Updates output and current_target
+;; Uses RCX for A
+variable_load:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rcx, rax                ; Protect A
+
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, open_paren         ; Using "("
+	call match                  ; IF global_token->S == "("
+	cmp rax, 0                  ; Then it might be a function
+	jne variable_load_regular   ; Otherwise it is regular
+
+	mov rbx, [rcx+24]           ; A->TYPE
+	mov rbx, [rbx+40]           ; A->TYPE->NAME
+	mov rax, type_function_name ; Using "FUNCTION"
+	call match                  ; IF A->TYPE->NAME == "FUNCTION"
+	cmp rax, 0                  ; Then it must be a function
+	jne variable_load_regular   ; otherwise just another regular
+
+	;; deal with function
+	mov rax, [rcx+32]           ; A->DEPTH
+	call numerate_number        ; Convert to string
+	mov rbx, 0                  ; pass 0 for true
+;	call function_call          ; Create the function call
+	jmp variable_load_done      ; Be done
+
+variable_load_regular:
+	mov rax, [rcx+24]           ; A->TYPE
+	mov [current_target], rax   ; current_target = A->TYPE
+
+	mov rax, variable_load_string_0 ; Using "LOAD_BASE_ADDRESS_eax %"
+	call emit_out               ; Emit it
+
+	mov rax, [rcx+32]           ; A->DEPTH
+	call numerate_number        ; Convert to string
+	call emit_out               ; Emit it
+
+	mov rax, variable_load_string_1 ; Using "\n"
+	call emit_out               ; Emit it
+
+	;; Check for special case of assignment
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, equal              ; Using "="
+	call match                  ; IF global_token->S == "="
+	cmp rax, 0                  ; Then we skip loading
+	je variable_load_done       ; And be done
+
+	;; Deal with common case
+	mov rax, variable_load_string_2 ; Using "LOAD_INTEGER\n"
+	call emit_out               ; Emit it
+
+variable_load_done:
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+variable_load_string_0: db "LOAD_BASE_ADDRESS_eax %", 0
+variable_load_string_1: db 10, 0
+variable_load_string_2: db "LOAD_INTEGER", 10, 0
+
+
+;; function_load function
+;; Recieves struct token_list* a in RAX
+;; Returns nothing
+;; Uses RCX to hold A->S
+function_load:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rax, [rax+16]           ; A->S
+	mov rcx, rax                ; Protect A->S
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, open_paren         ; Using "("
+	call match                  ; IF global_token->S == "("
+	cmp rax, 0                  ; The we need to do a function call
+	jne function_load_regular   ; Otherwise just load it's address
+
+	;; Deal with function call
+	mov rax, rcx                ; Using A->S
+	mov rbx, 1                  ; Using FALSE
+;	call function_call          ; Deal with it
+	jmp function_load_done      ; Be done
+
+function_load_regular:
+	mov rax, function_load_string_0 ; Using "LOAD_IMMEDIATE_eax &FUNCTION_"
+	call emit_out               ; Emit it
+
+	mov rax, rcx                ; Using A->S
+	call emit_out               ; Emit it
+
+	mov rax, function_load_string_1 ; Using "\n"
+	call emit_out               ; Emit it
+
+function_load_done:
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+function_load_string_0: db "LOAD_IMMEDIATE_eax &FUNCTION_", 0
+function_load_string_1: db 10, 0
+
+
+;; global_load function
+;; Recieves struct token_list* A in RAX
+;; Returns nothing
+;; Uses RBX to hold A->S
+global_load:
+	push rbx                    ; Protect RBX
+	mov rbx, rax                ; Set as A
+	mov rbx, [rbx+16]           ; Set as A->S
+
+	mov rax, [rax+24]           ; A->TYPE
+	mov [current_target], rax   ; current_target = A->TYPE
+
+	mov rax, global_load_string_0 ; Using "LOAD_IMMEDIATE_eax &GLOBAL_"
+	call emit_out               ; Emit it
+
+	mov rax, rbx                ; Using A->S
+	call emit_out               ; Emit it
+
+	mov rax, global_load_string_1 ; Using "\n"
+	call emit_out               ; Emit it
+
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, equal              ; "="
+	call match                  ; IF global_token->S == "="
+	cmp rax, 0                  ; We need to skip for assignment
+	je global_load_done         ; and be done
+
+	;; Otherwise we are loading the contents
+	mov rax, global_load_string_2 ; Using "LOAD_INTEGER\n"
+	call emit_out               ; Emit it
+
+global_load_done:
+	pop rbx                     ; Restore RBX
+	ret
+
+
+global_load_string_0: db "LOAD_IMMEDIATE_eax &GLOBAL_", 0
+global_load_string_1: db 10, 0
+global_load_string_2: db "LOAD_INTEGER", 10, 0
+
+
+;; sym_lookup function
+;; Recieves char* S in RAX and struct token_list* symbol_list in RBX
+;; Uses I->S in RAX, S in RBX and I in RCX
+;; Returns match or NULL
+sym_lookup:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rcx, rbx                ; I = symbol_list
+	mov rbx, rax                ; Put S in the right place
+sym_lookup_iter:
+	cmp rcx, 0                  ; IF NULL == I
+	je sym_lookup_done          ; We failed to find match
+
+	mov rax, [rcx+16]           ; Using I->S
+	call match                  ; IF I->S == S
+	cmp rax, 0                  ; then be done
+	je sym_lookup_done          ; Failed
+
+	mov rcx, [rcx]              ; I = I->NEXT
+	jmp sym_lookup_iter         ; otherwise keep looping
+
+sym_lookup_done:
+	mov rax, rcx                ; Return I
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+
+;; primary_expr_number function
+;; Recieves nothing
+;; Returns nothing
+;; Simply uses current global token to update output and then steps to next global_token
+primary_expr_number:
+	mov rax, primary_expr_number_string_0 ; Using "LOAD_IMMEDIATE_eax %"
+	call emit_out               ; Emit it
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	call emit_out               ; Emit it
+
+	mov rax, primary_expr_number_string_1 ; Using "\n"
+	call emit_out               ; Emit it
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+	ret
+
+primary_expr_number_string_0: db "LOAD_IMMEDIATE_eax %", 0
+primary_expr_number_string_1: db 10, 0
+
+
+	;; primary_expr_string function
+	;; recieves nothing
+	;; Returns nothing
+	;; creates entries for string and calls to generate string output
+	;; uses RCX for char* number_string
+primary_expr_string:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rbx, [current_count]    ; Using current_count
+	mov rax, rbx                ; And putting it in the right place
+	call numerate_number        ; Get the string
+	mov rcx, rax                ; protect number_string
+
+	add rbx, 1                  ; current_count + 1
+	mov [current_count], rbx    ; current_count = current_count + 1
+
+	mov rax, primary_expr_string_string_0 ; Using "LOAD_IMMEDIATE_eax &STRING_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Put number_string in the right place
+;	call uniqueID_out           ; Make it unique
+
+	;; Generate the target
+	mov rax, primary_expr_string_string_1 ; Using ":STRING_"
+	mov rbx, [strings_list]     ; Using strings_list
+	call emit                   ; Emit it
+	mov rbx, rax                ; put new strings_list in place
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+;	call uniqueID               ; Make it unique
+;	mov rbx, rax                ; put new strings_list in place
+
+	;; Parse the string
+	mov rax, [global_token]     ; Using global token
+	mov rax, [rax+16]           ; global_token->S
+;	call parse_string           ; convert to useful form
+	call emit                   ; Emit it
+	mov [strings_list], rax     ; Update Strings _list
+
+	mov rax, [global_token]     ; Using global token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+primary_expr_string_string_0: db "LOAD_IMMEDIATE_eax &STRING_", 0
+primary_expr_string_string_1: db ":STRING_", 0
+
+
+;; primary_expr_failure function
+;; Recieves nothing
+;; Does not return but aborts hard
+;; Complains about the bad input
+primary_expr_failure:
+;	call line_error             ; Get line of issue
+	mov r14, 2                  ; write to standard error
+	mov rax, primary_expr_failure_string_0 ; Using "Recieved "
+	call File_Print             ; Print it
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	call File_Print             ; Print it
+
+	mov rax, primary_expr_failure_string_1 ; Using " in primary_expr\n"
+	call File_Print             ; Print it
+	call Exit_Failure           ; Abort Hard
+
+primary_expr_failure_string_0: db "Recieved ", 0
+primary_expr_failure_string_1: db " in primary_expr", 10, 0
+
+
+;; common_recursion function
+;; Recieves FUNCTION F in RAX
+;; Returns Nothing
+;; Walks global_token list and update output_list
+;; Updates current_target
+;; Uses RBX to hold FUNCTION F and struct type* last_type
+common_recursion:
+	push rbx                    ; Protect RBX
+	mov rbx, rax                ; Put FUNCTION F safely out of the way
+	mov rax, common_recursion_string_0 ; Using "PUSH_eax\t#_common_recursion\n"
+	call emit_out               ; Emit it
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, rbx                ; Prepare for function call
+	mov rbx, [current_target]   ; Get last type
+	call rax                    ; F();
+	mov rax, [current_target]   ; Get current_target
+;	call promote_type           ; get the right type
+	mov [current_target], rax   ; Set new current_target
+
+	mov rax, common_recursion_string_1 ; Using "POP_ebx\t# _common_recursion\n"
+	call emit_out               ; Emit it
+	pop rbx                     ; Restore RBX
+	ret
+
+
+common_recursion_string_0: db "PUSH_eax", 9, "#_common_recursion", 10, 0
+common_recursion_string_1: db "POP_ebx", 9, "# _common_recursion", 10, 0
 
 
 ;; require_match function
@@ -1418,6 +2059,86 @@ match_Done:
 	ret
 
 
+;; numerate_number function
+;; Recieves an INT A in RAX
+;; Returns char* result in RAX
+;; Allocates 16 bytes of memory
+;; Behaves badly when given a negative number too large
+;; Uses RAX for temp, RBX for DIVISOR, RDX for mod/0, RSI for result[i] and RBP for A
+numerate_number:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	push rsi                    ; Protect RSI
+	push rbp                    ; Protect RBP
+	mov rbp, rax                ; Protect A
+
+	mov rax, 16                 ; 16bytes
+	call malloc                 ; Get our pointer
+	push rax                    ; Protect our pointer
+	mov rsi, rax                ; put pointer in right place
+	mov rbx, 0x3B9ACA00         ; Set divisor to largest positive number that fits in 32bits
+
+	cmp rbp, 0                  ; Deal with 0 case
+	je numerate_number_ZERO     ; If it is
+	jg numerate_number_positive ; If it is positive
+
+	;; Deal with negative case
+	mov rax, 45                 ; Using "-"
+	mov [rsi], al               ; Write it
+	add rsi, 1                  ; increment
+	imul rbp, -1                ; A = A * -1
+
+numerate_number_positive:
+	mov rdx, 0                  ; Set top to 0
+	mov rax, rbp                ; Using A as bottom
+	idiv rbx                    ; rdx:rax % rbx -> rdx + rdx:rax / rbx -> rax [Even if we don't want it]
+	cmp rax, 0                  ; IF 0 == (a / divisor)
+	jne numerate_number_iter    ; Clean up those leading Zeros
+
+	mov rdx, 0                  ; Set top to 0
+	mov rax, rbx                ; Using Divisor for bottom
+	mov rbx, 10                 ; Make this shit work because idiv 10 doesn't work
+	idiv rbx                    ; rdx:rax % 10 -> rdx + rdx:rax / 10 -> rax [Even if we don't want it]
+	mov rbx, rax                ; Update divisor
+	jmp numerate_number_positive ; Keep collecting
+
+numerate_number_iter:
+	cmp rbx, 0                  ; IF DIVISOR < 0
+	jle numerate_number_done    ; Be done
+
+	mov rdx, 0                  ; Set top to 0
+	mov rax, rbp                ; Using A as bottom
+	idiv rbx                    ; rdx:rax % rbx -> rdx + rdx:rax / rbx -> rax [Even if we don't want it]
+	add rax, 48                 ; ((a / divisor) + 48)
+	mov [rsi], al               ; Write it
+	mov rbp, rdx                ; a = a % divisor
+
+	mov rdx, 0                  ; Set top to 0
+	mov rax, rbx                ; Using Divisor for bottom
+	mov rbx, 10                 ; Make this shit work because idiv 10 doesn't work
+	idiv rbx                    ; rdx:rax % 10 -> rdx + rdx:rax / 10 -> rax [Even if we don't want it]
+	mov rbx, rax                ; Update divisor
+
+	add rsi, 1                  ; increment
+	jmp numerate_number_iter    ; Keep going
+
+numerate_number_done:
+	pop rax                     ; Restore our result
+	pop rbp                     ; Restore RBP
+	pop rsi                     ; Restore RSI
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+numerate_number_ZERO:
+	mov rax, 48                 ; Using '0'
+	mov [rsi], al               ; Write it
+	add rsi, 1                  ; increment
+	jmp numerate_number_done    ; Be done
+
+
 ;; Exit_Failure function
 ;; Recieves nothing
 ;; And aborts hard
@@ -1576,29 +2297,29 @@ debug_list_iter:
 	mov rax, debug_list_string0 ; Using our first string
 	call File_Print             ; Print it
 	mov rax, r12                ; Use address of pointer
-	; call numerate_number        ; Convert it into string
-	; call File_Print             ; Print it
+	call numerate_number        ; Convert it into string
+	call File_Print             ; Print it
 
 	;; NEXT
 	mov rax, debug_list_string1 ; Using our second string
 	call File_Print             ; Print it
 	mov rax, [r12]              ; Use address of pointer
-	; call numerate_number        ; Convert it into string
-	; call File_Print             ; Print it
+	call numerate_number        ; Convert it into string
+	call File_Print             ; Print it
 
 	;; PREV
 	mov rax, debug_list_string2 ; Using our third string
 	call File_Print             ; Print it
 	mov rax, [r12+8]            ; Use address of pointer
-	; call numerate_number        ; Convert it into string
-	; call File_Print             ; Print it
+	call numerate_number        ; Convert it into string
+	call File_Print             ; Print it
 
 	;; S
 	mov rax, debug_list_string3 ; Using our fourth string
 	call File_Print             ; Print it
 	mov rax, [r12+16]              ; Use address of pointer
-	; call numerate_number        ; Convert it into string
-	; call File_Print             ; Print it
+	call numerate_number        ; Convert it into string
+	call File_Print             ; Print it
 
 	;; S Contents
 	mov rax, debug_list_string4 ; Using our fifth string
@@ -1614,15 +2335,15 @@ debug_list_null:
 	mov rax, debug_list_string5 ; Using our sixth string
 	call File_Print             ; Print it
 	mov rax, [r12+24]           ; Use address of pointer
-	; call numerate_number        ; Convert it into string
-	; call File_Print             ; Print it
+	call numerate_number        ; Convert it into string
+	call File_Print             ; Print it
 
 	;; ARGS/DEPTH
 	mov rax, debug_list_string6 ; Using our third string
 	call File_Print             ; Print it
 	mov rax, [r12+32]           ; Use address of pointer
-	; call numerate_number        ; Convert it into string
-	; call File_Print             ; Print it
+	call numerate_number        ; Convert it into string
+	call File_Print             ; Print it
 
 	mov rax, 10                 ; Add "\n"
 	call fputc                  ; print it
@@ -1686,9 +2407,8 @@ global_symbol_list:
 current_count:
 	dq 0
 
-;; Is supposed to be the global variable named function but NASM can't handle that name
-fn_function:
+global_function_list:
 	dq 0
 
-global_function_list:
+current_target:
 	dq 0
