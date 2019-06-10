@@ -26,10 +26,14 @@ Added catm for i386 in NASM, M1 and hex0
 Added support for EOF in line comments in hex2 and M1; thanks to markjenkins
 Added prototype M1 Manpage
 Added prototype hex2 Manpage
+Added prototype blood-elf Manpage
+Added prototype kaem Manpage
+Added prototype get_machine Manpage
 
 ** Changed
 
 ** Fixed
+Removed duplicate in kaem's help
 
 ** Removed
 

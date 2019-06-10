@@ -314,7 +314,7 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "-h") || match(argv[i], "--help"))
 		{
-			file_print("kaem only accepts --help, --file, --verbose, --version, --verbose, --nightmare-mode or no arguments\n", stdout);
+			file_print("kaem only accepts --help, --version, --file, --verbose, --nightmare-mode or no arguments\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
