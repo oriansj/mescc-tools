@@ -24,6 +24,8 @@ Added hex2 for i386 in NASM, M1, hex2 and hex1
 Added M0 for i386 in NASM, M1 and hex2
 Added catm for i386 in NASM, M1 and hex0
 Added support for EOF in line comments in hex2 and M1; thanks to markjenkins
+Added prototype M1 Manpage
+Added prototype hex2 Manpage
 
 ** Changed
 
