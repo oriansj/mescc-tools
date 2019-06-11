@@ -6,7 +6,7 @@ get_machine - identify running hardware architecture
 
 .SH SYNOPSIS
 
-get_machine { --exact --override OVERRIDE --OS }
+get_machine [ --exact --override OVERRIDE --OS ]
 
 .SH DESCRIPTION
 
@@ -15,7 +15,7 @@ to know that hardware architecture it is assuming or what
 host operating system is being used.
 .br
 
-At it's core is figure out the general hardware architecture
+At its core is figure out the general hardware architecture
 and return it as quickly as possible. Although it is sometimes
 useful to return something different; which is why --override
 exits and thus what ever is supplied by with it is returned.
@@ -44,7 +44,7 @@ Typically, get_machine will be in scripts used in bootstrapping
 
 .SH COMPATIBILITY
 
-get_machine is compatable with all Turing complete machines;
+get_machine is compatible with all Turing complete machines;
 even the ones that try to be Turing complete -1
 
 .SH AUTHORS

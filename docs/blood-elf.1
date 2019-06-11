@@ -6,7 +6,7 @@ blood-elf - Get mescc with dwarfs
 
 .SH SYNOPSIS
 
-blood-elf --file FILE {--output FILE}
+blood-elf --file FILE [--output FILE --64]
 
 .SH DESCRIPTION
 
@@ -14,7 +14,7 @@ blood-elf exists to generate ELF debug tables in M1-macro
 format from M1-macro assembly files.
 .br
 
-At it's core is read until you find :LABEL and then add it
+At its core is read until you find :LABEL and then add it
 to the list of things to output. It will ignore labels that
 have '_' prefixing their name. eg :_foo will not get an entry.
 If no output is specified, the result will be sent to Standard
@@ -37,8 +37,8 @@ Typically, blood-elf will be called in scripts used in bootstrapping
 
 .SH COMPATIBILITY
 
-blood-elf is compatable with all Turing complete machines;
-even the ones that try to be Turing complete -1
+blood-elf is compatible with all Turing complete machines;
+even the ones that try to be Turing complete -1.
 
 .SH AUTHORS
 Jeremiah Orians <Jeremiah@pdp10.guru>

@@ -6,7 +6,7 @@ kaem - Like running with scissors but shell scripts without a shell
 
 .SH SYNOPSIS
 
-kaem {--file FILE --strict --verbose --nightmare-mode }
+kaem [--file FILE --strict --verbose --nightmare-mode]
 
 .SH DESCRIPTION
 
@@ -16,7 +16,7 @@ thus allowing the bootstrap to occur with only itself and a
 hex0 assembler as the only binaries running on the system.
 .br
 
-At it's core is read a line (except when the line is terminated
+At its core is read a line (except when the line is terminated
 with a '\\', when it is read the next line too) and then collect
 the arguments into an array, lookup the program in the path
 provided by the name or if not found in the ENVIRONMENT and
@@ -42,7 +42,7 @@ Typically, kaem will be in running scripts used in bootstrapping
 
 .SH COMPATIBILITY
 
-kaem is compatable with all Turing complete machines;
+kaem is compatible with all Turing complete machines;
 even the ones that try to be Turing complete -1
 
 .SH AUTHORS

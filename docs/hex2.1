@@ -6,7 +6,7 @@ hex2 - The trivially bootstrappable linker that is designed to be introspectable
 
 .SH SYNOPSIS
 
-hex2 --architecture ARCHITECTURE --BaseAddress ADDRESS --file FILE {--output FILE --exec_enable}
+hex2 --architecture ARCHITECTURE --BaseAddress ADDRESS --file FILE [--output FILE --exec_enable]
 
 .SH DESCRIPTION
 
@@ -14,7 +14,7 @@ hex2 is designed to allow humans to write elf and other binary
 files by hand in a format that allows comments and ease of understanding.
 .br
 
-At it's core is read 2 hex characters add them together
+At its core is read 2 hex characters add them together
 and output a single byte. You can override this and use
 binary or octal input if you so desire, using the --octal
 or --binary option.
@@ -24,10 +24,12 @@ By default the file will not be executable unless the option:
 --exec_enable is also passed.
 .br
 
-The Supported ARCHITECTURES are as follows: knight-native,
-knight-posix, x86, amd64, armv7l and aarch64
+The supported ARCHITECTURES are as follows: knight-native,
+knight-posix, x86, amd64, armv7l and aarch64.
+If you fail to specify an architecture, the default of knight-native
+will be used.
 .br
-The Base Address for which the binary is to be loaded into memory
+The base address for which the binary is to be loaded into memory
 and thus the relative and absolute pointers should be based,
 is passed via --BaseAddress if it is not provided the default
 value of ZERO will be assumed.
@@ -56,7 +58,7 @@ Typically, hex2 will be called in scripts used in bootstrapping
 
 .SH COMPATIBILITY
 
-hex2 is compatable with all Turing complete machines;
+hex2 is compatible with all Turing complete machines;
 even the ones that try to be Turing complete -1
 
 .SH AUTHORS

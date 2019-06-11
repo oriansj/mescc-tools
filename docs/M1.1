@@ -6,7 +6,7 @@ M1 \- The universal Macro assembler
 
 .SH SYNOPSIS
 
-M1 --architecture ARCHITECTURE --file FILE {--output FILE}
+M1 --architecture ARCHITECTURE --file FILE [--output FILE --octal --binary --BigEndian --LittleEndian]
 
 .SH DESCRIPTION
 
@@ -26,8 +26,10 @@ in the output file or if no output file is specified the
 output will be send to standard out.
 .br
 
-The Supported ARCHITECTURES are as follows: knight-native,
-knight-posix, x86, amd64, armv7l and aarch64
+The supported ARCHITECTURES are as follows: knight-native,
+knight-posix, x86, amd64, armv7l and aarch64.
+If you fail to specify an architecture, the default of knight-native
+will be used.
 .br
 
 M1 also supports the generation of 8, 16 and 32bit integers
@@ -52,7 +54,7 @@ Typically, M1 will be called in scripts used in bootstrapping
 
 .SH COMPATIBILITY
 
-M1 is compatable with all Turing complete machines;
+M1 is compatible with all Turing complete machines;
 even the ones that try to be Turing complete -1
 
 .SH AUTHORS
