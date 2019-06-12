@@ -2978,25 +2978,134 @@ create_struct_string_1: db "ERROR in create_struct", 10, " Missing ;", 10, 0
 	;; build_member function
 	;; Recieves struct type* last in RAX, int offset in RBX and global member_size in RDI
 	;; Updates member_size in RDI and returns struct type* I in RAX
+	;; Uses RCX for struct type* member_type and RDX for struct type* I
 build_member:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	mov rdx, rax                ; Put last out of the way
+	mov rax, 56                 ; Allocate type
+	call malloc                 ; Get I
+	mov [rax+32], rdx           ; I->MEMBERS = LAST
+	mov [rax+16], rbx           ; I->OFFSET = OFFSET
+	mov rdx, rax                ; Put I in place
 
+	call type_name              ; Get member_type
+	mov rcx, rax                ; Put in place
+	mov [rdx+40], rcx           ; I->TYPE = MEMBER_TYPE
+	mov rax, [global_token]     ; Using global_token
+	mov rbx, [rax+16]           ; global_token->S
+	mov [rdx+48], rbx           ; I->NAME = global_token->S
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	;; Check if we have an array
+	mov rbx, [rax+16]           ; global_token->S
+	mov rax, open_bracket       ; Using "["
+	call match                  ; IF global_token->S == "["
+	cmp rax, 0                  ; Then we have to deal with arrays in our structs
+	je build_member_arrray      ; So deal with that pain
+
+	;; Deal with non-array case
+	mov rax, [rcx+8]            ; member_type->SIZE
+	mov [rdx+8], rax            ; I->SIZE = member_type->SIZE
+	jmp build_member_done       ; Be done
+
+build_member_arrray:
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, [rax+16]           ; global_token->S
+	call numerate_string        ; convert number
+	mov rbx, [rcx+40]           ; member_type->TYPE
+	mov rbx, [rbx+8]            ; member_type->TYPE->SIZE
+	imul rax, rbx               ; member_type->type->size * numerate_string(global_token->s)
+	mov [rdx+8], rax            ; I->SIZE = member_type->type->size * numerate_string(global_token->s)
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, build_member_string_0 ; Using "Struct only supports [num] form\n"
+	mov rbx, close_bracket      ; Using "]"
+	call require_match          ; Make sure we have it
+
+build_member_done:
+	mov rdi, [rdx+8]            ; MEMBER_SIZE = I->SIZE
+	pop rdx                     ; Restore RDX
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
 	ret
 
+build_member_string_0: db "Struct only supports [num] form", 10, 0
 
-	;; build_union function
-	;; Recieves struct type* last in RAX, int offset in RBX and global member_size in RDI
-	;; Updates member_size in RDI and returns struct type* LAST in RAX
+
+
+;; build_union function
+;; Recieves struct type* last in RAX, int offset in RBX and global member_size in RDI
+;; Updates member_size in RDI and returns struct type* LAST in RAX
+;; Uses RCX for struct type* last, RDX for int offset, RSI for int size and RDI for int member_size
 build_union:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	push rsi                    ; Protect RSI
+	mov rcx, rax                ; Put LAST in right spot
+	mov rdx, rbx                ; Put OFFSET in right spot
+	mov rsi, 0                  ; SIZE = 0
 
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, build_union_string_0 ; Using "ERROR in build_union\nMissing {\n"
+	mov rbx, open_curly_brace   ; Using "{"
+	call require_match          ; Make sure we have it
+
+build_union_iter:
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	mov al, [rax]               ; global_token->S[0]
+	movzx rax, al               ; make it useful
+	cmp rax, 125                ; IF global_token->S[0] == "}"
+	je build_union_done         ; Be done
+
+	;; Collect union member
+	mov rax, rcx                ; Passing LAST
+	mov rbx, rdx                ; Passing offset
+	call build_member           ; build_member(last, offset)
+	mov rcx, rax                ; last = build_member(last, offset)
+
+	cmp rsi, rdi                ; IF member_size > size
+	jg build_union_size         ; Then update size
+
+	;; deal with member_size > size
+	mov rsi, rdi                ; SIZE = MEMBER_SIZE
+
+build_union_size:
+	mov rax, build_union_string_1 ; Using "ERROR in build_union\nMissing ;\n"
+	mov rbx, semicolon          ; Using ";"
+	call require_match          ; Make sure we have it
+	jmp build_union_iter        ; Keep going
+
+build_union_done:
+	mov rdi, rsi                ; MEMBER_SIZE = SIZE
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, rcx                ; Return last
+
+	pop rsi                     ; Restore RSI
+	pop rdx                     ; Restore RDX
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
 	ret
+
+build_union_string_0: db "ERROR in build_union", 10, "Missing {", 10, 0
+build_union_string_1: db "ERROR in build_union", 10, "Missing ;", 10, 0
 
 
 
@@ -3126,6 +3235,89 @@ numerate_number_ZERO:
 	mov [rsi], al               ; Write it
 	add rsi, 1                  ; increment
 	jmp numerate_number_done    ; Be done
+
+
+;; numerate_string function
+;; Recieves CHAR* in RAX
+;; Returns value of CHAR* in RAX
+;; Uses RAX for VALUE, RBX for S, RCX for CH and RSI for NEGATIVE?
+numerate_string:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	push rsi                    ; Protect RSI
+	mov rbx, rax                ; put S in correct place
+	mov rax, 0                  ; Initialize to Zero
+numerate_string_loop:
+	mov cl, [rbx+1]             ; S[1]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 120                ; IF 'x' == S[1]
+	je numerate_hex             ; Deal with hex input
+
+	;; Assume decimal input
+	mov rsi, 0                  ; Assume no negation
+	mov cl, [rbx]               ; S[0]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 45                 ; IF '-' == S[0]
+	jne numerate_decimal        ; Skip negation
+
+	mov rsi, 1                  ; Set FLAG
+	add rbx, 1                  ; S = S + 1
+
+numerate_decimal:
+	mov cl, [rbx]               ; S[0]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 0                  ; IF NULL == S[0]
+	je numerate_decimal_done    ; We are done
+
+	imul rax, 10                ; VALUE = VALUE * 10
+	sub rcx, 48                 ; CH = CH - '0'
+	cmp rcx, 9                  ; Check for illegal
+	jg numerate_string_fail     ; If CH > '9'
+	cmp rcx, 0                  ; Check for illegal
+	jl numerate_string_fail     ; IF CH < 0
+	add rax, rcx                ; VALUE = VALUE + CH
+	add rbx, 1                  ; S = S + 1
+	jmp numerate_decimal        ; Keep looping
+
+numerate_decimal_done:
+	cmp rsi, 1                  ; Check if need to negate
+	jne numerate_string_done    ; Nope
+
+	imul rax, -1                ; VALUE = VALUE * -1
+	jmp numerate_string_done    ; Done
+
+numerate_hex:
+	add rbx, 2                  ; S = S + 2
+numerate_hex_loop:
+	mov cl, [rbx]               ; S[0]
+	movzx rcx, cl               ; make it useful
+	cmp rcx, 0                  ; IF NULL == S[0]
+	je numerate_string_done     ; We are done
+
+	shl rax, 4                  ; VALUE = VALUE << 4
+	sub rcx, 48                 ; CH = CH - '0'
+	cmp rcx, 10                 ; IF 10 >= CH
+	jl numerate_hex_digit       ; NO
+	sub rcx, 7                  ; Push A-F into range
+numerate_hex_digit:
+	cmp rcx, 15                 ; Check for illegal
+	jg numerate_string_fail     ; If CH > 'F'
+	cmp rcx, 0                  ; Check for illegal
+	jl numerate_string_fail     ; IF CH < 0
+	add rax, rcx                ; VALUE = VALUE + CH
+	add rbx, 1                  ; S = S + 1
+	jmp numerate_hex_loop       ; Keep looping
+
+numerate_string_fail:
+	mov rax, 0                  ; return ZERO
+
+numerate_string_done:
+	pop rsi                     ; Restore RSI
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
 
 
 ;; Exit_Failure function
