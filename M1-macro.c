@@ -316,7 +316,7 @@ void hexify_string(struct Token* p)
 	char* table = "0123456789ABCDEF";
 	int i = string_length(p->Text);
 
-	char* d = calloc(((i << 2) + 4), sizeof(char));
+	char* d = calloc(((((i >> 2) + 1) << 3) + 1), sizeof(char));
 	p->Expression = d;
 	char* S = p->Text;
 

@@ -954,7 +954,7 @@ statement_if:
 	jne statement_do            ; otherwise try DO
 
 	;; Deal with IF statement
-	; call process_if
+	call process_if             ; DO IT
 	jmp statement_done          ; be done
 
 statement_do:
@@ -964,7 +964,7 @@ statement_do:
 	jne statement_while         ; otherwise try WHILE
 
 	;; Deal with DO statement
-	; call process_do
+	call process_do             ; DO IT
 	jmp statement_done          ; be done
 
 statement_while:
@@ -974,7 +974,7 @@ statement_while:
 	jne statement_for           ; otherwise try FOR
 
 	;; Deal with WHILE statement
-	; call process_while
+	call process_while          ; DO IT
 	jmp statement_done          ; be done
 
 statement_for:
@@ -984,7 +984,7 @@ statement_for:
 	jne statement_asm           ; otherwise try ASM
 
 	;; Deal with FOR statement
-	; call process_for
+	call process_for            ; DO IT
 	jmp statement_done          ; be done
 
 statement_asm:
@@ -994,7 +994,7 @@ statement_asm:
 	jne statement_goto          ; otherwise try GOTO
 
 	;; Deal with ASM statement
-	; call process_asm
+	call process_asm            ; Hit it
 	jmp statement_done          ; be done
 
 statement_goto:
@@ -1331,6 +1331,71 @@ collect_local_string_2: db "ERROR in collect_local", 10, "Missing ;", 10, 0
 collect_local_string_3: db "PUSH_eax", 9, "#", 0
 
 
+;; process_asm function
+;; Recieves nothing
+;; Returns nothing
+;; Simply inlines the asm statements
+;; Uses RBX for global_token temp storage
+process_asm:
+	push rbx                    ; Protect RBX
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, process_asm_string_0 ; Using "ERROR in process_asm\nMISSING (\n"
+	mov rbx, open_paren         ; Using "("
+	call require_match          ; Make sure we have it
+
+	mov rbx, [global_token]     ; Using global_token
+process_asm_iter:
+	mov rax, [rbx+16]           ; global_token->S
+	mov al, [rax]               ; global_token->S[0]
+	movzx rax, al               ; Make it useful
+	cmp rax, 34                 ; IF global_token->S[0] == '"'
+	jne process_asm_done        ; Otherwise be done
+
+	mov rax, [rbx+16]           ; global_token->S
+	add rax, 1                  ; global_token->S + 1
+	call emit_out               ; Emit it
+
+	mov rax, process_asm_string_1 ; Using "\n"
+	call emit_out               ; Emit it
+
+	mov rbx, [rbx]              ; global_token->NEXT
+	mov [global_token], rbx     ; global_token = global_token->NEXT
+	jmp process_asm_iter        ; keep going
+
+process_asm_done:
+	mov rax, process_asm_string_2 ; Using "ERROR in process_asm\nMISSING )\n"
+	mov rbx, close_paren        ; Using ")"
+	call require_match          ; Make sure we have it
+
+	mov rax, process_asm_string_3 ; Using "ERROR in process_asm\nMISSING ;\n"
+	mov rbx, semicolon          ; Using ";"
+	call require_match          ; Make sure we have it
+
+	pop rbx                     ; Restore RBX
+	ret
+
+process_asm_string_0: db "ERROR in process_asm", 10, "MISSING (", 10, 0
+process_asm_string_1: db 10, 0
+process_asm_string_2: db "ERROR in process_asm", 10, "MISSING )", 10, 0
+process_asm_string_3: db "ERROR in process_asm", 10, "MISSING ;", 10, 0
+
+
+process_if:
+	ret
+
+process_do:
+	ret
+
+process_while:
+	ret
+
+process_for:
+	ret
+
+
 ;; expression function
 ;; Recieves Nothing
 ;; Returns Nothing
@@ -1606,18 +1671,35 @@ postfix_expr:
 	ret
 
 
-	;; postfix_expr_stub function
-	;; Recieves nothing
-	;; Returns Nothing
-	;; Just calls general_recursion a bunch
-	;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
+;; postfix_expr_stub function
+;; Recieves nothing
+;; Returns Nothing
+;; Checks for "[" and "->" and deals with them otherwise does nothing
+;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
 postfix_expr_stub:
 	push rbx                    ; Protect RBX
-	push rcx                    ; Protect RCX
-	push rdx                    ; Protect RDX
-	
-	pop rdx                     ; Restore RDX
-	pop rcx                     ; Restore RCX
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, open_bracket       ; Using "["
+	call match                  ; IF global_token->S == "["
+	cmp rax, 0                  ; then we have an array
+	jne postfix_expr_stub_arrow ; Otherwise try arrow
+
+	;; Deal with array
+	call postfix_expr_array     ; Get it
+	call postfix_expr_stub      ; Recurse
+
+postfix_expr_stub_arrow:
+	mov rax, arrow_string       ; Using "->"
+	call match                  ; IF global_token->S == "->"
+	cmp rax, 0                  ; Then we need to deal with struct offsets
+	jne postfix_expr_stub_done  ; Otherwise be done
+
+	;; Deal with arrow
+	call postfix_expr_arrow     ; Get it
+	call postfix_expr_stub      ; Recurse
+
+postfix_expr_stub_done:
 	pop rbx                     ; Restore RBX
 	ret
 
@@ -1663,6 +1745,183 @@ unary_expr_sizeof_string_1: db "ERROR in unary_expr", 10, "Missing )", 10, 0
 unary_expr_sizeof_string_2: db "LOAD_IMMEDIATE_eax %", 0
 unary_expr_sizeof_string_3: db 10, 0
 
+
+;; postfix_expr_array function
+;; Recieves Nothing
+;; Returns Nothing
+;; Uses RBX for struct type* ARRAY and RCX for char* ASSIGN
+postfix_expr_array:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rbx, [current_target]   ; ARRAY = current_target
+
+	mov rax, expression         ; Using expression
+	call common_recursion       ; Recurse
+
+	mov [current_target], rbx   ; current_target = ARRAY
+
+	mov rcx, postfix_expr_array_string_0 ; ASSIGN = "LOAD_INTEGER\n"
+
+	mov rax, type_char_indirect_name ; Using "char*"
+	mov rbx, [rbx+48]           ; current_target->NAME
+	call match                  ; IF current_target->NAME == "char*"
+	cmp rax, 0                  ; load a byte
+	jne postfix_expr_array_large ; Otherwise adjust
+
+	;; Deal with loading byte
+	mov rcx, postfix_expr_array_string_1 ; ASSIGN = "LOAD_BYTE\n"
+	jmp postfix_expr_array_common ; Do the next bit
+
+postfix_expr_array_large:
+	;; deal with arrays made of things other than chars
+	mov rax, postfix_expr_array_string_2 ; Using "SAL_eax_Immediate8 !"
+	call emit_out               ; Emit it
+
+	mov rax, [current_target]   ; Using current_target
+	mov rax, [rax+24]           ; current_target->INDIRECT
+	mov rax, [rax+8]            ; current_target->INDIRECT->SIZE
+	call ceil_log2              ; ceil_log2(current_target->indirect->size)
+	call numerate_number        ; numerate_number(ceil_log2(current_target->indirect->size))
+	call emit_out               ; Emit it
+
+	mov rax, postfix_expr_array_string_3 ; Using "\n"
+	call emit_out               ; Emit it
+
+postfix_expr_array_common:
+	mov rax, postfix_expr_array_string_4 ; Using "ADD_ebx_to_eax\n"
+	call emit_out               ; Emit it
+
+	mov rax, postfix_expr_array_string_5 ; Using "ERROR in postfix_expr\nMissing ]\n"
+	mov rbx, close_bracket      ; Using "]"
+	call require_match          ; Make sure we have it
+
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, equal              ; Using "="
+	call match                  ; IF global_token->S == "="
+	cmp rax, 0                  ; We need to preserve address
+	jne postfix_expr_array_done ; Otherwise be done
+
+	;; Clearing out assign
+	mov rcx, postfix_expr_array_string_6 ; ASSIGN = ""
+
+postfix_expr_array_done:
+	mov rax, rcx                ; Using ASSIGN
+	call emit_out               ; Emit it
+
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+postfix_expr_array_string_0: db "LOAD_INTEGER", 10, 0
+postfix_expr_array_string_1: db "LOAD_BYTE", 10, 0
+postfix_expr_array_string_2: db "SAL_eax_Immediate8 !", 0
+postfix_expr_array_string_3: db 10, 0
+postfix_expr_array_string_4: db "ADD_ebx_to_eax", 10, 0
+postfix_expr_array_string_5: db "ERROR in postfix_expr", 10, "Missing ]", 10, 0
+postfix_expr_array_string_6: db 0
+
+
+;; ceil_log2 function
+;; Recieves int a in RAX
+;; Performs log2 on A and
+;; Returns result in RAX
+;; Uses RBX for INT A and RCX for INT RESULT
+ceil_log2:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rcx, 0                  ; RESULT = 0
+
+	mov rbx, rax                ; put A in right place
+	sub rax, 1                  ; (A - 1)
+	and rax, rbx                ; A & (A - 1)
+	cmp rax, 0                  ; IF 0 == (A & (A - 1))
+	jne ceil_log2_iter          ; Starting from -1
+
+	mov rcx, -1                 ; RESULT = -1
+
+ceil_log2_iter:
+	cmp rbx, 0                  ; IF A > 0
+	jle ceil_log2_done          ; Otherwise be done
+
+	add rcx, 1                  ; RESULT = RESULT + 1
+	shr rbx, 1                  ; A = A >> 1
+	jmp ceil_log2_iter          ; Keep looping
+
+ceil_log2_done:
+	mov rax, rcx                ; Return RESULT
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+
+;; postfix_expr_arrow function
+;; Recieves nothing
+;; Returns nothing
+;; Emits a bunch and updates current_target
+;; Uses RBX for struct type* I
+postfix_expr_arrow:
+	push rbx                    ; Protect RBX
+	mov rax, postfix_expr_arrow_string_0 ; Using "# looking up offset\n"
+	call emit_out               ; Emit it
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rbx, [rax+16]           ; Using global_token->S
+	mov rax, [current_target]   ; Using current_target
+	call lookup_member          ; lookup_member(current_target, global_token->s)
+	mov rbx, rax                ; struct type* I = lookup_member(current_target, global_token->s)
+
+	mov rax, [rax+40]           ; I->TYPE
+	mov [current_target], rax   ; current_target = I->TYPE
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, [rbx+16]           ; I->OFFSET
+	cmp rax, 0                  ; IF 0 != I->OFFSET
+	je postfix_expr_arrow_first ; Then we don't need to do an offset
+
+	;; Deal with needing an offset
+	mov rax, postfix_expr_arrow_string_1 ; Using "# -> offset calculation\nLOAD_IMMEDIATE_ebx %"
+	call emit_out               ; Emit it
+
+	mov rax, [rbx+16]           ; I->OFFSET
+	call numerate_number        ; Convert to string
+	call emit_out               ; Emit it
+
+	mov rax, postfix_expr_arrow_string_2 ; Using "\nADD_ebx_to_eax\n"
+	call emit_out               ; Emit it
+
+postfix_expr_arrow_first:
+	mov rax, [rbx+8]            ; I->SIZE
+	cmp rax, 4                  ; IF I->SIZE >= 4
+	jl postfix_expr_arrow_done  ; Otherwise be done
+
+	;; Last chance for load
+	mov rax, [global_token]     ; Using global_token
+	mov rbx, [rax+16]           ; global_token->S
+	mov rax, equal              ; Using "="
+	call match                  ; IF global_token->S == "="
+	cmp rax, 0                  ; Then we have assignment and should not load
+	je postfix_expr_arrow_done  ; Be done
+
+	;; Deal with load case
+	mov rax, postfix_expr_arrow_string_3 ; Using "LOAD_INTEGER\n"
+	call emit_out               ; Emit it
+
+postfix_expr_arrow_done:
+	pop rbx                     ; Restore RBX
+	ret
+
+postfix_expr_arrow_string_0: db "# looking up offset", 10, 0
+postfix_expr_arrow_string_1: db "# -> offset calculation", 10, "LOAD_IMMEDIATE_ebx %", 0
+postfix_expr_arrow_string_2: db 10, "ADD_ebx_to_eax", 10, 0
+postfix_expr_arrow_string_3: db "LOAD_INTEGER", 10, 0
 
 
 ;; primary_expr function
@@ -2377,8 +2636,6 @@ uniqueID_out:
 	ret
 
 
-
-
 ;; emit_out function
 ;; Recieves char* S in RAX
 ;; Returns nothing
@@ -2975,10 +3232,67 @@ create_struct_string_0: db "ERROR in create_struct", 10, " Missing {", 10, 0
 create_struct_string_1: db "ERROR in create_struct", 10, " Missing ;", 10, 0
 
 
-	;; build_member function
-	;; Recieves struct type* last in RAX, int offset in RBX and global member_size in RDI
-	;; Updates member_size in RDI and returns struct type* I in RAX
-	;; Uses RCX for struct type* member_type and RDX for struct type* I
+;; lookup_member function
+;; Recieves struct type* parent in RAX and char* name in RBX
+;; Returns struct type* I in RAX
+;; Uses char* NAME in RBX, RCX for struct type* I and RDX to hold parent for errors
+;; Aborts hard if not found
+lookup_member:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	mov rdx, rax                ; Protect Parent
+	mov rcx, [rax+32]           ; struct type* I = parent->MEMBERS
+lookup_member_iter:
+	cmp rcx, 0                  ; IF I == NULL
+	je lookup_member_fail       ; Abort HARD
+
+	mov rax, [rcx+48]           ; Using I->NAME
+	call match                  ; IF I->NAME == NAME
+	cmp rax, 0                  ; Then we have found the member
+	mov rax, rcx                ; Prepare for return
+	mov rcx, [rcx+32]           ; Prepare for loop I = I->MEMBERS
+	jne lookup_member_iter      ; Looks like we are looping
+
+	;; I is already in RAX
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+lookup_member_fail:
+	mov r14, 2                  ; write to standard error
+	mov rax, lookup_member_string_0 ; Using "ERROR in lookup_member "
+	call File_Print             ; print it
+
+	mov rax, [rdx+48]           ; PARENT->NAME
+	call File_Print             ; print it
+
+	mov rax, arrow_string       ; Using "->"
+	call File_Print             ; print it
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	call File_Print             ; print it
+
+	mov rax, lookup_member_string_1 ; Using " does not exist\n"
+	call File_Print             ; print it
+
+;	call line_error             ; Write useful debug info
+
+	mov rax, lookup_member_string_2 ; Using "\n"
+	call File_Print             ; print it
+	jmp Exit_Failure            ; Abort Hard
+
+lookup_member_string_0: db "ERROR in lookup_member ", 0
+lookup_member_string_1: db " does not exist", 10, 0
+lookup_member_string_2: db 10, 0
+
+
+;; build_member function
+;; Recieves struct type* last in RAX, int offset in RBX and global member_size in RDI
+;; Updates member_size in RDI and returns struct type* I in RAX
+;; Uses RCX for struct type* member_type and RDX for struct type* I
 build_member:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -3033,6 +3347,9 @@ build_member_arrray:
 
 build_member_done:
 	mov rdi, [rdx+8]            ; MEMBER_SIZE = I->SIZE
+	mov [rdx+40], rcx           ; I->TYPE = MEMBER_TYPE
+	mov rax, rdx                ; Return I
+
 	pop rdx                     ; Restore RDX
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
@@ -3106,7 +3423,6 @@ build_union_done:
 
 build_union_string_0: db "ERROR in build_union", 10, "Missing {", 10, 0
 build_union_string_1: db "ERROR in build_union", 10, "Missing ;", 10, 0
-
 
 
 ;; sym_declare function
