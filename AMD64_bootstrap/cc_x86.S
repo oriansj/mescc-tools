@@ -1043,7 +1043,7 @@ statement_break:
 	jne statement_continue      ; Otherwise try CONTINUE
 
 	;; Deal with BREAK statement
-	; call process_break
+	call process_break          ; Lets do some damage
 	jmp statement_done          ; be done
 
 statement_continue:
@@ -1271,7 +1271,7 @@ collect_local_else:
 	mov rax, [function]         ; Using function
 	mov rax, [rax+8]            ; function->locals
 	mov rax, [rax+32]           ; function->locals->depth
-	sub rax, 8                  ; function->locals->depth - 4
+	sub rax, 4                  ; function->locals->depth - 4
 	mov [rcx+32], rax           ; a->DEPTH = function->locals->depth - 4
 
 collect_local_common:
@@ -1383,17 +1383,554 @@ process_asm_string_2: db "ERROR in process_asm", 10, "MISSING )", 10, 0
 process_asm_string_3: db "ERROR in process_asm", 10, "MISSING ;", 10, 0
 
 
+;; process_if function
+;; Recieves nothing
+;; Returns Nothing
+;; Increments current_count recurses into expression + statement
+;; Uses RCX for char* NUMBER_STRING
 process_if:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rax, [current_count]    ; Using current count
+	mov rbx, rax                ; Preparing for update
+	add rbx, 1                  ; current_count + 1
+	mov [current_count], rbx    ; current_count = current_count + 1
+	call numerate_number        ; convert to string
+	mov rcx, rax                ; put NUMBER_STRING in place
+
+	mov rax, process_if_string_0 ; Using "# IF_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, process_if_string_1 ; Using "ERROR in process_if\nMISSING (\n"
+	mov rbx, open_paren         ; Using "("
+	call require_match          ; Make sure we have it
+
+	call expression             ; Recurse to get the IF(...) part
+
+	mov rax, process_if_string_2 ; Using "TEST\nJUMP_EQ %ELSE_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_if_string_3 ; Using "ERROR in process_if\nMISSING )\n"
+	mov rbx, close_paren        ; Using ")"
+	call require_match          ; Make sure we have it
+
+	call statement              ; Recursive to get the IF(){...} part
+
+	mov rax, process_if_string_4 ; Using "JUMP %_END_IF_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_if_string_5 ; Using ":ELSE_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, else_string        ; Using "else"
+	call match                  ; IF global_token->S == "else"
+	cmp rax, 0                  ; Then we need to collect the else too
+	jne process_if_done         ; Otherwise finish up
+
+	;; deal with else statement
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	call statement              ; Recurse to get the ELSE {...} part
+
+process_if_done:
+	mov rax, process_if_string_6 ; Using ":_END_IF_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
 	ret
 
+process_if_string_0: db "# IF_",0
+process_if_string_1: db "ERROR in process_if", 10, "MISSING (", 10, 0
+process_if_string_2: db "TEST", 10, "JUMP_EQ %ELSE_", 0
+process_if_string_3: db "ERROR in process_if", 10, "MISSING )", 10, 0
+process_if_string_4: db "JUMP %_END_IF_", 0
+process_if_string_5: db ":ELSE_", 0
+process_if_string_6: db ":_END_IF_", 0
+
+
+;; save_break_frame microfunction
+;; Overwrites RAX abd RBX
+;; Saves break frame on stack
+;; Returns to caller
+save_break_frame:
+	pop rbx                     ; Save return Address
+	mov rax, [break_frame]      ; Get break_frame
+	push rax                    ; Store as nested_locals
+	mov rax, [break_target_head] ; Get break_target_head
+	push rax                    ; Store as nested_break_head
+	mov rax, [break_target_func] ; Get break_target_func
+	push rax                    ; Store as nested_break_func
+	mov rax, [break_target_num] ; Get break_target_num
+	push rax                    ; Store as nested_break_num
+	push rbx                    ; Put return back in place
+	ret                         ; Return to caller
+
+
+;; restore_break_frame microfunction
+;; Overwrites RAX and RBX
+;; Restores break frame from stack
+;; Returns to caller
+restore_break_frame:
+	pop rbx                     ; Save return Address
+	pop rax                     ; Get nested_break_num
+	mov [break_target_num], rax ; Restore break_target_num
+	pop rax                     ; Get nested_break_func
+	mov [break_target_func], rax ; Restore break_target_func
+	pop rax                     ; Get nested_break_head
+	mov [break_target_head], rax ; Restore break_target_head
+	pop rax                     ; Get nested_locals
+	mov [break_frame], rax      ; Restore break_frame
+	push rbx                    ; Put return back in place
+	ret                         ; Return to caller
+
+
+;; set_break_frame microfunction
+;; Recieves char* head in RAX and char* num in RBX
+;; Overwrites RAX and RBX
+;; Returns to calling function
+set_break_frame:
+	mov [break_target_head], rax ; update break_target_head
+	mov [break_target_num], rbx ; update break_target_num
+	mov rbx, [function]         ; Using function
+	mov rax, [rbx+8]            ; function->LOCALS
+	mov [break_frame], rax      ; break_frame = function->LOCALS
+	mov rax, [rbx+16]           ; function->S
+	mov [break_target_func], rax ; break_target_func = function->S
+	ret                         ; Return to sender
+
+
+;; process_do function
+;; Recieves Nothing
+;; Returns Nothing
+;; Increments current_count and leverages save/restore_break_frame pieces
+;; Uses RCX for char* NUMBER_STRING
 process_do:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	call save_break_frame       ; Save the frame
+
+	mov rax, [current_count]    ; Using current count
+	mov rbx, rax                ; Preparing for update
+	add rbx, 1                  ; current_count + 1
+	mov [current_count], rbx    ; current_count = current_count + 1
+	call numerate_number        ; convert to string
+	mov rcx, rax                ; put NUMBER_STRING in place
+
+	mov rax, process_do_string_0 ; Using "DO_END_"
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call set_break_frame        ; Set the frame
+
+	mov rax, process_do_string_1 ; Using ":DO_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	call statement              ; Do the DO {...} part
+
+	mov rax, process_do_string_2 ; Using "ERROR in process_do\nMISSING while\n"
+	mov rbx, while_string       ; Using "while"
+	call require_match          ; Make sure we have it
+
+	mov rax, process_do_string_3 ; Using "ERROR in process_do\nMISSING (\n"
+	mov rbx, open_paren         ; Using "("
+	call require_match          ; Make sure we have it
+
+	call expression             ; Do the WHILE (...) part
+
+	mov rax, process_do_string_4 ; Using "ERROR in process_do\nMISSING )\n"
+	mov rbx, close_paren        ; Using ")"
+	call require_match          ; Make sure we have it
+
+	mov rax, process_do_string_5 ; Using "ERROR in process_do\nMISSING ;\n"
+	mov rbx, semicolon          ; Using ";"
+	call require_match          ; Make sure we have it
+
+	mov rax, process_do_string_6 ; Using "TEST\nJUMP_NE %DO_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_do_string_7 ; Using ":DO_END_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	call restore_break_frame    ; Restore the old break frame
+
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
 	ret
 
+process_do_string_0: db "DO_END_", 0
+process_do_string_1: db ":DO_", 0
+process_do_string_2: db "ERROR in process_do", 10, "MISSING while", 10, 0
+process_do_string_3: db "ERROR in process_do", 10, "MISSING (", 10, 0
+process_do_string_4: db "ERROR in process_do", 10, "MISSING )", 10, 0
+process_do_string_5: db "ERROR in process_do", 10, "MISSING ;", 10, 0
+process_do_string_6: db "TEST", 10, "JUMP_NE %DO_", 0
+process_do_string_7: db ":DO_END_", 0
+
+
+;; process_while function
+;; Recieves nothing
+;; Returns nothing
+;; Increments current_count and leverages save/restore_break_frame pieces
+;; Uses RCX for char* NUMBER_STRING
 process_while:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	call save_break_frame       ; Save break_frame
+
+	mov rax, [current_count]    ; Using current count
+	mov rbx, rax                ; Preparing for update
+	add rbx, 1                  ; current_count + 1
+	mov [current_count], rbx    ; current_count = current_count + 1
+	call numerate_number        ; convert to string
+	mov rcx, rax                ; put NUMBER_STRING in place
+
+	mov rax, process_while_string_0 ; Using "END_WHILE_"
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call set_break_frame        ; Set it and forget it
+
+	mov rax, process_while_string_1 ; Using ":WHILE_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, process_while_string_2 ; Using "ERROR in process_while\nMISSING (\n"
+	mov rbx, open_paren         ; Using "("
+	call require_match          ; Make sure we have it
+
+	call expression             ; Deal with the WHILE (...) part
+
+	mov rax, process_while_string_3 ; Using "TEST\nJUMP_EQ %END_WHILE_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_while_string_4 ; Using "# THEN_while_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_while_string_5 ; Using "ERROR in process_while\nMISSING )\n"
+	mov rbx, close_paren        ; Using ")"
+	call require_match          ; Make sure we have it
+
+	call statement              ; Deal with the {....} part
+
+	mov rax, process_while_string_6 ; Using "JUMP %WHILE_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_while_string_7 ; Using ":END_WHILE_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	call restore_break_frame    ; Restore the old break frame
+
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
 	ret
 
+process_while_string_0: db "END_WHILE_", 0
+process_while_string_1: db ":WHILE_", 0
+process_while_string_2: db "ERROR in process_while", 10, "MISSING (", 10, 0
+process_while_string_3: db "TEST", 10, "JUMP_EQ %END_WHILE_", 0
+process_while_string_4: db "# THEN_while_", 0
+process_while_string_5: db "ERROR in process_while", 10, "MISSING )", 10, 0
+process_while_string_6: db "JUMP %WHILE_", 0
+process_while_string_7: db ":END_WHILE_", 0
+
+
+;; process_for function
+;; Recieves Nothing
+;; Returns Nothing
+;; Increments current_count and leverages save/restore_break_frame pieces
+;; Uses RCX for char* NUMBER_STRING
 process_for:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	call save_break_frame       ; Save the frame
+
+	mov rax, [current_count]    ; Using current count
+	mov rbx, rax                ; Preparing for update
+	add rbx, 1                  ; current_count + 1
+	mov [current_count], rbx    ; current_count = current_count + 1
+	call numerate_number        ; convert to string
+	mov rcx, rax                ; put NUMBER_STRING in place
+
+	mov rax, process_for_string_0 ; Using "FOR_END_"
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call set_break_frame        ; Set it and forget it
+
+	mov rax, process_for_string_1 ; Using "# FOR_initialization_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, process_for_string_2 ; Using "ERROR in process_for\nMISSING (\n"
+	mov rbx, open_paren         ; Using "("
+	call require_match          ; Make Sure we have it
+
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+16]           ; global_token->S
+	mov rax, semicolon          ; Using ";"
+	call match                  ; IF global_token->S == ";"
+	cmp rax, 0                  ; Then no initializer
+	je process_for_terminator   ; And skip getting the expression
+
+	;; Deal with FOR (...; case
+	call expression             ; Get the FOR ( ... ; part
+
+process_for_terminator:
+	mov rax, process_for_string_3 ; Using ":FOR_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_for_string_4 ; Using "ERROR in process_for\nMISSING ;1\n"
+	mov rbx, semicolon          ; Using ";"
+	call require_match          ; Make sure we have it
+
+	call expression             ; Get the FOR ( ; ... ; Part
+
+	mov rax, process_for_string_5 ; Using "TEST\nJUMP_EQ %FOR_END_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_for_string_6 ; Using "JUMP %FOR_THEN_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_for_string_7 ; Using ":FOR_ITER_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_for_string_8 ; Using "ERROR in process_for\nMISSING ;2\n"
+	mov rbx, semicolon          ; Using ";"
+	call require_match          ; Make sure we have it
+
+	call expression             ; Get the FOR (;;...) part
+
+	mov rax, process_for_string_9 ; Using "JUMP %FOR_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_for_string_10 ; Using ":FOR_THEN_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_for_string_11 ; Using "ERROR in process_for\nMISSING )\n"
+	mov rbx, close_paren        ; Using ")"
+	call require_match          ; Make sure we have it
+
+	call statement              ; Get FOR (;;) {...} part
+
+	mov rax, process_for_string_12 ; Using "JUMP %FOR_ITER_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	mov rbx, rcx                ; Passing NUMBER_STRING
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	mov rax, process_for_string_13 ; Using ":FOR_END_"
+	call emit_out               ; Emit it
+
+	mov rax, [function]         ; Using function
+	mov rax, [rax+16]           ; function->S
+	call uniqueID_out           ; uniqueID_out(function->s, number_string)
+
+	call restore_break_frame    ; Restore the old break frame
+
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
 	ret
+
+process_for_string_0: db "FOR_END_", 0
+process_for_string_1: db "# FOR_initialization_", 0
+process_for_string_2: db "ERROR in process_for", 10, "MISSING (", 10, 0
+process_for_string_3: db ":FOR_", 0
+process_for_string_4: db "ERROR in process_for", 10, "MISSING ;1", 10, 0
+process_for_string_5: db "TEST", 10, "JUMP_EQ %FOR_END_", 0
+process_for_string_6: db "JUMP %FOR_THEN_", 0
+process_for_string_7: db ":FOR_ITER_", 0
+process_for_string_8: db "ERROR in process_for", 10, "MISSING ;2", 10, 0
+process_for_string_9: db "JUMP %FOR_", 0
+process_for_string_10: db ":FOR_THEN_", 0
+process_for_string_11: db "ERROR in process_for",10, "MISSING )", 10, 0
+process_for_string_12: db "JUMP %FOR_ITER_", 0
+process_for_string_13: db ":FOR_END_", 0
+
+
+;; process_break function
+;; Recieves nothing
+;; Returns nothing
+;; Handles the break out of loops case
+;; Uses RBX for struct token_list* break_frame and RCX for struct token_list* I
+process_break:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	mov rax, [break_target_head] ; Catch big error
+	cmp rax, 0                  ; IF(NULL == break_target_head)
+	je process_break_bad        ; I'm sorry Mr White but you have stage-3 lung cancer
+
+	mov rax, [function]         ; Using function
+	mov rcx, [rax+8]            ; I = function->LOCALS
+	mov rbx, [break_frame]      ; Put break_frame in the right spot
+	mov rax, process_break_string_1 ; Using "POP_ebx\t# break_cleanup_locals\n"
+
+process_break_iter:
+	cmp rcx, 0                  ; IF (NULL == I)
+	je process_break_cleaned    ; We are done
+
+	cmp rcx, rbx                ; IF I != break_frame
+	je process_break_cleaned    ; We are done
+
+	call emit_out               ; Emit it
+	mov rcx, [rcx]              ; I = I->NEXT
+	jmp process_break_iter      ; Keep looping
+
+process_break_cleaned:
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	mov rax, process_break_string_2 ; Using "JUMP %"
+	call emit_out               ; Emit it
+
+	mov rax, [break_target_head] ; Get what we are in
+	call emit_out               ; Emit it
+
+	mov rax, [break_target_func] ; Get what function we are in
+	call emit_out               ; Emit it
+
+	mov rax, underline          ; Using "_"
+	call emit_out               ; Emit it
+
+	mov rax, [break_target_num] ; Get dem digits
+	call emit_out               ; Emit it
+
+	mov rax, process_break_string_3 ; Using "\n"
+	call emit_out               ; Emit it
+
+	mov rax, process_break_string_4 ; Using "ERROR in break statement\nMissing ;\n"
+	mov rbx, semicolon          ; Using ";"
+	call require_match          ; Make sure we have it
+
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+
+process_break_bad:
+	;; Breaking badly
+	mov r14, 2                  ; write to standard error
+;	call line_error             ; Write useful debug info
+	mov rax, rcx                ; put S in the right place
+	call File_Print             ; print it
+
+	mov rax, process_break_string_0 ; Ending string
+	call File_Print             ; print it
+	jmp Exit_Failure            ; Abort Hard
+
+process_break_string_0: db "Not inside of a loop or case statement", 0
+process_break_string_1: db "POP_ebx", 9, "# break_cleanup_locals", 10, 0
+process_break_string_2: db "JUMP %", 0
+process_break_string_3: db 10, 0
+process_break_string_4: db "ERROR in break statement",10, "Missing ;", 10, 0
 
 
 ;; expression function
@@ -1753,11 +2290,13 @@ unary_expr_sizeof_string_3: db 10, 0
 postfix_expr_array:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
-	mov rbx, [current_target]   ; ARRAY = current_target
+	mov rax, [current_target]   ; ARRAY = current_target
+	push rax                    ; Protect it
 
 	mov rax, expression         ; Using expression
 	call common_recursion       ; Recurse
 
+	pop rbx                     ; Restore array
 	mov [current_target], rbx   ; current_target = ARRAY
 
 	mov rcx, postfix_expr_array_string_0 ; ASSIGN = "LOAD_INTEGER\n"
@@ -2180,6 +2719,150 @@ primary_expr_variable_string_1: db 10, 0
 primary_expr_variable_string_2: db "LOAD_IMMEDIATE_eax %", 0
 
 
+;; function_call function
+;; Recieves char* S in RAX and int BOOL in RBX
+;; Builds stack frames before and tears them down after function calls
+;; Uses RCX for char* S, RDX for int BOOL, RSI for PASSED
+function_call:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	push rsi                    ; Protect RSI
+	mov rcx, rax                ; Put S in place
+	mov rdx, rbx                ; Put BOOL in place
+	mov rsi, 0                  ; PASSED = 0
+
+	mov rax, function_call_string_0 ; Using "ERROR in process_expression_list\nNo ( was found\n"
+	mov rbx, open_paren         ; Using "("
+	call require_match          ; Make sure we have it
+
+	mov rax, function_call_string_1 ; Using "PUSH_edi\t# Prevent overwriting in recursion\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_2 ; Using "PUSH_ebp\t# Protect the old base pointer\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_3 ; Using "COPY_esp_to_edi\t# Copy new base pointer\n"
+	call emit_out               ; Emit it
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	mov al, [rax]               ; global_token->S[0]
+	movzx rax, al               ; Make it useful
+	cmp rax, 41                 ; IF global_token->S[0] == ")"
+	je function_call_gen_done   ; Then no arguments to send
+
+	;; looks like we have arguments to collect
+	call expression             ; Collect the argument
+
+	mov rax, function_call_string_4 ; Using "PUSH_eax\t#_process_expression1\n"
+	call emit_out               ; Emit it
+	mov rsi, 1                  ; PASSED = 1
+
+function_call_gen_iter:
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax+16]           ; global_token->S
+	mov al, [rax]               ; global_token->S[0]
+	movzx rax, al               ; Make it useful
+	cmp rax, 44                 ; IF global_token->S[0] == ","
+	jne function_call_gen_done  ; Otherwise we are done
+
+	mov rax, [global_token]     ; Using global_token
+	mov rax, [rax]              ; global_token->NEXT
+	mov [global_token], rax     ; global_token = global_token->NEXT
+
+	call expression             ; Collect the argument
+
+	mov rax, function_call_string_5 ; Using "PUSH_eax\t#_process_expression2\n"
+	call emit_out               ; Emit it
+	add rsi, 1                  ; PASSED = PASSED + 1
+	jmp function_call_gen_iter  ; Keep trying
+
+function_call_gen_done:
+	;; All is collected
+	mov rax, function_call_string_6 ; Using "ERROR in process_expression_list\nNo ) was found\n"
+	mov rbx, close_paren         ; Using ")"
+	call require_match          ; Make sure we have it
+
+	cmp rdx, 0                  ; IF(BOOL == TRUE)
+	jne function_call_static    ; Otherwise it is a static call
+
+	;; Deal with a passed function pointer
+	mov rax, function_call_string_7 ; Using "LOAD_BASE_ADDRESS_eax %"
+	call emit_out               ; Emit it
+
+	mov rax, rcx                ; Using S
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_8 ; Using "\nLOAD_INTEGER\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_9 ; Using "COPY_edi_to_ebp\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_10 ; Using "CALL_eax\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_13 ; Using "POP_ebx\t# _process_expression_locals\n"
+	jmp function_call_cleanup   ; Clean up
+
+function_call_static:
+	;; Deal with fixed function name
+	mov rax, function_call_string_9 ; Using "COPY_edi_to_ebp\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_11 ; Using "CALL_IMMEDIATE %FUNCTION_"
+	call emit_out               ; Emit it
+
+	mov rax, rcx                ; Using S
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_12 ; Using "\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_13 ; Using "POP_ebx\t# _process_expression_locals\n"
+
+function_call_cleanup:
+	cmp rsi, 0                  ; IF PASSED > 0
+	jle function_call_done      ; Otherwise be done
+
+	;; The desired string is already in RAX
+	call emit_out               ; Emit it
+
+	sub rsi, 1                  ; PASSED = PASSED - 1
+	jmp function_call_cleanup   ; Keep going
+
+function_call_done:
+	mov rax, function_call_string_14 ; Using "POP_ebp\t# Restore old base pointer\n"
+	call emit_out               ; Emit it
+
+	mov rax, function_call_string_15 ; Using "POP_edi\t# Prevent overwrite\n"
+	call emit_out               ; Emit it
+
+	pop rsi                     ; Restore RSI
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
+
+function_call_string_0: db "ERROR in process_expression_list", 10, "No ( was found", 10, 0
+function_call_string_1: db "PUSH_edi", 9, "# Prevent overwriting in recursion", 10, 0
+function_call_string_2: db "PUSH_ebp", 9, "# Protect the old base pointer", 10, 0
+function_call_string_3: db "COPY_esp_to_edi", 9, "# Copy new base pointer", 10, 0
+function_call_string_4: db "PUSH_eax", 9, "#_process_expression1", 10, 0
+function_call_string_5: db "PUSH_eax", 9, "#_process_expression2", 10, 0
+function_call_string_6: db "ERROR in process_expression_list", 10, "No ) was found", 10, 0
+function_call_string_7: db "LOAD_BASE_ADDRESS_eax %", 0
+function_call_string_8: db 10, "LOAD_INTEGER", 10, 0
+function_call_string_9: db "COPY_edi_to_ebp", 10, 0
+function_call_string_10: db "CALL_eax", 10, 0
+function_call_string_11: db "CALL_IMMEDIATE %FUNCTION_", 0
+function_call_string_12: db 10, 0
+function_call_string_13: db "POP_ebx", 9, "# _process_expression_locals", 10, 0
+function_call_string_14: db "POP_ebp", 9, "# Restore old base pointer", 10, 0
+function_call_string_15: db "POP_edi", 9, "# Prevent overwrite", 10, 0
+
+
 ;; variable_load function
 ;; Recieves struct token_list* A in RAX
 ;; Returns nothing
@@ -2198,7 +2881,7 @@ variable_load:
 	jne variable_load_regular   ; Otherwise it is regular
 
 	mov rbx, [rcx+24]           ; A->TYPE
-	mov rbx, [rbx+40]           ; A->TYPE->NAME
+	mov rbx, [rbx+48]           ; A->TYPE->NAME
 	mov rax, type_function_name ; Using "FUNCTION"
 	call match                  ; IF A->TYPE->NAME == "FUNCTION"
 	cmp rax, 0                  ; Then it must be a function
@@ -2208,7 +2891,7 @@ variable_load:
 	mov rax, [rcx+32]           ; A->DEPTH
 	call numerate_number        ; Convert to string
 	mov rbx, 0                  ; pass 0 for true
-;	call function_call          ; Create the function call
+	call function_call          ; Create the function call
 	jmp variable_load_done      ; Be done
 
 variable_load_regular:
@@ -2267,7 +2950,7 @@ function_load:
 	;; Deal with function call
 	mov rax, rcx                ; Using A->S
 	mov rbx, 1                  ; Using FALSE
-;	call function_call          ; Deal with it
+	call function_call          ; Deal with it
 	jmp function_load_done      ; Be done
 
 function_load_regular:
@@ -2531,6 +3214,55 @@ general_recursion_done:
 	ret
 
 
+	;; promote_type function
+	;; Recieves struct type* a in RAX and struct type* b in RBX
+	;; Returns the most recent type in RAX
+	;; Uses RAX for struct type* I, RCX for struct type* A and RDX for struct type* B
+promote_type:
+	push rbx                    ; Protect RBX
+	push rcx                    ; Protect RCX
+	push rdx                    ; Protect RDX
+	cmp rbx, 0                  ; IF NULL == A
+	je promote_type_done        ; Just return A
+
+	mov rcx, rax                ; Put A in place
+	mov rdx, rbx                ; Put B in place
+	mov rax, rbx                ; IF NULL == A
+	cmp rcx, 0                  ; Then we just return B
+	je promote_type_done        ; Be done
+
+	;; Looks like we need to walk the list
+	mov rcx, [rcx+48]           ; A->NAME
+	mov rdx, [rdx+48]           ; B->NAME
+	mov rax, [global_types]     ; I = global_types
+promote_type_iter:
+	cmp rax, 0                  ; IF NULL == I
+	je promote_type_done        ; Just be done
+
+	mov rbx, [rax+48]           ; I->NAME
+	cmp rbx, rcx                ; IF(A->NAME == I->NAME)
+	je promote_type_done        ; Be done
+
+	cmp rbx, rdx                ; IF(B->NAME == I->NAME)
+	je promote_type_done        ; Be done
+
+	mov rbx, [rax+24]           ; I->INDIRECT
+	mov rbx, [rbx+48]           ; I->INDIRECT->NAME
+
+	cmp rbx, rcx                ; IF(A->NAME == I->INDIRECT->NAME)
+	je promote_type_done        ; Be done
+
+	cmp rbx, rdx                ; IF(B->NAME == I->INDIRECT->NAME)
+	je promote_type_done        ; Be done
+
+	mov rax, [rax]              ; I = I->NEXT
+	jmp promote_type_iter       ; Keep going
+
+promote_type_done:
+	pop rdx                     ; Restore RDX
+	pop rcx                     ; Restore RCX
+	pop rbx                     ; Restore RBX
+	ret
 
 
 ;; common_recursion function
@@ -2553,7 +3285,7 @@ common_recursion:
 	mov rbx, [current_target]   ; Get last type
 	call rax                    ; F();
 	mov rax, [current_target]   ; Get current_target
-;	call promote_type           ; get the right type
+	call promote_type           ; get the right type
 	mov [current_target], rax   ; Set new current_target
 
 	mov rax, common_recursion_string_1 ; Using "POP_ebx\t# _common_recursion\n"
@@ -2744,9 +3476,9 @@ escape_lookup_string_0: db "Unknown escape recieved: ", 0
 escape_lookup_string_1: db " Unable to process", 10, 0
 
 
-	;; char2hex function
-	;; Recieves char in RAX
-	;; Returns hex or aborts hard
+;; char2hex function
+;; Recieves char in RAX
+;; Returns hex or aborts hard
 char2hex:
 	sub rax, 48                 ; Try 0-9
 	cmp rax, 10                 ; Otherwise fun times
@@ -3000,10 +3732,10 @@ hex1:
 
 
 
-	;; type_name function
-	;; Recieves nothing
-	;; Returns type_size in RAX
-	;; Uses RCX for STRUCT TYPE* RET
+;; type_name function
+;; Recieves nothing
+;; Returns type_size in RAX
+;; Uses RCX for STRUCT TYPE* RET
 type_name:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -3908,4 +4640,16 @@ global_function_list:
 	dq 0
 
 current_target:
+	dq 0
+
+break_frame:
+	dq 0
+
+break_target_head:
+	dq 0
+
+break_target_func:
+	dq 0
+
+break_target_num:
 	dq 0
