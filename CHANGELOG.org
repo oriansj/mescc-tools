@@ -29,6 +29,7 @@ Added prototype hex2 Manpage
 Added prototype blood-elf Manpage
 Added prototype kaem Manpage
 Added prototype get_machine Manpage
+Added cc_x86 for AMD64 in NASM
 
 ** Changed
 

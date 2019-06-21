@@ -92,14 +92,10 @@ Done:
 	mov rax, 0x3c               ; put the exit syscall number in eax
 	syscall                     ; Call it a good day
 
-header_string1:
-	db 10, "# Core program", 10, 0
+header_string1: db 10, "# Core program", 10, 0
+header_string2: db 10, ":ELF_data", 10, 10, "# Program global variables", 10, 0
+header_string3: db 10, "# Program strings", 10, 0
 
-header_string2:
-	db 10, ":ELF_data", 10, 10, "# Program global variables", 10, 0
-
-header_string3:
-	db 10, "# Program strings", 10, 0
 
 ;; read_all_tokens function
 ;; Recieves FILE* in R15 and Token_List* in RAX
@@ -119,11 +115,11 @@ read_all_tokens_done:
 	ret
 
 
-	;; get_token function
-	;; Recieves INT in RAX and FILE* in R15
-	;; Makes a list of TOKEN_LIST
-	;; C and STRING_INDEX are stored in memory, RCX is used for S and RDX is used for current
-	;; Returns C in RAX
+;; get_token function
+;; Recieves INT in RAX and FILE* in R15
+;; Makes a list of TOKEN_LIST
+;; C and STRING_INDEX are stored in memory, RCX is used for S and RDX is used for current
+;; Returns C in RAX
 get_token:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -303,7 +299,6 @@ clear_white_space_done:
 	ret
 
 
-
 ;; In_Set function
 ;; Recieves Char C in RAX and CHAR* in RBX
 ;; Returns 1 if true, zero if false in RAX
@@ -335,14 +330,9 @@ In_Set_False:
 	pop rbx                     ; Restore RBX
 	ret
 
-alphas:
-	db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", 0
-
-symbols:
-	db "<=>|&!-", 0
-
-strings:
-	db 34, 39, 0
+alphas: db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", 0
+symbols: db "<=>|&!-", 0
+strings: db 34, 39, 0
 
 
 ;; purge_macro function
@@ -418,10 +408,10 @@ preserve_symbol_done:
 	ret
 
 
-	;; consume_word function
-	;; recieves INT C in RAX
-	;; returns INT C in RAX
-	;; Uses RAX for C, RBX for FREQ and RCX for ESCAPE
+;; consume_word function
+;; recieves INT C in RAX
+;; returns INT C in RAX
+;; Uses RAX for C, RBX for FREQ and RCX for ESCAPE
 consume_word:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -789,7 +779,6 @@ declare_function_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 declare_function_string_0: db 35, " Defining function ", 0
 declare_function_string_1: db 10, ":FUNCTION_", 0
 declare_function_string_2: db "RETURN", 10, 0
@@ -1076,7 +1065,6 @@ statement_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 statement_string_0: db 9, "#C goto label", 10, 0
 statement_string_1: db "JUMP %", 0
 statement_string_2: db 10, 0
@@ -1145,7 +1133,6 @@ recursive_statement_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 recursive_statement_string_0: db "RETURN", 10, 0
 recursive_statement_string_1: db "POP_ebx", 9, "# _recursive_statement_locals", 10, 0
 
@@ -1192,7 +1179,6 @@ return_result_done:
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
 	ret
-
 
 return_result_string_0: db "ERROR in return_result", 10, "MISSING ;", 10, 0
 return_result_string_1: db "POP_ebx", 9, "# _return_result_locals", 10, 0
@@ -1985,7 +1971,6 @@ expression_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 expression_string_0: db "STORE_INTEGER", 10, 0
 expression_string_1: db "STORE_CHAR", 10, 0
 
@@ -2395,7 +2380,6 @@ ceil_log2_done:
 	ret
 
 
-
 ;; postfix_expr_arrow function
 ;; Recieves nothing
 ;; Returns nothing
@@ -2622,11 +2606,11 @@ primary_expr_string_6: db "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_
 primary_expr_string_7:db "0123456789", 0
 
 
-	;; primary_expr_variable function
-	;; Recieves nothing
-	;; Returns nothing
-	;; Walks global and updates output
-	;; Uses RAX for struct token_list* a and RCX for char* S
+;; primary_expr_variable function
+;; Recieves nothing
+;; Returns nothing
+;; Walks global and updates output
+;; Uses RAX for struct token_list* a and RCX for char* S
 primary_expr_variable:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -2689,7 +2673,7 @@ primary_expr_variable_function:
 	jmp primary_expr_variable_done ; Be done
 
 primary_expr_variable_global:
-mov rax, rcx                ; Using S
+	mov rax, rcx                ; Using S
 	mov rbx, [global_symbol_list] ; Using global_symbol_list
 	call sym_lookup             ; sym_lookup(s, global_symbol_list)
 	cmp rax, 0                  ; IF NULL == sym_lookup(s, global_symbol_list)
@@ -2713,7 +2697,6 @@ primary_expr_variable_done:
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
 	ret
-
 
 primary_expr_variable_string_0: db " is not a defined symbol", 10, 0
 primary_expr_variable_string_1: db 10, 0
@@ -2926,7 +2909,6 @@ variable_load_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 variable_load_string_0: db "LOAD_BASE_ADDRESS_eax %", 0
 variable_load_string_1: db 10, 0
 variable_load_string_2: db "LOAD_INTEGER", 10, 0
@@ -2969,7 +2951,6 @@ function_load_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 function_load_string_0: db "LOAD_IMMEDIATE_eax &FUNCTION_", 0
 function_load_string_1: db 10, 0
 
@@ -3010,7 +2991,6 @@ global_load_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 global_load_string_0: db "LOAD_IMMEDIATE_eax &GLOBAL_", 0
 global_load_string_1: db 10, 0
 global_load_string_2: db "LOAD_INTEGER", 10, 0
@@ -3042,7 +3022,6 @@ sym_lookup_done:
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
 	ret
-
 
 
 ;; primary_expr_number function
@@ -3118,7 +3097,6 @@ primary_expr_string:
 	pop rcx                     ; Restore RCX
 	pop rbx                     ; Restore RBX
 	ret
-
 
 primary_expr_string_string_0: db "LOAD_IMMEDIATE_eax &STRING_", 0
 primary_expr_string_string_1: db ":STRING_", 0
@@ -3215,10 +3193,10 @@ general_recursion_done:
 	ret
 
 
-	;; promote_type function
-	;; Recieves struct type* a in RAX and struct type* b in RBX
-	;; Returns the most recent type in RAX
-	;; Uses RAX for struct type* I, RCX for struct type* A and RDX for struct type* B
+;; promote_type function
+;; Recieves struct type* a in RAX and struct type* b in RBX
+;; Returns the most recent type in RAX
+;; Uses RAX for struct type* I, RCX for struct type* A and RDX for struct type* B
 promote_type:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -3293,7 +3271,6 @@ common_recursion:
 	call emit_out               ; Emit it
 	pop rbx                     ; Restore RBX
 	ret
-
 
 common_recursion_string_0: db "PUSH_eax", 9, "#_common_recursion", 10, 0
 common_recursion_string_1: db "POP_ebx", 9, "# _common_recursion", 10, 0
@@ -3399,11 +3376,11 @@ emit:
 	ret
 
 
-	;; escape_lookup function
-	;; Recieves char* c in RAX
-	;; Returns integer value of char in RAX
-	;; Aborts hard if unknown escape is recieved
-	;; Uses RCX to hold char* C
+;; escape_lookup function
+;; Recieves char* c in RAX
+;; Returns integer value of char in RAX
+;; Aborts hard if unknown escape is recieved
+;; Uses RCX to hold char* C
 escape_lookup:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -3597,7 +3574,6 @@ weird_false:
 	mov rax, 1                  ; Return false
 	jmp weird_done              ; Be done
 
-
 weird_string_0: db 9, 10, " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", 0
 weird_string_1: db 9, 10, 13, 32, 0
 
@@ -3747,7 +3723,6 @@ hex1:
 	ret
 
 
-
 ;; type_name function
 ;; Recieves nothing
 ;; Returns type_size in RAX
@@ -3830,7 +3805,6 @@ type_name_done:
 	pop rbx                     ; Restore RBX
 	ret
 
-
 type_name_string_0: db "Unknown type ", 0
 type_name_string_1: db 10, 0
 
@@ -3863,13 +3837,13 @@ lookup_type_done:
 	ret
 
 
-	;; create_struct function
-	;; Recieves nothing
-	;; Returns nothing
-	;; Uses global_token to malloc a struct's definition
-	;; Uses RCX for int OFFSET, RDX for struct type* head, RBP for struct type* I,
-	;; RDI for member_size (Which is passed) and RSI for LAST
-	;; RAX and RBX are used for scratch
+;; create_struct function
+;; Recieves nothing
+;; Returns nothing
+;; Uses global_token to malloc a struct's definition
+;; Uses RCX for int OFFSET, RDX for struct type* head, RBP for struct type* I,
+;; RDI for member_size (Which is passed) and RSI for LAST
+;; RAX and RBX are used for scratch
 create_struct:
 	push rbx                    ; Protect RBX
 	push rcx                    ; Protect RCX
@@ -4066,14 +4040,14 @@ build_member:
 	mov rax, open_bracket       ; Using "["
 	call match                  ; IF global_token->S == "["
 	cmp rax, 0                  ; Then we have to deal with arrays in our structs
-	je build_member_arrray      ; So deal with that pain
+	je build_member_array       ; So deal with that pain
 
 	;; Deal with non-array case
 	mov rax, [rcx+8]            ; member_type->SIZE
 	mov [rdx+8], rax            ; I->SIZE = member_type->SIZE
 	jmp build_member_done       ; Be done
 
-build_member_arrray:
+build_member_array:
 	mov rax, [global_token]     ; Using global_token
 	mov rax, [rax]              ; global_token->NEXT
 	mov [global_token], rax     ; global_token = global_token->NEXT
@@ -4104,7 +4078,6 @@ build_member_done:
 	ret
 
 build_member_string_0: db "Struct only supports [num] form", 10, 0
-
 
 
 ;; build_union function
@@ -4529,10 +4502,11 @@ type_unsigned:
 	dq type_unsigned_name       ; NAME
 type_unsigned_name: db "unsigned", 0
 
-	;; debug_list function
-	;; Recieves struct token_list* in RAX
-	;; Prints contents of list and exits
-	;; Does NOT return
+
+;; debug_list function
+;; Recieves struct token_list* in RAX
+;; Prints contents of list and exits
+;; Does NOT return
 debug_list:
 	mov r12, rax                ; Protect the list pointer
 	mov r14, 2                  ; write to standard error
@@ -4602,7 +4576,6 @@ debug_list_null:
 	mov rax, 0x3c               ; put the exit syscall number in eax
 	syscall                     ; Call it a bad day
 
-
 debug_list_string0: db "Token_list node at address: ", 0
 debug_list_string1: db 10, "NEXT address: ", 0
 debug_list_string2: db 10, "PREV address: ", 0
@@ -4612,60 +4585,24 @@ debug_list_string5: db 10, "TYPE address: ", 0
 debug_list_string6: db 10, "ARGUMENTS address: ", 0
 debug_list_string_null: db ">::<NULL>::<", 0
 
+
 section .data
-global_types:
-	dq prim_types
-
-Token:
-	dq 0
-
-C:
-	dq 0
-
-string_index:
-	dq 0
-
-output_list:
-	dq 0
-
-globals_list:
-	dq 0
-
-strings_list:
-	dq 0
-
-global_token:
-	dq 0
-
-Address_of:
-	dq 0
-
-function:
-	dq 0
-
-global_constant_list:
-	dq 0
-
-global_symbol_list:
-	dq 0
-
-current_count:
-	dq 0
-
-global_function_list:
-	dq 0
-
-current_target:
-	dq 0
-
-break_frame:
-	dq 0
-
-break_target_head:
-	dq 0
-
-break_target_func:
-	dq 0
-
-break_target_num:
-	dq 0
+Address_of: dq 0
+C: dq 0
+Token: dq 0
+break_frame: dq 0
+break_target_func: dq 0
+break_target_head: dq 0
+break_target_num: dq 0
+current_count: dq 0
+current_target: dq 0
+function: dq 0
+global_constant_list: dq 0
+global_function_list: dq 0
+global_symbol_list: dq 0
+global_token: dq 0
+global_types: dq prim_types
+globals_list: dq 0
+output_list: dq 0
+string_index: dq 0
+strings_list: dq 0
