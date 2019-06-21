@@ -1952,15 +1952,16 @@ expression:
 
 	;; Deal with possible assignment
 	mov rcx, expression_string_1 ; Assume "STORE_CHAR\n" by default
-	mov rbx, global_token       ; Using global_token
-	mov rbx, [rbx+16]           ; global_token->S
+	mov rbx, [global_token]     ; Using global_token
+	mov rbx, [rbx+8]            ; global_token->PREV
+	mov rbx, [rbx+16]           ; global_token->PREV->S
 	mov rax, close_bracket      ; Using "]"
 	call match                  ; IF global_token->S == "]"
 	cmp rax, 0                  ; Then we might have a char
 	jne expression_int          ; Otherwise INT
 
 	mov rbx, [current_target]   ; Using current_target
-	mov rbx, [rbx+40]           ; current_target->NAME
+	mov rbx, [rbx+48]           ; current_target->NAME
 	mov rax, type_char_indirect_name ; Using "char*"
 	call match                  ; Intensional inefficency because I feel like it
 	cmp rax, 0                  ; IF current_target->NAME == "char*"
@@ -3561,12 +3562,26 @@ weird_reset:
 	add rcx, 2                  ; string = string + 2
 
 weird_escaped:
-	mov rbx, weird_string_0     ; Use "\t !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+	push rax                    ; Protect C in case we need it
+	mov rbx, weird_string_0     ; Use "\t\n !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 	call In_Set                 ; To find if weird
 	cmp rax, 1                  ; IF TRUE
+	pop rax                     ; Restore C
 	jne weird_true              ; Then not weird
 
 	add rcx, 1                  ; string = string + 1
+
+	;; Last chance for weird
+	mov rbx, weird_string_1     ; Use "\t\n\r "
+	call In_Set                 ; Check for special case
+	cmp rax, 1                  ; IF TRUE
+	jne weird_reset             ; Otherwise not in the special case
+
+	;; Deal with possible special case
+	mov al, [rcx]               ; Load string[1]
+	movzx rax, al               ; Make it useful
+	cmp rax, 58                 ; IF string[1] == ":"
+	je weird_true               ; Then we hit the special case
 	jmp weird_reset             ; Keep trying
 
 weird_done:
@@ -3583,7 +3598,8 @@ weird_false:
 	jmp weird_done              ; Be done
 
 
-weird_string_0: db 9, " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", 0
+weird_string_0: db 9, 10, " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", 0
+weird_string_1: db 9, 10, 13, 32, 0
 
 
 ;; collect_regular_string function
