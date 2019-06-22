@@ -77,14 +77,18 @@ _start_out:
 	call File_Print             ; Print it
 	mov rax, [output_list]      ; Our output_list
 	call recursive_output       ; Print core program
-	mov rax, header_string2     ; Our second label
+;	mov rax, header_string2     ; Our Enable debug
+;	call File_Print             ; Print it
+	mov rax, header_string3     ; Our second label
 	call File_Print             ; Print it
 	mov rax, [globals_list]     ; Our globals
 	call recursive_output       ; Get them
-	mov rax, header_string3     ; Our final header
+	mov rax, header_string4     ; Our final header
 	call File_Print             ; Print it
 	mov rax, [strings_list]     ; Our strings
 	call recursive_output       ; Get them
+	mov rax, header_string5     ; Our final header
+	call File_Print             ; Print it
 
 Done:
 	; program completed Successfully
@@ -93,8 +97,10 @@ Done:
 	syscall                     ; Call it a good day
 
 header_string1: db 10, "# Core program", 10, 0
-header_string2: db 10, ":ELF_data", 10, 10, "# Program global variables", 10, 0
-header_string3: db 10, "# Program strings", 10, 0
+header_string2: db 10, ":ELF_data", 10, 0
+header_string3: db 10, "# Program global variables", 10, 0
+header_string4: db 10, "# Program strings", 10, 0
+header_string5: db 10, ":ELF_end", 10, 0
 
 
 ;; read_all_tokens function
