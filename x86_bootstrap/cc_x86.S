@@ -703,6 +703,7 @@ program_function:
 
 program_error:
 	;; Deal with the case of something we don't support
+	;; NOT IMPLEMENTED
 
 program_done:
 	pop ecx                     ; Restore ECX
@@ -952,7 +953,7 @@ statement_if:
 	jmp statement_done          ; be done
 
 statement_do:
-	mov eax, do_string          ; Using "do
+	mov eax, do_string          ; Using "do"
 	call match                  ; IF global_token->S == "do"
 	cmp eax, 0                  ; then we have a do statement
 	jne statement_while         ; otherwise try WHILE
@@ -1342,7 +1343,7 @@ process_asm_iter:
 	mov eax, [ebx+8]            ; global_token->S
 	mov al, [eax]               ; global_token->S[0]
 	movzx eax, al               ; Make it useful
-	cmp eax, 34                 ; IF global_token->S[0] == '"'
+	cmp eax, 34                 ; IF global_token->S[0] == '\"'
 	jne process_asm_done        ; Otherwise be done
 
 	mov eax, [ebx+8]            ; global_token->S
@@ -2558,7 +2559,7 @@ primary_expr_str:
 	mov eax, [eax+8]            ; global_token->S
 	mov al, [eax]               ; global_token->S[0]
 	movzx eax, al               ; Make it useful
-	cmp eax, 34                 ; Using '"'
+	cmp eax, 34                 ; Using '\"'
 	jne primary_expr_var        ; Otherwise try a variable
 
 	;; Deal with strings
@@ -3415,12 +3416,12 @@ escape_lookup:
 	cmp ebx, 116                ; If t
 	je escape_lookup_done       ; Be done
 
-	mov eax, ebx                ; "\\", "'" and '"' all encode as themselves
+	mov eax, ebx                ; "\\", "'" and '\"' all encode as themselves
 	cmp ebx, 92                 ; If "\\"
 	je escape_lookup_done       ; Be done
 	cmp ebx, 39                 ; IF "'"
 	je escape_lookup_done       ; Be done
-	cmp ebx, 34                 ; IF '"'
+	cmp ebx, 34                 ; IF '\"'
 	je escape_lookup_done       ; Be done
 
 	mov eax, 13                 ; Guess "\r"
@@ -3526,7 +3527,7 @@ weird:
 	push ebx                    ; Protect EBX
 	push ecx                    ; Protect ECX
 	mov ecx, eax                ; Place string in safe place
-	add ecx, 1                  ; increment past the "
+	add ecx, 1                  ; increment past the '\"'
 weird_reset:
 	mov al, [ecx]               ; Load a char
 	movzx eax, al               ; Make it useful
@@ -3632,8 +3633,8 @@ collect_regular_string_escaped:
 	jmp collect_regular_string_reset ; Keep going
 
 collect_regular_string_done:
-	mov eax, 34                 ; Using '"'
-	mov [ecx], al               ; hold_string[index] = '"'
+	mov eax, 34                 ; Using '\"'
+	mov [ecx], al               ; hold_string[index] = '\"'
 	add ecx, 1                  ; Increment it
 	mov eax, 10                 ; Using "\n"
 	mov [ecx], al               ; hold_string[index] = '\n'

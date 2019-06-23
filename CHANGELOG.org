@@ -30,7 +30,7 @@ Added prototype blood-elf Manpage
 Added prototype kaem Manpage
 Added prototype get_machine Manpage
 Added cc_x86 for AMD64 in NASM
-Added cc_x86 for x86 in NASM
+Added cc_x86 for x86 in NASM and M1
 
 ** Changed
 
