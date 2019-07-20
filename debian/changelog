@@ -1,3 +1,10 @@
+mescc-tools (0.6.1-2) unstable; urgency=medium
+
+  * debian/control: Update to Standards-Version 4.4.0, no changes.
+  * debian/control: Update Vcs-Git and Vcs-Browser.
+
+ -- Vagrant Cascadian <vagrant@debian.org>  Sat, 20 Jul 2019 10:53:20 -0300
+
 mescc-tools (0.6.1-1) experimental; urgency=low
 
   * Initial release.
