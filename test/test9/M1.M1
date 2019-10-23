@@ -2568,7 +2568,7 @@
 	jmp32  %_LittleEndian_34_body4
 :_LittleEndian_34_clause4
 :_LittleEndian_34_body4
-					# fprintf(2, "Recieved invalid number of bytes in LittleEndian %d\n",      Number_of_bytes); 
+					# fprintf(2, "Received invalid number of bytes in LittleEndian %d\n",      Number_of_bytes); 
 	push___0x8(%ebp) !0x10
 	push___$i32 &string_open_8
 	mov____$i32,%eax %0x2
@@ -3511,7 +3511,7 @@
 "A displacement of %d does not fit in 1 byte"
 
 :string_open_8
-"Recieved invalid number of bytes in LittleEndian %d
+"Received invalid number of bytes in LittleEndian %d
 "
 
 :string_open_9

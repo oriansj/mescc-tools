@@ -104,7 +104,7 @@ header_string5: db 10, ":ELF_end", 10, 0
 
 
 ;; read_all_tokens function
-;; Recieves FILE* in R15 and Token_List* in RAX
+;; Receives FILE* in R15 and Token_List* in RAX
 ;; Tokenizes all input and returns updated list in RAX
 ;; Returns TOKEN in RAX
 ;; Uses RAX for C
@@ -122,7 +122,7 @@ read_all_tokens_done:
 
 
 ;; get_token function
-;; Recieves INT in RAX and FILE* in R15
+;; Receives INT in RAX and FILE* in R15
 ;; Makes a list of TOKEN_LIST
 ;; C and STRING_INDEX are stored in memory, RCX is used for S and RDX is used for current
 ;; Returns C in RAX
@@ -283,7 +283,7 @@ malloc:
 
 
 ;; clear_white_space function
-;; Recieves INT C in RAX and FILE* in R15
+;; Receives INT C in RAX and FILE* in R15
 ;; Returns first non-whitespace char in RAX
 clear_white_space:
 	cmp rax, 32                 ; Check for ' '
@@ -306,7 +306,7 @@ clear_white_space_done:
 
 
 ;; In_Set function
-;; Recieves Char C in RAX and CHAR* in RBX
+;; Receives Char C in RAX and CHAR* in RBX
 ;; Returns 1 if true, zero if false in RAX
 In_Set:
 	push rbx                    ; Protect RBX
@@ -342,7 +342,7 @@ strings: db 34, 39, 0
 
 
 ;; purge_macro function
-;; Recieves CH in RAX
+;; Receives CH in RAX
 ;; Reads chars until Line feed is read
 ;; returns line feed
 purge_macro:
@@ -353,7 +353,7 @@ purge_macro:
 
 
 ;; preserve_keyword function
-;; Recieves INT C in RAX
+;; Receives INT C in RAX
 ;; collects all chars in keyword
 ;; Returns C in RAX
 ;; Uses RCX for INT C
@@ -388,7 +388,7 @@ preserve_keyword_done:
 
 
 ;; preserve_symbol function
-;; Recieves INT C in RAX
+;; Receives INT C in RAX
 ;; collects all chars in symbol
 ;; Returns C in RAX
 ;; Uses RCX for INT C
@@ -415,7 +415,7 @@ preserve_symbol_done:
 
 
 ;; consume_word function
-;; recieves INT C in RAX
+;; receives INT C in RAX
 ;; returns INT C in RAX
 ;; Uses RAX for C, RBX for FREQ and RCX for ESCAPE
 consume_word:
@@ -452,7 +452,7 @@ consume_word_iter:
 
 
 ;; consume_byte function
-;; Recieves INT C in RAX
+;; Receives INT C in RAX
 ;; Inserts C into string S, updates String S
 ;; Returns Next char in RAX
 consume_byte:
@@ -467,7 +467,7 @@ consume_byte:
 
 
 ;; fixup_label function
-;; Recieves S in RCX
+;; Receives S in RCX
 ;; prepends ':' to string and returns registers un changed
 ;; Uses RAX for HOLD, RBX for PREV and RCX for S[0]
 fixup_label:
@@ -492,7 +492,7 @@ fixup_label_loop:
 
 
 ;; fgetc function
-;; Recieves FILE* in R15
+;; Receives FILE* in R15
 ;; Returns -4 (EOF) or char in RAX
 fgetc:
 	mov rax, -4                 ; Put EOF in rax
@@ -517,7 +517,7 @@ fgetc_done:
 
 
 ;; Reverse_List function
-;; Recieves List in RAX
+;; Receives List in RAX
 ;; Returns the list reversed in RAX
 Reverse_List:
 	push rbx                    ; Protect RBX
@@ -541,7 +541,7 @@ Reverse_List_Done:
 
 
 ;; recursive_output function
-;; Recieves list in RAX
+;; Receives list in RAX
 ;; walks the list and prints the I->S for all nodes backwards
 ;; Uses RBX for I
 recursive_output:
@@ -564,7 +564,7 @@ recursive_output_done:
 
 
 ;; File_Print function
-;; Recieves CHAR* in RAX
+;; Receives CHAR* in RAX
 ;; calls fputc for every non-null char
 File_Print:
 	push rbx                    ; Protect RBX
@@ -589,7 +589,7 @@ File_Print_Done:
 
 
 ;; fputc function
-;; recieves CHAR in RAX and FILE* in R14
+;; receives CHAR in RAX and FILE* in R14
 ;; writes char and returns
 fputc:
 	push rax                    ; We are writing rax
@@ -609,7 +609,7 @@ fputc:
 
 
 ;; program function
-;; recieves nothing, returns nothing
+;; receives nothing, returns nothing
 ;; Uses RAX for type_size
 program:
 	;; The binary initialized the globals to null, so we can skip those steps
@@ -716,7 +716,7 @@ program_string_1: db 10, "NOP", 10, 0
 
 
 ;; declare_function function
-;; Recieves nothing and returns nothing
+;; Receives nothing and returns nothing
 ;; Sets current function and adds it to the global function list
 declare_function:
 	push rbx                    ; Protect RBX
@@ -792,7 +792,7 @@ declare_function_string_3: db 10, 0
 
 
 ;; collect_arguments function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Adds arguments to the function definition
 ;; holds struct type* type_size in RCX, then replace with struct token_list* a in RCX when type_size is used
@@ -888,7 +888,7 @@ collect_arguments_done:
 
 
 ;; statement function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks down global_token recursively to collect the contents of the function
 statement:
@@ -1079,7 +1079,7 @@ statement_string_4: db "ERROR in statement", 10, "Missing ;", 10, 0
 
 
 ;; recursive_statement function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks the global_token list to build the contents of statements
 ;; Uses struct token_list* frame in RCX
@@ -1144,7 +1144,7 @@ recursive_statement_string_1: db "POP_RBX", 9, "# _recursive_statement_locals", 
 
 
 ;; return_result function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Cleans up function and generates return
 ;; Also handles returing expressions
@@ -1192,7 +1192,7 @@ return_result_string_2: db "RETURN", 10, 0
 
 
 ;; collect_local function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks global_token list to create function locals
 ;; Uses RCX for struct token_list* A
@@ -1324,7 +1324,7 @@ collect_local_string_3: db "PUSH_RAX", 9, "#", 0
 
 
 ;; process_asm function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Simply inlines the asm statements
 ;; Uses RBX for global_token temp storage
@@ -1376,7 +1376,7 @@ process_asm_string_3: db "ERROR in process_asm", 10, "MISSING ;", 10, 0
 
 
 ;; process_if function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Increments current_count recurses into expression + statement
 ;; Uses RCX for char* NUMBER_STRING
@@ -1510,7 +1510,7 @@ restore_break_frame:
 
 
 ;; set_break_frame microfunction
-;; Recieves char* head in RAX and char* num in RBX
+;; Receives char* head in RAX and char* num in RBX
 ;; Overwrites RAX and RBX
 ;; Returns to calling function
 set_break_frame:
@@ -1525,7 +1525,7 @@ set_break_frame:
 
 
 ;; process_do function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Increments current_count and leverages save/restore_break_frame pieces
 ;; Uses RCX for char* NUMBER_STRING
@@ -1609,7 +1609,7 @@ process_do_string_7: db ":DO_END_", 0
 
 
 ;; process_while function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Increments current_count and leverages save/restore_break_frame pieces
 ;; Uses RCX for char* NUMBER_STRING
@@ -1700,7 +1700,7 @@ process_while_string_7: db ":END_WHILE_", 0
 
 
 ;; process_for function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Increments current_count and leverages save/restore_break_frame pieces
 ;; Uses RCX for char* NUMBER_STRING
@@ -1848,7 +1848,7 @@ process_for_string_13: db ":FOR_END_", 0
 
 
 ;; process_break function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Handles the break out of loops case
 ;; Uses RBX for struct token_list* break_frame and RCX for struct token_list* I
@@ -1926,7 +1926,7 @@ process_break_string_4: db "ERROR in break statement",10, "Missing ;", 10, 0
 
 
 ;; expression function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Walks global_token and updates output_list
 ;; Uses RAX and RBX for match and RCX for char* store
@@ -1982,7 +1982,7 @@ expression_string_1: db "STORE_CHAR", 10, 0
 
 
 ;; bitwise_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks global_token list and updates output list
 ;; Just calls other functions
@@ -1993,7 +1993,7 @@ bitwise_expr:
 
 
 ;; bitwise_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Just calls general_recursion a bunch
 ;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
@@ -2043,7 +2043,7 @@ bitwise_expr_stub_string_2: db "XOR_rbx_rax_into_rax", 10, 0
 
 
 ;; relational_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Walks global_token list and updates output list
 ;; just calls other function
@@ -2054,7 +2054,7 @@ relational_expr:
 
 
 ;; relational_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Just calls general_recursion a bunch
 ;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
@@ -2113,7 +2113,7 @@ relational_expr_stub_string_5: db "CMP", 10, "SETNE", 10, "MOVEZX", 10, 0
 
 
 ;; additive_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Walks global_token list and updates output list
 ;; just calls other function
@@ -2124,7 +2124,7 @@ additive_expr:
 
 
 ;; additive_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Just calls general_recursion a bunch
 ;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
@@ -2190,7 +2190,7 @@ additive_expr_stub_string_6: db "COPY_rax_to_rcx", 10, "COPY_rbx_to_rax", 10, "S
 
 
 ;; postfix_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Walks global_token list and updates output list
 ;; just calls other function
@@ -2201,7 +2201,7 @@ postfix_expr:
 
 
 ;; postfix_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Checks for "[" and "->" and deals with them otherwise does nothing
 ;; Uses RAX, RBX, RCX and RDX for passing constants to general recursion
@@ -2234,7 +2234,7 @@ postfix_expr_stub_done:
 
 
 ;; unary_expr_sizeof function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Uses RCX for A->SIZE
 unary_expr_sizeof:
@@ -2276,7 +2276,7 @@ unary_expr_sizeof_string_3: db 10, 0
 
 
 ;; postfix_expr_array function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Uses RBX for struct type* ARRAY and RCX for char* ASSIGN
 postfix_expr_array:
@@ -2354,7 +2354,7 @@ postfix_expr_array_string_6: db 0
 
 
 ;; ceil_log2 function
-;; Recieves int a in RAX
+;; Receives int a in RAX
 ;; Performs log2 on A and
 ;; Returns result in RAX
 ;; Uses RBX for INT A and RCX for INT RESULT
@@ -2387,7 +2387,7 @@ ceil_log2_done:
 
 
 ;; postfix_expr_arrow function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Emits a bunch and updates current_target
 ;; Uses RBX for struct type* I
@@ -2455,7 +2455,7 @@ postfix_expr_arrow_string_3: db "LOAD_INTEGER", 10, 0
 
 
 ;; primary_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 primary_expr:
 	push rbx                    ; Protect RBX
@@ -2613,7 +2613,7 @@ primary_expr_string_7:db "0123456789", 0
 
 
 ;; primary_expr_variable function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks global and updates output
 ;; Uses RAX for struct token_list* a and RCX for char* S
@@ -2710,7 +2710,7 @@ primary_expr_variable_string_2: db "LOAD_IMMEDIATE_rax %", 0
 
 
 ;; function_call function
-;; Recieves char* S in RAX and int BOOL in RBX
+;; Receives char* S in RAX and int BOOL in RBX
 ;; Builds stack frames before and tears them down after function calls
 ;; Uses RCX for char* S, RDX for int BOOL, RSI for PASSED
 function_call:
@@ -2854,7 +2854,7 @@ function_call_string_15: db "POP_RDI", 9, "# Prevent overwrite", 10, 0
 
 
 ;; variable_load function
-;; Recieves struct token_list* A in RAX
+;; Receives struct token_list* A in RAX
 ;; Returns nothing
 ;; Updates output and current_target
 ;; Uses RCX for A
@@ -2921,7 +2921,7 @@ variable_load_string_2: db "LOAD_INTEGER", 10, 0
 
 
 ;; function_load function
-;; Recieves struct token_list* a in RAX
+;; Receives struct token_list* a in RAX
 ;; Returns nothing
 ;; Uses RCX to hold A->S
 function_load:
@@ -2962,7 +2962,7 @@ function_load_string_1: db 10, 0
 
 
 ;; global_load function
-;; Recieves struct token_list* A in RAX
+;; Receives struct token_list* A in RAX
 ;; Returns nothing
 ;; Uses RBX to hold A->S
 global_load:
@@ -3003,7 +3003,7 @@ global_load_string_2: db "LOAD_INTEGER", 10, 0
 
 
 ;; sym_lookup function
-;; Recieves char* S in RAX and struct token_list* symbol_list in RBX
+;; Receives char* S in RAX and struct token_list* symbol_list in RBX
 ;; Uses I->S in RAX, S in RBX and I in RCX
 ;; Returns match or NULL
 sym_lookup:
@@ -3031,7 +3031,7 @@ sym_lookup_done:
 
 
 ;; primary_expr_number function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Simply uses current global token to update output and then steps to next global_token
 primary_expr_number:
@@ -3055,7 +3055,7 @@ primary_expr_number_string_1: db 10, 0
 
 
 ;; primary_expr_string function
-;; recieves nothing
+;; receives nothing
 ;; Returns nothing
 ;; creates entries for string and calls to generate string output
 ;; uses RCX for char* number_string
@@ -3109,7 +3109,7 @@ primary_expr_string_string_1: db ":STRING_", 0
 
 
 ;; primary_expr_char function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Updates output_list using global_token
 primary_expr_char:
@@ -3140,13 +3140,13 @@ primary_expr_char_string_1: db 10, 0
 
 
 ;; primary_expr_failure function
-;; Recieves nothing
+;; Receives nothing
 ;; Does not return but aborts hard
 ;; Complains about the bad input
 primary_expr_failure:
 ;	call line_error             ; Get line of issue
 	mov r14, 2                  ; write to standard error
-	mov rax, primary_expr_failure_string_0 ; Using "Recieved "
+	mov rax, primary_expr_failure_string_0 ; Using "Received "
 	call File_Print             ; Print it
 
 	mov rax, [global_token]     ; Using global_token
@@ -3157,12 +3157,12 @@ primary_expr_failure:
 	call File_Print             ; Print it
 	jmp Exit_Failure            ; Abort Hard
 
-primary_expr_failure_string_0: db "Recieved ", 0
+primary_expr_failure_string_0: db "Received ", 0
 primary_expr_failure_string_1: db " in primary_expr", 10, 0
 
 
 ;; general_recursion function
-;; Recieves FUNCTION F in RAX, char* S in RBX, char* name in RCX and FUNCTION iterate in RDX
+;; Receives FUNCTION F in RAX, char* S in RBX, char* name in RCX and FUNCTION iterate in RDX
 ;; Returns nothing
 ;; Uses RCX for char* S, RDX for FUNCTION iterate and RBP for FUNCTION F
 ;; But generally recurses a shitload
@@ -3200,7 +3200,7 @@ general_recursion_done:
 
 
 ;; promote_type function
-;; Recieves struct type* a in RAX and struct type* b in RBX
+;; Receives struct type* a in RAX and struct type* b in RBX
 ;; Returns the most recent type in RAX
 ;; Uses RAX for struct type* I, RCX for struct type* A and RDX for struct type* B
 promote_type:
@@ -3251,7 +3251,7 @@ promote_type_done:
 
 
 ;; common_recursion function
-;; Recieves FUNCTION F in RAX
+;; Receives FUNCTION F in RAX
 ;; Returns Nothing
 ;; Walks global_token list and update output_list
 ;; Updates current_target
@@ -3283,7 +3283,7 @@ common_recursion_string_1: db "POP_RBX", 9, "# _common_recursion", 10, 0
 
 
 ;; require_match function
-;; Recieves char* message in RAX and char* required in RBX
+;; Receives char* message in RAX and char* required in RBX
 ;; Returns nothing
 ;; Uses RCX to hold message and updates global_token
 require_match:
@@ -3313,7 +3313,7 @@ require_match_good:
 
 
 ;; uniqueID Function
-;; Recieves char*S in RAX, struct token_list* l in RBX snd char* num in RCX
+;; Receives char*S in RAX, struct token_list* l in RBX snd char* num in RCX
 ;; Returns updated struct token_list* L in RAX
 uniqueID:
 	push rbx                    ; Protect RBX
@@ -3336,7 +3336,7 @@ uniqueID_string_0: db 10, 0
 
 
 ;; uniqueID_out function
-;; Recieves char* S in RAX and char* num in RBX
+;; Receives char* S in RAX and char* num in RBX
 ;; Returns nothing
 uniqueID_out:
 	push rax                    ; Protect RAX
@@ -3353,7 +3353,7 @@ uniqueID_out:
 
 
 ;; emit_out function
-;; Recieves char* S in RAX
+;; Receives char* S in RAX
 ;; Returns nothing
 ;; Updates output_list
 ;; MUST NOT ALTER REGISTERS
@@ -3369,7 +3369,7 @@ emit_out:
 
 
 ;; emit function
-;; Recieves char *s in RAX and struct token_list* head in RBX
+;; Receives char *s in RAX and struct token_list* head in RBX
 ;; Returns struct token_list* T in RAX
 emit:
 	push rcx                    ; Protect RCX
@@ -3383,9 +3383,9 @@ emit:
 
 
 ;; escape_lookup function
-;; Recieves char* c in RAX
+;; Receives char* c in RAX
 ;; Returns integer value of char in RAX
-;; Aborts hard if unknown escape is recieved
+;; Aborts hard if unknown escape is received
 ;; Uses RCX to hold char* C
 escape_lookup:
 	push rbx                    ; Protect RBX
@@ -3428,7 +3428,7 @@ escape_lookup:
 	;; Looks like we have no clue what we are doing
 	;; Aborting hard
 	mov r14, 2                  ; write to standard error
-	mov rax, escape_lookup_string_0 ; Using "Unknown escape recieved: "
+	mov rax, escape_lookup_string_0 ; Using "Unknown escape received: "
 	call File_Print             ; Print it
 	mov rax, rcx                ; Using C
 	call File_Print             ; Print it
@@ -3456,12 +3456,12 @@ escape_lookup_hex:
 	add rax, rbx                ; hex(c[2]) << 4 + hex(c[3])
 	jmp escape_lookup_done      ; Be done
 
-escape_lookup_string_0: db "Unknown escape recieved: ", 0
+escape_lookup_string_0: db "Unknown escape received: ", 0
 escape_lookup_string_1: db " Unable to process", 10, 0
 
 
 ;; char2hex function
-;; Recieves char in RAX
+;; Receives char in RAX
 ;; Returns hex or aborts hard
 char2hex:
 	sub rax, 48                 ; Try 0-9
@@ -3490,7 +3490,7 @@ char2hex_string_0: db "Tried to print non-hex number", 10, 0
 
 
 ;; parse_string function
-;; Recieves char* string in RAX
+;; Receives char* string in RAX
 ;; Returns cleaned up string
 ;; Protects char* string in RBX
 parse_string:
@@ -3515,7 +3515,7 @@ parse_string_done:
 
 
 ;; weird function
-;; Recieves char* string in RAX
+;; Receives char* string in RAX
 ;; Returns true(0) or false(1) in RAX
 ;; Uses RCX to hold char* string
 weird:
@@ -3585,7 +3585,7 @@ weird_string_1: db 9, 10, 13, 32, 0
 
 
 ;; collect_regular_string function
-;; Recieves char* string in RAX
+;; Receives char* string in RAX
 ;; Malloc and creates new string to return in RAX
 ;; Uses RCX for return string and RDX for passed string
 collect_regular_string:
@@ -3641,7 +3641,7 @@ collect_regular_string_done:
 
 
 ;; collect_weird_string function
-;; Recieves char* string in RAX
+;; Receives char* string in RAX
 ;; Mallocs and returns char* hold in RAX
 ;; Uses RCX for char* hold and RDX for char* string
 collect_weird_string:
@@ -3709,7 +3709,7 @@ collect_weird_string_done:
 
 
 ;; HEX to ascii routine
-;; Recieves INT in RAX and CHAR* in RCX
+;; Receives INT in RAX and CHAR* in RCX
 ;; Stores ascii of INT in CHAR*
 ;; Returns only modifying RAX and RCX
 hex8:
@@ -3730,7 +3730,7 @@ hex1:
 
 
 ;; type_name function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns type_size in RAX
 ;; Uses RCX for STRUCT TYPE* RET
 type_name:
@@ -3816,7 +3816,7 @@ type_name_string_1: db 10, 0
 
 
 ;; lookup_type function
-;; Recieves char* s in RAX and struct type* start in RBX
+;; Receives char* s in RAX and struct type* start in RBX
 ;; Returns struct type* in RAX
 ;; Uses RBX for S and RCX for I
 lookup_type:
@@ -3844,7 +3844,7 @@ lookup_type_done:
 
 
 ;; create_struct function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Uses global_token to malloc a struct's definition
 ;; Uses RCX for int OFFSET, RDX for struct type* head, RBP for struct type* I,
@@ -3961,7 +3961,7 @@ create_struct_string_1: db "ERROR in create_struct", 10, " Missing ;", 10, 0
 
 
 ;; lookup_member function
-;; Recieves struct type* parent in RAX and char* name in RBX
+;; Receives struct type* parent in RAX and char* name in RBX
 ;; Returns struct type* I in RAX
 ;; Uses char* NAME in RBX, RCX for struct type* I and RDX to hold parent for errors
 ;; Aborts hard if not found
@@ -4018,7 +4018,7 @@ lookup_member_string_2: db 10, 0
 
 
 ;; build_member function
-;; Recieves struct type* last in RAX, int offset in RBX and global member_size in RDI
+;; Receives struct type* last in RAX, int offset in RBX and global member_size in RDI
 ;; Updates member_size in RDI and returns struct type* I in RAX
 ;; Uses RCX for struct type* member_type and RDX for struct type* I
 build_member:
@@ -4087,7 +4087,7 @@ build_member_string_0: db "Struct only supports [num] form", 10, 0
 
 
 ;; build_union function
-;; Recieves struct type* last in RAX, int offset in RBX and global member_size in RDI
+;; Receives struct type* last in RAX, int offset in RBX and global member_size in RDI
 ;; Updates member_size in RDI and returns struct type* LAST in RAX
 ;; Uses RCX for struct type* last, RDX for int offset, RSI for int size and RDI for int member_size
 build_union:
@@ -4153,7 +4153,7 @@ build_union_string_1: db "ERROR in build_union", 10, "Missing ;", 10, 0
 
 
 ;; sym_declare function
-;; Recieves char *s in RAX, struct type* t in RBX, and struct token_list* list in RCX
+;; Receives char *s in RAX, struct type* t in RBX, and struct token_list* list in RCX
 ;; Returns struct token_list* in RAX
 ;; Uses RAX for A
 sym_declare:
@@ -4169,7 +4169,7 @@ sym_declare:
 
 
 ;; match function
-;; Recieves CHAR* in RAX and CHAR* in RBX
+;; Receives CHAR* in RAX and CHAR* in RBX
 ;; Returns 0 (TRUE) or 1 (FALSE) in RAX
 match:
 	push rbx                    ; Protect RBX
@@ -4201,7 +4201,7 @@ match_Done:
 
 
 ;; numerate_number function
-;; Recieves an INT A in RAX
+;; Receives an INT A in RAX
 ;; Returns char* result in RAX
 ;; Allocates 16 bytes of memory
 ;; Behaves badly when given a negative number too large
@@ -4281,7 +4281,7 @@ numerate_number_ZERO:
 
 
 ;; numerate_string function
-;; Recieves CHAR* in RAX
+;; Receives CHAR* in RAX
 ;; Returns value of CHAR* in RAX
 ;; Uses RAX for VALUE, RBX for S, RCX for CH and RSI for NEGATIVE?
 numerate_string:
@@ -4364,7 +4364,7 @@ numerate_string_done:
 
 
 ;; Exit_Failure function
-;; Recieves nothing
+;; Receives nothing
 ;; And aborts hard
 ;; Does NOT return
 Exit_Failure:
@@ -4510,7 +4510,7 @@ type_unsigned_name: db "unsigned", 0
 
 
 ;; debug_list function
-;; Recieves struct token_list* in RAX
+;; Receives struct token_list* in RAX
 ;; Prints contents of list and exits
 ;; Does NOT return
 debug_list:
