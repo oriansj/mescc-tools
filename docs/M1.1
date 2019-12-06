@@ -5,8 +5,9 @@
 M1 \- The universal Macro assembler
 
 .SH SYNOPSIS
+.na
 
-M1 --architecture ARCHITECTURE --file FILE [--output FILE --octal --binary --BigEndian --LittleEndian]
+M1 --architecture ARCHITECTURE --file FILE [--output FILE --octal    --binary --BigEndian --LittleEndian]
 
 .SH DESCRIPTION
 
@@ -17,7 +18,9 @@ Leveraging a few grammar details to provide the user with a
 rich vocabulary of ways of expressing their desired output
 and input; thus eliminating surprise from the generation
 process.
+.br
 At it's core is DEFINE MACRO EXPANDED
+.br
 Where one can define an assembly instruction like:
 DEFINE INT_80 CD80
 and know that everywhere INT_80 is placed in the input
@@ -49,7 +52,7 @@ format, you can specify the exact output you desire with:
 
 Typically, M1 will be called in scripts used in bootstrapping
 .br
-# M1 -f x86.defs -f libc-core.M1 -f cc.M1 -f cc-footer.M1 --LittleEndian --architecture x86 -o cc.hex2
+# M1 -f x86.defs -f libc-core.M1 -f cc.M1 -f cc-footer.M1             --LittleEndian --architecture x86 -o cc.hex2
 .br
 
 .SH COMPATIBILITY
