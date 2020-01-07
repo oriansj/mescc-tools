@@ -179,6 +179,7 @@ char* store_string(char c, char* filename)
 	{
 		store[i] = ch;
 		i = i + 1;
+		if('\n' == ch) linenumber = linenumber + 1;
 		ch = fgetc(source_file);
 		if(-1 == ch)
 		{
