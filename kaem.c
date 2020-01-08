@@ -208,9 +208,47 @@ char* find_executable(char* name, char* PATH)
 	return NULL;
 }
 
+/* Function to check if the token is an envar and if it is get the pos of = */
+int check_envar(char* token)
+{
+	int j;
+	int equal_found;
+	equal_found = 0;
+	for(j = 0; j < string_length(token); j = j + 1)
+	{
+		if(token[j] == '=')
+		{ /* After = can be anything */
+			equal_found = 1;
+			break;
+		}
+		else
+		{ /* Should be A-z */
+			int found;
+			found = 0;
+			char c;
+			/* Represented numerically; A = 65 through z = 122 */
+			for(c = 65; c <= 122; c = c + 1)
+			{
+				if(token[j] == c)
+				{
+					found = 1;
+				}
+			}
+			if(found == 0)
+			{ /* In all likelihood this isn't actually an environment variable */
+				return 1;
+			}
+		}
+	}
+	if(equal_found == 0)
+	{ /* Not an envar */
+		return 1;
+	}
+	return 0;
+}
 
 /* Function for executing our programs with desired arguments */
-void execute_command(FILE* script, char** envp)
+void execute_command(FILE* script, char** envp, int envp_length)
 {
 	tokens = calloc(max_args, sizeof(char*));
 	char* PATH = env_lookup("PATH=", envp);
@@ -258,40 +296,52 @@ void execute_command(FILE* script, char** envp)
 
 	if(0 < i)
 	{ /* Not a line comment */
-		char* program = find_executable(tokens[0], PATH);
-		if(NULL == program)
-		{
-			file_print(tokens[0], stderr);
-			file_print("Some weird shit went down with: ", stderr);
-			file_print("\n", stderr);
-			exit(EXIT_FAILURE);
+		int is_envar;
+		is_envar = 0;
+		if(check_envar(tokens[0]) == 0) 
+		{ /* It's an envar! */
+			is_envar = 1;
+			envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
+			envp_length = envp_length + 1;
 		}
 
-		int f = fork();
-		if (f == -1)
-		{
-			file_print("fork() failure", stderr);
-			exit(EXIT_FAILURE);
-		}
-		else if (f == 0)
-		{ /* child */
-			/* execve() returns only on error */
-			execve(program, tokens, envp);
-			/* Prevent infinite loops */
-			_exit(EXIT_SUCCESS);
-		}
-
-		/* Otherwise we are the parent */
-		/* And we should wait for it to complete */
-		waitpid(f, &status, 0);
-
-		if(STRICT && (0 != status))
-		{ /* Clearly the script hit an issue that should never have happened */
-			file_print("Subprocess error ", stderr);
-			file_print(numerate_number(status), stderr);
-			file_print("\nABORTING HARD\n", stderr);
-			/* stop to prevent damage */
-			exit(EXIT_FAILURE);
+		if(is_envar == 0)
+		{ /* Stuff to exec */
+			char* program = find_executable(tokens[0], PATH);
+			if(NULL == program)
+			{
+				file_print(tokens[0], stderr);
+				file_print("Some weird shit went down with: ", stderr);
+				file_print("\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+	
+			int f = fork();
+			if (f == -1)
+			{
+				file_print("fork() failure", stderr);
+				exit(EXIT_FAILURE);
+			}
+			else if (f == 0)
+			{ /* child */
+				/* execve() returns only on error */
+				execve(program, tokens, envp);
+				/* Prevent infinite loops */
+				_exit(EXIT_SUCCESS);
+			}
+	
+			/* Otherwise we are the parent */
+			/* And we should wait for it to complete */
+			waitpid(f, &status, 0);
+	
+			if(STRICT && (0 != status))
+			{ /* Clearly the script hit an issue that should never have happened */
+				file_print("Subprocess error ", stderr);
+				file_print(numerate_number(status), stderr);
+				file_print("\nABORTING HARD\n", stderr);
+				/* stop to prevent damage */
+				exit(EXIT_FAILURE);
+			}
 		}
 		/* Then go again */
 	}
@@ -304,6 +354,20 @@ int main(int argc, char** argv, char** envp)
 	STRICT = FALSE;
 	char* filename = "kaem.run";
 	FILE* script = NULL;
+
+	/* Expand envp */
+	int envp_length;
+	envp_length = 0;
+	while(envp[envp_length] != NULL)
+	{
+		envp_length = envp_length + 1;
+	}
+	char** envp_old = calloc(envp_length, sizeof(char*));
+	envp_old = envp;
+	free(envp);
+	char** envp = calloc(envp_length + max_args, sizeof(char*));
+	envp = envp_old;
+	free(envp_old);
 
 	int i = 1;
 	while(i <= argc)
@@ -362,7 +426,7 @@ int main(int argc, char** argv, char** envp)
 
 	while(1)
 	{
-		execute_command(script, envp);
+		execute_command(script, envp, envp_length);
 	}
 	fclose(script);
 	return EXIT_SUCCESS;
