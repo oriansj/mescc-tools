@@ -226,6 +226,14 @@ int check_envar(char* token)
 			int found;
 			found = 0;
 			char c;
+			/* Represented numerically; 0 = 48 through 9 = 57 */
+			for(c = 48; c <= 57; c = c + 1)
+			{
+				if(token[j] == c)
+				{
+					found = 1;
+				}
+			}
 			/* Represented numerically; A = 65 through z = 122 */
 			for(c = 65; c <= 122; c = c + 1)
 			{
@@ -301,7 +309,13 @@ void execute_command(FILE* script, char** envp, int envp_length)
 		if(check_envar(tokens[0]) == 0) 
 		{ /* It's an envar! */
 			is_envar = 1;
+			char** envp_old = calloc(envp_length, sizeof(char*));
+			envp_old = envp;
+			free(envp);
+			char** envp = calloc(envp_length + 1, sizeof(char*));
+			free(envp_old);
 			envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
+			envp[envp_length][string_length(tokens[0])] = '\0';
 			envp_length = envp_length + 1;
 		}
 
@@ -355,19 +369,15 @@ int main(int argc, char** argv, char** envp)
 	char* filename = "kaem.run";
 	FILE* script = NULL;
 
-	/* Expand envp */
+	/* Get envp_length */
 	int envp_length;
 	envp_length = 0;
 	while(envp[envp_length] != NULL)
 	{
 		envp_length = envp_length + 1;
 	}
-	char** envp_old = calloc(envp_length, sizeof(char*));
-	envp_old = envp;
-	free(envp);
-	char** envp = calloc(envp_length + max_args, sizeof(char*));
-	envp = envp_old;
-	free(envp_old);
+	char** nenvp = calloc(envp_length, sizeof(char*));
+	nenvp = envp;
 
 	int i = 1;
 	while(i <= argc)
@@ -426,7 +436,7 @@ int main(int argc, char** argv, char** envp)
 
 	while(1)
 	{
-		execute_command(script, envp, envp_length);
+		execute_command(script, nenvp, envp_length);
 	}
 	fclose(script);
 	return EXIT_SUCCESS;
