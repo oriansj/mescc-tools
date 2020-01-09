@@ -309,11 +309,6 @@ void execute_command(FILE* script, char** envp, int envp_length)
 		if(check_envar(tokens[0]) == 0) 
 		{ /* It's an envar! */
 			is_envar = 1;
-			char** envp_old = calloc(envp_length, sizeof(char*));
-			envp_old = envp;
-			free(envp);
-			char** envp = calloc(envp_length + 1, sizeof(char*));
-			free(envp_old);
 			envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
 			envp[envp_length][string_length(tokens[0])] = '\0';
 			envp_length = envp_length + 1;
@@ -371,13 +366,18 @@ int main(int argc, char** argv, char** envp)
 
 	/* Get envp_length */
 	int envp_length;
-	envp_length = 0;
+	envp_length = 1;
 	while(envp[envp_length] != NULL)
 	{
 		envp_length = envp_length + 1;
 	}
-	char** nenvp = calloc(envp_length, sizeof(char*));
+	char** nenvp = calloc(envp_length + max_args, sizeof(char*));
 	nenvp = envp;
+	int i;
+	for(i = envp_length; i < envp_length + max_args; i = i + 1)
+	{
+		nenvp[i] = "";
+	}
 
 	int i = 1;
 	while(i <= argc)
