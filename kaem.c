@@ -256,108 +256,105 @@ int check_envar(char* token)
 }
 
 /* Function for executing our programs with desired arguments */
-void execute_command(FILE* script, char** envp, int envp_length)
+void execute_commands(FILE* script, char** envp, int envp_length)
 {
-	tokens = calloc(max_args, sizeof(char*));
-	char* PATH = env_lookup("PATH=", envp);
-	if(NULL != PATH)
-	{
-		PATH = calloc(max_string, sizeof(char));
-		copy_string(PATH, env_lookup("PATH=", envp));
-	}
-
-	char* USERNAME = env_lookup("LOGNAME=", envp);
-	if((NULL == PATH) && (NULL == USERNAME))
-	{
-		PATH = calloc(max_string, sizeof(char));
-		copy_string(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
-	}
-	else if(NULL == PATH)
-	{
-		PATH = prepend_string("/home/", prepend_string(USERNAME,"/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"));
-	}
-
-	int i = 0;
-	int status = 0;
-	command_done = 0;
-	do
-	{
-		char* result = collect_token(script);
-		if(0 != result)
-		{ /* Not a comment string but an actual argument */
-			tokens[i] = result;
-			i = i + 1;
-		}
-	} while(0 == command_done);
-
-	if(VERBOSE && (0 < i))
-	{
-		file_print(" +> ", stdout);
-		int j;
-		for(j = 0; j < i; j = j + 1)
-		{
-			file_print(tokens[j], stdout);
-			fputc(' ', stdout);
-		}
-		file_print("\n", stdout);
-	}
-
-	if(0 < i)
-	{ /* Not a line comment */
-		int is_envar;
-		is_envar = 0;
-		if(check_envar(tokens[0]) == 0) 
-		{ /* It's an envar! */
-			is_envar = 1;
-			char** envp_old = calloc(envp_length, sizeof(char*));
-			envp_old = envp;
-			free(envp);
-			char** envp = calloc(envp_length + 1, sizeof(char*));
-			free(envp_old);
-			envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
-			envp[envp_length][string_length(tokens[0])] = '\0';
-			envp_length = envp_length + 1;
-		}
-
-		if(is_envar == 0)
-		{ /* Stuff to exec */
-			char* program = find_executable(tokens[0], PATH);
-			if(NULL == program)
-			{
-				file_print(tokens[0], stderr);
-				file_print("Some weird shit went down with: ", stderr);
-				file_print("\n", stderr);
-				exit(EXIT_FAILURE);
-			}
-	
-			int f = fork();
-			if (f == -1)
-			{
-				file_print("fork() failure", stderr);
-				exit(EXIT_FAILURE);
-			}
-			else if (f == 0)
-			{ /* child */
-				/* execve() returns only on error */
-				execve(program, tokens, envp);
-				/* Prevent infinite loops */
-				_exit(EXIT_SUCCESS);
-			}
-	
-			/* Otherwise we are the parent */
-			/* And we should wait for it to complete */
-			waitpid(f, &status, 0);
-	
-			if(STRICT && (0 != status))
-			{ /* Clearly the script hit an issue that should never have happened */
-				file_print("Subprocess error ", stderr);
-				file_print(numerate_number(status), stderr);
-				file_print("\nABORTING HARD\n", stderr);
-				/* stop to prevent damage */
-				exit(EXIT_FAILURE);
-			}
-		}
-		/* Then go again */
+	while(1)
+	{ 
+    	tokens = calloc(max_args, sizeof(char*));
+    	char* PATH = env_lookup("PATH=", envp);
+    	if(NULL != PATH)
+    	{
+    		PATH = calloc(max_string, sizeof(char));
+    		copy_string(PATH, env_lookup("PATH=", envp));
+    	}
+    
+    	char* USERNAME = env_lookup("LOGNAME=", envp);
+    	if((NULL == PATH) && (NULL == USERNAME))
+    	{
+    		PATH = calloc(max_string, sizeof(char));
+    		copy_string(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
+    	}
+    	else if(NULL == PATH)
+    	{
+    		PATH = prepend_string("/home/", prepend_string(USERNAME,"/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"));
+    	}
+    
+    	int i = 0;
+    	int status = 0;
+    	command_done = 0;
+    	do
+    	{
+    		char* result = collect_token(script);
+    		if(0 != result)
+    		{ /* Not a comment string but an actual argument */
+    			tokens[i] = result;
+    			i = i + 1;
+    		}
+    	} while(0 == command_done);
+    
+    	if(VERBOSE && (0 < i))
+    	{
+    		file_print(" +> ", stdout);
+    		int j;
+    		for(j = 0; j < i; j = j + 1)
+    		{
+    			file_print(tokens[j], stdout);
+    			fputc(' ', stdout);
+    		}
+    		file_print("\n", stdout);
+    	}
+    
+    	if(0 < i)
+    	{ /* Not a line comment */
+    		int is_envar;
+    		is_envar = 0;
+    		if(check_envar(tokens[0]) == 0) 
+    		{ /* It's an envar! */
+    			is_envar = 1;
+    			envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
+    			envp_length = envp_length + 1;
+    		}
+    
+    		if(is_envar == 0)
+    		{ /* Stuff to exec */
+    			char* program = find_executable(tokens[0], PATH);
+    			if(NULL == program)
+    			{
+    				file_print(tokens[0], stderr);
+    				file_print("Some weird shit went down with: ", stderr);
+    				file_print("\n", stderr);
+    				exit(EXIT_FAILURE);
+    			}
+    	
+    			int f = fork();
+    			if (f == -1)
+    			{
+    				file_print("fork() failure", stderr);
+    				exit(EXIT_FAILURE);
+    			}
+    			else if (f == 0)
+    			{ /* child */
+    				/* execve() returns only on error */
+    				execve(program, tokens, envp);
+    				/* Prevent infinite loops */
+    				_exit(EXIT_SUCCESS);
+    			}
+    	
+    			/* Otherwise we are the parent */
+    			/* And we should wait for it to complete */
+    			waitpid(f, &status, 0);
+    	
+    			if(STRICT && (0 != status))
+    			{ /* Clearly the script hit an issue that should never have happened */
+    				file_print("Subprocess error ", stderr);
+    				file_print(numerate_number(status), stderr);
+    				file_print("\nABORTING HARD\n", stderr);
+    				/* stop to prevent damage */
+    				exit(EXIT_FAILURE);
+    			}
+    		}
+    		/* Then go again */
+    	}
 	}
 }
 
@@ -370,14 +367,19 @@ int main(int argc, char** argv, char** envp)
 	FILE* script = NULL;
 
 	/* Get envp_length */
-	int envp_length;
-	envp_length = 0;
+	int* envp_length = calloc(1, sizeof(int));
+	envp_length = 1;
 	while(envp[envp_length] != NULL)
 	{
 		envp_length = envp_length + 1;
 	}
-	char** nenvp = calloc(envp_length, sizeof(char*));
+	char** nenvp = calloc(envp_length + max_args, sizeof(char*));
 	nenvp = envp;
+	int i;
+	for(i = envp_length; i < envp_length + max_args; i = i + 1)
+	{
+		nenvp[i] = "";
+	}
 
 	int i = 1;
 	while(i <= argc)
@@ -434,10 +436,7 @@ int main(int argc, char** argv, char** envp)
 		exit(EXIT_FAILURE);
 	}
 
-	while(1)
-	{
-		execute_command(script, nenvp, envp_length);
-	}
+	execute_commands(script, nenvp, envp_length);
 	fclose(script);
 	return EXIT_SUCCESS;
 }
