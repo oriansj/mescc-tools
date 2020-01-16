@@ -18,7 +18,7 @@
 VPATH = bin:test:test/results
 PACKAGE = mescc-tools
 
-all: M1 hex2 exec_enable get_machine blood-elf kaem catm
+all: M1 hex2 get_machine blood-elf kaem catm
 
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
@@ -37,9 +37,6 @@ hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_
 	functions/match.c \
 	functions/numerate_number.c \
 	functions/in_set.c -o bin/hex2
-
-exec_enable: exec_enable.c | bin
-	$(CC) $(CFLAGS) functions/file_print.c exec_enable.c -o bin/exec_enable
 
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) functions/file_print.c functions/match.c get_machine.c -o bin/get_machine
@@ -101,7 +98,7 @@ test: test0-binary \
 test0-binary: results hex2 get_machine
 	test/test0/hello.sh
 
-test1-binary: results hex2 M1 exec_enable get_machine
+test1-binary: results hex2 M1 get_machine
 	test/test1/hello.sh
 
 test2-binary: results hex2 M1

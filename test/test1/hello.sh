@@ -28,7 +28,7 @@ then
 	[ $r = 0 ] || exit 1
 	out=$(sha256_check test/test1/proof1.answer)
 	[ "$out" = "test/test1/proof1: OK" ] || exit 2
-	./bin/exec_enable test/test1/proof1
+	chmod u+x test/test1/proof1
 	./test/test1/proof1 < test/test1/hex1.hex0 > test/test1/proof2
 	r=$?
 	[ $r = 0 ] || exit 3
