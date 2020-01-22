@@ -60,13 +60,24 @@
 
 char* numerate_number(int a);
 int match(char* a, char* b);
-void file_print(char* s, FILE* f);
+void collect_comment(FILE* input);
+int collect_string(FILE* input, int index, char* target);
+char* collect_token(FILE* input);
+char* find_char(char* string, char a);
+char* prematch(char* search, char* field);
+char* env_lookup(char* token, char** envp);
+char* find_executable(char* name, char* PATH);
+int check_envar(char* token);
+int cd(char** path);
+void execute_commands(FILE* script, char** envp);
 
 char** tokens;
 int command_done;
 int VERBOSE;
 int STRICT;
 int envp_length;
+char* pwd;
+char* old_pwd;
 
 /* Function for purging line comments */
 void collect_comment(FILE* input)
@@ -273,8 +284,26 @@ int check_envar(char* token)
 	return 0;
 }
 
+/* cd builtin */
+int cd(char** path)
+{
+	if(match(path, "-"))
+	{
+		file_print("moving -\n", stdout);
+		file_print(old_pwd, stdout);
+		file_print("\n", stdout);
+		cd(old_pwd);
+	}
+	else
+	{
+		chdir(path);
+		old_pwd = pwd;
+		pwd = path;
+	}
+}
+
 /* Function for executing our programs with desired arguments */
-void execute_commands(FILE* script, char** envp, int envp_length)
+void execute_commands(FILE* script, char** envp)
 {
 	while(1)
 	{
@@ -324,16 +353,17 @@ void execute_commands(FILE* script, char** envp, int envp_length)
 
 		if(0 < i)
 		{ /* Not a line comment */
-			int is_envar;
-			is_envar = 0;
+			/* Find what it is */
 			if(check_envar(tokens[0]) == 0)
 			{ /* It's an envar! */
-				is_envar = 1;
 				envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
 				envp_length = envp_length + 1;
 			}
-
-			if(is_envar == 0)
+			else if(match(tokens[0], "cd"))
+			{ /* cd builtin */
+				cd(tokens[1]);
+			}
+			else
 			{ /* Stuff to exec */
 				char* program = find_executable(tokens[0], PATH);
 				if(NULL == program)
@@ -385,7 +415,6 @@ int main(int argc, char** argv, char** envp)
 	FILE* script = NULL;
 
 	/* Get envp_length */
-	int envp_length;
 	envp_length = 1;
 	while(envp[envp_length] != NULL)
 	{
@@ -402,6 +431,10 @@ int main(int argc, char** argv, char** envp)
 	{
 		nenvp[i] = "";
 	}
+
+	/* Initialize pwd */
+	pwd = "/proc/self/cwd/";
+	old_pwd = pwd;
 
 	i = 1;
 	while(i <= argc)
@@ -458,7 +491,7 @@ int main(int argc, char** argv, char** envp)
 		exit(EXIT_FAILURE);
 	}
 
-	execute_commands(script, nenvp, envp_length);
+	execute_commands(script, nenvp);
 	fclose(script);
 	return EXIT_SUCCESS;
 }
