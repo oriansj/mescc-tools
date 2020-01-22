@@ -114,7 +114,13 @@ char* collect_token(FILE* input)
 	do
 	{
 		c = fgetc(input);
-		if(-1 == c)
+		if(i >= max_string)
+		{ /* Prevent buffer overflow */
+			file_print(token, stderr);
+			file_print("\nthis line is too long\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		else if(-1 == c)
 		{ /* Deal with end of file */
 			file_print("execution complete\n", stderr);
 			exit(EXIT_SUCCESS);
