@@ -20,6 +20,12 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include "functions/file_print.c"
+#include "functions/in_set.c"
+#include "functions/match.c"
+#include "functions/numerate_number.c"
+#include "functions/string.c"
+
 #define FALSE 0
 //CONSTANT FALSE 0
 #define TRUE 1
@@ -148,31 +154,6 @@ char* collect_token(FILE* input)
 		return NULL;
 	}
 	return token;
-}
-
-char* copy_string(char* target, char* source)
-{
-	while(0 != source[0])
-	{
-		target[0] = source[0];
-		target = target + 1;
-		source = source + 1;
-	}
-	return target;
-}
-
-int string_length(char* a)
-{
-	int i = 0;
-	while(0 != a[i]) i = i + 1;
-	return i;
-}
-
-char* prepend_string(char* add, char* base)
-{
-	char* ret = calloc(max_string, sizeof(char));
-	copy_string(copy_string(ret, add), base);
-	return ret;
 }
 
 char* find_char(char* string, char a)
@@ -398,6 +379,7 @@ int main(int argc, char** argv, char** envp)
 	FILE* script = NULL;
 
 	/* Get envp_length */
+	int envp_length;
 	envp_length = 1;
 	while(envp[envp_length] != NULL)
 	{
