@@ -48,14 +48,18 @@
 #define AARM64 80
 
 
-void file_print(char* s, FILE* f);
-int match(char* a, char* b);
-int string_length(char* a);
+/* Imported functions */
 char* numerate_number(int a);
-int numerate_string(char *a);
 int hex2char(int c);
 int in_set(int c, char* s);
+int match(char* a, char* b);
+int numerate_string(char *a);
+int string_length(char* a);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
 
+
+/* Globals */
 FILE* source_file;
 FILE* destination_file;
 int BigEndian;
@@ -286,7 +290,9 @@ void identify_macros(struct Token* p)
 		if(match(i->Text, "DEFINE"))
 		{
 			i->type = MACRO;
+			require(NULL != i->next, "Macro name must exist\n");
 			i->Text = i->next->Text;
+			require(NULL != i->next->next, "Macro value must exist\n");
 			if(STR == i->next->next->type)
 			{
 				i->Expression = i->next->next->Text + 1;
@@ -362,6 +368,7 @@ void process_string(struct Token* p)
 char* pad_nulls(int size, char* nil)
 {
 	if(0 == size) return nil;
+	require(size > 0, "negative null padding not possible\n");
 	size = size * 2;
 
 	char* s = calloc(size + 1, sizeof(char));

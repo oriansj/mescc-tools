@@ -23,12 +23,13 @@ all: M1 hex2 get_machine blood-elf kaem catm
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
 
-M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c | bin
+M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c functions/require.c functions/in_set.c | bin
 	$(CC) $(CFLAGS) M1-macro.c \
 	functions/file_print.c \
 	functions/match.c \
 	functions/numerate_number.c \
 	functions/string.c \
+	functions/require.c \
 	functions/in_set.c -o bin/M1
 
 hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c | bin
