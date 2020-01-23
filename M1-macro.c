@@ -91,11 +91,7 @@ struct Token* newToken(char* filename, int linenumber)
 	struct Token* p;
 
 	p = calloc (1, sizeof (struct Token));
-	if (NULL == p)
-	{
-		file_print("calloc failed.\n", stderr);
-		exit (EXIT_FAILURE);
-	}
+	require(NULL != p, "Exhusted available memory\n");
 
 	p->filename = filename;
 	p->linenumber = linenumber;
@@ -147,11 +143,7 @@ struct Token* append_newline(struct Token* head, char* filename)
 struct Token* store_atom(struct Token* head, char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
-	if(NULL == store)
-	{
-		file_print("Exhusted available memory\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	require(NULL != store, "Exhusted available memory\n");
 	int ch = c;
 	int i = 0;
 	do
@@ -159,7 +151,9 @@ struct Token* store_atom(struct Token* head, char c, char* filename)
 		store[i] = ch;
 		ch = fgetc(source_file);
 		i = i + 1;
-	} while (!in_set(ch, "\t\n ") && (i <= max_string));
+		require(i < max_string, "storing atom of size larger than max_string\n");
+		if(EOF == ch) break;
+	} while (!in_set(ch, "\t\n "));
 
 	head->Text = store;
 	if('\n' == ch)
@@ -172,11 +166,8 @@ struct Token* store_atom(struct Token* head, char c, char* filename)
 char* store_string(char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
-	if(NULL == store)
-	{
-		file_print("Exhusted available memory\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	require(NULL != store, "Exhusted available memory\n");
+
 	int ch = c;
 	int i = 0;
 	do
@@ -185,12 +176,8 @@ char* store_string(char c, char* filename)
 		i = i + 1;
 		if('\n' == ch) linenumber = linenumber + 1;
 		ch = fgetc(source_file);
-		if(-1 == ch)
-		{
-			line_error(filename, linenumber);
-			file_print("Unmatched \"!\n", stderr);
-			exit(EXIT_FAILURE);
-		}
+		require(EOF != ch, "Unmatched \"!\n");
+
 		if(max_string == i)
 		{
 			line_error(filename, linenumber);
@@ -324,6 +311,7 @@ void hexify_string(struct Token* p)
 	int i = string_length(p->Text);
 
 	char* d = calloc(((((i >> 2) + 1) << 3) + 1), sizeof(char));
+	require(NULL != d, "Exhusted available memory\n");
 	p->Expression = d;
 	char* S = p->Text;
 
@@ -372,6 +360,7 @@ char* pad_nulls(int size, char* nil)
 	size = size * 2;
 
 	char* s = calloc(size + 1, sizeof(char));
+	require(NULL != s, "Exhusted available memory\n");
 
 	int i = 0;
 	while(i < size)
@@ -514,6 +503,7 @@ int stringify(char* s, int digits, int divisor, int value, int shift)
 char* express_number(int value, char c)
 {
 	char* ch = calloc(42, sizeof(char));
+	require(NULL != ch, "Exhusted available memory\n");
 	int size;
 	int number_of_bytes;
 	int shift;
