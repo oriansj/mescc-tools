@@ -42,11 +42,13 @@
 #define AARM64 80
 
 
-void file_print(char* s, FILE* f);
-int match(char* a, char* b);
+/* Imported functions */
 char* numerate_number(int a);
-int numerate_string(char *a);
 int in_set(int c, char* s);
+int match(char* a, char* b);
+int numerate_string(char *a);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
 
 struct input_files
 {
@@ -61,6 +63,8 @@ struct entry
 	char* name;
 };
 
+
+/* Globals */
 FILE* output;
 struct entry* jump_table;
 int BigEndian;
@@ -91,6 +95,8 @@ int consume_token(FILE* source_file)
 		scratch[i] = c;
 		i = i + 1;
 		c = fgetc(source_file);
+		require(max_string > i, "Consumed token exceeds length restriction\n");
+		if(EOF == c) break;
 	}
 
 	return c;
@@ -102,6 +108,7 @@ int Throwaway_token(FILE* source_file)
 	do
 	{
 		c = fgetc(source_file);
+		if(EOF == c) break;
 	} while(!in_set(c, " \t\n>"));
 
 	return c;

@@ -33,8 +33,10 @@
 //CONSTANT FALSE 0
 int BITSIZE;
 
-void file_print(char* s, FILE* f);
+int in_set(int c, char* s);
 int match(char* a, char* b);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
 
 struct entry
 {
@@ -49,12 +51,15 @@ void consume_token(FILE* source_file, char* s)
 {
 	int i = 0;
 	int c = fgetc(source_file);
+	require(EOF != c, "Can not have an EOF token\n");
 	do
 	{
 		s[i] = c;
 		i = i + 1;
+		require(max_string > i, "Token exceeds token length restriction\n");
 		c = fgetc(source_file);
-	} while((' ' != c) && ('\t' != c) && ('\n' != c) && '>' != c);
+		if(EOF == c) break;
+	} while(!in_set(c, " \t\n>"));
 }
 
 void storeLabel(FILE* source_file)
@@ -79,8 +84,9 @@ void storeLabel(FILE* source_file)
 void line_Comment(FILE* source_file)
 {
 	int c = fgetc(source_file);
-	while(('\n' != c) && ('\r' != c) && (EOF != c))
+	while(!in_set(c, "\n\r"))
 	{
+		if(EOF == c) break;
 		c = fgetc(source_file);
 	}
 }

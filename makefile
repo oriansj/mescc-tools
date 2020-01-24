@@ -32,18 +32,19 @@ M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_numbe
 	functions/require.c \
 	functions/in_set.c -o bin/M1
 
-hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c | bin
+hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c functions/require.c functions/in_set.c | bin
 	$(CC) $(CFLAGS) hex2_linker.c \
 	functions/file_print.c \
 	functions/match.c \
 	functions/numerate_number.c \
+	functions/require.c \
 	functions/in_set.c -o bin/hex2
 
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) functions/file_print.c functions/match.c get_machine.c -o bin/get_machine
 
-blood-elf: blood-elf.c functions/file_print.c functions/match.c | bin
-	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c -o bin/blood-elf
+blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c | bin
+	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
 
 kaem: kaem.c | bin
 	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c -o bin/kaem
