@@ -20,20 +20,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "functions/file_print.c"
-#include "functions/in_set.c"
-#include "functions/match.c"
-#include "functions/numerate_number.c"
-#include "functions/string.c"
-
 #define FALSE 0
 //CONSTANT FALSE 0
 #define TRUE 1
 //CONSTANT TRUE 1
-#define max_string 4096
-//CONSTANT max_string 4096
-#define max_args 256
-//CONSTANT max_args 256
+#define MAX_STRING 4096
+//CONSTANT MAX_STRING 4096
+#define MAX_ARGS 256
+//CONSTANT MAX_ARGS 256
 
 /****************************************
  * There is something unusual involving *
@@ -68,10 +62,9 @@ char* prematch(char* search, char* field);
 char* env_lookup(char* token, char** envp);
 char* find_executable(char* name, char* PATH);
 int check_envar(char* token);
-int cd(char** path);
+int cd(char* path);
 void execute_commands(FILE* script, char** envp);
 
-char** tokens;
 int command_done;
 int VERBOSE;
 int STRICT;
@@ -100,6 +93,7 @@ int collect_string(FILE* input, int index, char* target)
 	int c;
 	do
 	{
+		require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
 		c = fgetc(input);
 		if(-1 == c)
 		{ /* We never should hit EOF while collecting a RAW string */
@@ -119,19 +113,15 @@ int collect_string(FILE* input, int index, char* target)
 /* Function to collect an individual argument or purge a comment */
 char* collect_token(FILE* input)
 {
-	char* token = calloc(max_string, sizeof(char));
+	char* token = calloc(MAX_STRING, sizeof(char));
 	char c;
 	int i = 0;
 	do
 	{
 		c = fgetc(input);
-		if(i >= max_string)
-		{ /* Prevent buffer overflow */
-			file_print(token, stderr);
-			file_print("\nthis line is too long\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		else if(-1 == c)
+		/* Bounds checking */
+		require(MAX_STRING > i, "LINE IS TOO LONG\nABORTING HARD\n");
+		if(-1 == c)
 		{ /* Deal with end of file */
 			file_print("execution complete\n", stderr);
 			exit(EXIT_SUCCESS);
@@ -165,7 +155,7 @@ char* collect_token(FILE* input)
 		i = i + 1;
 	} while (0 != c);
 
-	if(1 == i)
+	if(1 >= i)
 	{ /* Nothing worth returning */
 		free(token);
 		return NULL;
@@ -217,7 +207,7 @@ char* find_executable(char* name, char* PATH)
 	}
 
 	char* next = find_char(PATH, ':');
-	char* trial;
+	char* trial = calloc(MAX_STRING, sizeof(char));
 	FILE* t;
 	while(NULL != next)
 	{
@@ -237,7 +227,7 @@ char* find_executable(char* name, char* PATH)
 	return NULL;
 }
 
-/* Function to check if the token is an envar and if it is get the pos of = */
+/* Function to check if the token is an envar */ 
 int check_envar(char* token)
 {
 	int j;
@@ -285,8 +275,9 @@ int check_envar(char* token)
 }
 
 /* cd builtin */
-int cd(char** path)
+int cd(char* path)
 {
+	require(NULL != path, "INVALID CD PATH\nABORTING HARD\n");
 	if(match(path, "-"))
 	{
 		file_print("moving -\n", stdout);
@@ -307,18 +298,18 @@ void execute_commands(FILE* script, char** envp)
 {
 	while(1)
 	{
-		tokens = calloc(max_args, sizeof(char*));
+		char** tokens = calloc(MAX_ARGS, sizeof(char*));
 		char* PATH = env_lookup("PATH=", envp);
 		if(NULL != PATH)
 		{
-			PATH = calloc(max_string, sizeof(char));
+			PATH = calloc(MAX_STRING, sizeof(char));
 			copy_string(PATH, env_lookup("PATH=", envp));
 		}
 
 		char* USERNAME = env_lookup("LOGNAME=", envp);
 		if((NULL == PATH) && (NULL == USERNAME))
 		{
-			PATH = calloc(max_string, sizeof(char));
+			PATH = calloc(MAX_STRING, sizeof(char));
 			copy_string(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 		}
 		else if(NULL == PATH)
@@ -332,8 +323,13 @@ void execute_commands(FILE* script, char** envp)
 		do
 		{
 			char* result = collect_token(script);
-			if(0 != result)
+			if(NULL != result)
 			{ /* Not a comment string but an actual argument */
+				if(i >= MAX_ARGS)
+				{ /* Prevent segfaults */
+					file_print("Script too long\n", stderr);
+					exit(EXIT_FAILURE);
+				}
 				tokens[i] = result;
 				i = i + 1;
 			}
@@ -354,8 +350,14 @@ void execute_commands(FILE* script, char** envp)
 		if(0 < i)
 		{ /* Not a line comment */
 			/* Find what it is */
+			int skip = 0;
 			if(check_envar(tokens[0]) == 0)
 			{ /* It's an envar! */
+				if(string_length(tokens[0]) > (sizeof(char*) / sizeof(char)))
+				{ /* String is too long; prevent buffer overflow */
+					file_print(tokens[0], stderr);
+					file_print("\nis too long to fit in envp\n", stderr);
+				}
 				envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
 				envp_length = envp_length + 1;
 			}
@@ -363,14 +365,17 @@ void execute_commands(FILE* script, char** envp)
 			{ /* cd builtin */
 				cd(tokens[1]);
 			}
-			else
+			else if(match(tokens[0], ""))
+			{ /* Well, that's weird, but can happen, and leads to segfaults in exec */
+				skip = 1;
+			}
+			else if(skip == 0)
 			{ /* Stuff to exec */
 				char* program = find_executable(tokens[0], PATH);
 				if(NULL == program)
 				{
-					file_print("Some weird shit went down with: ", stderr);
 					file_print(tokens[0], stderr);
-					file_print("\n", stderr);
+					file_print(" failed to execute\n", stderr);
 					exit(EXIT_FAILURE);
 				}
 
@@ -401,8 +406,10 @@ void execute_commands(FILE* script, char** envp)
 					exit(EXIT_FAILURE);
 				}
 			}
-			/* Then go again */
 		}
+		/* Does nothing in M2-Planet but otherwise GCC-compiled kaem segfaults */
+		free(tokens);
+		/* Then go again */
 	}
 }
 
@@ -420,14 +427,14 @@ int main(int argc, char** argv, char** envp)
 	{
 		envp_length = envp_length + 1;
 	}
-	char** nenvp = calloc(envp_length + max_args, sizeof(char*));
+	char** nenvp = calloc(envp_length + MAX_ARGS, sizeof(char*));
 	int i;
 	for(i = 0; i < envp_length; i = i + 1)
 	{
 		nenvp[i] = envp[i];
 	}
 
-	for(i = envp_length; i < (envp_length + max_args); i = i + 1)
+	for(i = envp_length; i < (envp_length + MAX_ARGS); i = i + 1)
 	{
 		nenvp[i] = "";
 	}
