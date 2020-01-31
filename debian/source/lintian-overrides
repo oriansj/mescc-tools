@@ -1,0 +1,4 @@
+# Upstream does not make available signatures for tarball releases,
+# but the upstream signing key is used to sign git tags.
+mescc-tools source: orig-tarball-missing-upstream-signature mescc-tools_*
+mescc-tools source: debian-watch-could-verify-download debian/upstream/signing-key.asc
