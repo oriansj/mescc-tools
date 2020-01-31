@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	}
 
 	int output = open(argv[1], 577 , 384);
-	if(0 == output)
+	if(-1 == output)
 	{
 		file_print("The file: ", stderr);
 		file_print(argv[1], stderr);
@@ -48,6 +48,13 @@ int main(int argc, char** argv)
 	for(i = 2; i <= argc ; i =  i + 1)
 	{
 		input = open(argv[i], 0, 0);
+		if(-1 == input)
+		{
+			file_print("The file: ", stderr);
+			file_print(argv[i], stderr);
+			file_print(" is not a valid input file name\n", stderr);
+			exit(EXIT_FAILURE);
+		}
 keep:
 		bytes = read(input, buffer, BUFFER_SIZE);
 		write(output, buffer, bytes);

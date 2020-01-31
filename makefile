@@ -16,35 +16,35 @@
 
 # Prevent rebuilding
 VPATH = bin:test:test/results
+PACKAGE = mescc-tools
 
-all: M1 hex2 exec_enable get_machine blood-elf kaem catm
+all: M1 hex2 get_machine blood-elf kaem catm
 
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
 
-M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c | bin
+M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c functions/require.c functions/in_set.c | bin
 	$(CC) $(CFLAGS) M1-macro.c \
 	functions/file_print.c \
 	functions/match.c \
 	functions/numerate_number.c \
 	functions/string.c \
+	functions/require.c \
 	functions/in_set.c -o bin/M1
 
-hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c | bin
+hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c functions/require.c functions/in_set.c | bin
 	$(CC) $(CFLAGS) hex2_linker.c \
 	functions/file_print.c \
 	functions/match.c \
 	functions/numerate_number.c \
+	functions/require.c \
 	functions/in_set.c -o bin/hex2
-
-exec_enable: exec_enable.c | bin
-	$(CC) $(CFLAGS) functions/file_print.c exec_enable.c -o bin/exec_enable
 
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) functions/file_print.c functions/match.c get_machine.c -o bin/get_machine
 
-blood-elf: blood-elf.c functions/file_print.c functions/match.c | bin
-	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c -o bin/blood-elf
+blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c | bin
+	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
 
 kaem: kaem.c | bin
 	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c -o bin/kaem
@@ -100,7 +100,7 @@ test: test0-binary \
 test0-binary: results hex2 get_machine
 	test/test0/hello.sh
 
-test1-binary: results hex2 M1 exec_enable get_machine
+test1-binary: results hex2 M1 get_machine
 	test/test1/hello.sh
 
 test2-binary: results hex2 M1
@@ -148,3 +148,25 @@ bindir:=$(DESTDIR)$(PREFIX)/bin
 install: M1 hex2 blood-elf kaem get_machine
 	mkdir -p $(bindir)
 	cp $^ $(bindir)
+
+###  dist
+.PHONY: dist
+
+COMMIT=$(shell git describe --dirty)
+TARBALL_VERSION=$(COMMIT:Release_%=%)
+TARBALL_DIR:=$(PACKAGE)-$(TARBALL_VERSION)
+TARBALL=$(TARBALL_DIR).tar.gz
+# Be friendly to Debian; avoid using EPOCH
+MTIME=$(shell git show HEAD --format=%ct --no-patch)
+# Reproducible tarball
+TAR_FLAGS=--sort=name --mtime=@$(MTIME) --owner=0 --group=0 --numeric-owner --mode=go=rX,u+rw,a-s
+
+$(TARBALL):
+	(git ls-files					\
+	    --exclude=$(TARBALL_DIR);			\
+	    echo $^ | tr ' ' '\n')			\
+	    | tar $(TAR_FLAGS)				\
+	    --transform=s,^,$(TARBALL_DIR)/,S -T- -cf-	\
+	    | gzip -c --no-name > $@
+
+dist: $(TARBALL)

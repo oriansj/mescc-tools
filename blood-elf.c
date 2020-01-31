@@ -33,8 +33,10 @@
 //CONSTANT FALSE 0
 int BITSIZE;
 
-void file_print(char* s, FILE* f);
+int in_set(int c, char* s);
 int match(char* a, char* b);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
 
 struct entry
 {
@@ -49,12 +51,15 @@ void consume_token(FILE* source_file, char* s)
 {
 	int i = 0;
 	int c = fgetc(source_file);
+	require(EOF != c, "Can not have an EOF token\n");
 	do
 	{
 		s[i] = c;
 		i = i + 1;
+		require(max_string > i, "Token exceeds token length restriction\n");
 		c = fgetc(source_file);
-	} while((' ' != c) && ('\t' != c) && ('\n' != c) && '>' != c);
+		if(EOF == c) break;
+	} while(!in_set(c, " \t\n>"));
 }
 
 void storeLabel(FILE* source_file)
@@ -79,8 +84,9 @@ void storeLabel(FILE* source_file)
 void line_Comment(FILE* source_file)
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(!in_set(c, "\n\r"))
 	{
+		if(EOF == c) break;
 		c = fgetc(source_file);
 	}
 }
@@ -88,7 +94,7 @@ void line_Comment(FILE* source_file)
 void purge_string(FILE* source_file)
 {
 	int c = fgetc(source_file);
-	while((EOF != c) && (34 != c))
+	while((EOF != c) && ('"' != c))
 	{
 		c = fgetc(source_file);
 	}
@@ -122,7 +128,7 @@ void first_pass(struct entry* input)
 		{
 			line_Comment(source_file);
 		}
-		else if (34 == c)
+		else if ('"' == c)
 		{
 			purge_string(source_file);
 		}
@@ -228,7 +234,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("blood-elf 0.6.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			file_print("blood-elf 0.7.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

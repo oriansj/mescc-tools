@@ -44,15 +44,22 @@
 #define AMD64 2
 // CONSTANT ARMV7L 40
 #define ARMV7L 40
+// CONSTANT AARM64 80
+#define AARM64 80
 
-void file_print(char* s, FILE* f);
-int match(char* a, char* b);
-int string_length(char* a);
+
+/* Imported functions */
 char* numerate_number(int a);
-int numerate_string(char *a);
 int hex2char(int c);
 int in_set(int c, char* s);
+int match(char* a, char* b);
+int numerate_string(char *a);
+int string_length(char* a);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
 
+
+/* Globals */
 FILE* source_file;
 FILE* destination_file;
 int BigEndian;
@@ -84,11 +91,7 @@ struct Token* newToken(char* filename, int linenumber)
 	struct Token* p;
 
 	p = calloc (1, sizeof (struct Token));
-	if (NULL == p)
-	{
-		file_print("calloc failed.\n", stderr);
-		exit (EXIT_FAILURE);
-	}
+	require(NULL != p, "Exhusted available memory\n");
 
 	p->filename = filename;
 	p->linenumber = linenumber;
@@ -114,6 +117,7 @@ void purge_lineComment()
 	int c = fgetc(source_file);
 	while(!in_set(c, "\n\r"))
 	{
+		if(EOF == c) break;
 		c = fgetc(source_file);
 	}
 }
@@ -139,11 +143,7 @@ struct Token* append_newline(struct Token* head, char* filename)
 struct Token* store_atom(struct Token* head, char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
-	if(NULL == store)
-	{
-		file_print("Exhusted available memory\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	require(NULL != store, "Exhusted available memory\n");
 	int ch = c;
 	int i = 0;
 	do
@@ -151,7 +151,9 @@ struct Token* store_atom(struct Token* head, char c, char* filename)
 		store[i] = ch;
 		ch = fgetc(source_file);
 		i = i + 1;
-	} while (!in_set(ch, "\t\n ") && (i <= max_string));
+		require(i < max_string, "storing atom of size larger than max_string\n");
+		if(EOF == ch) break;
+	} while (!in_set(ch, "\t\n "));
 
 	head->Text = store;
 	if('\n' == ch)
@@ -164,24 +166,18 @@ struct Token* store_atom(struct Token* head, char c, char* filename)
 char* store_string(char c, char* filename)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
-	if(NULL == store)
-	{
-		file_print("Exhusted available memory\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	require(NULL != store, "Exhusted available memory\n");
+
 	int ch = c;
 	int i = 0;
 	do
 	{
 		store[i] = ch;
 		i = i + 1;
+		if('\n' == ch) linenumber = linenumber + 1;
 		ch = fgetc(source_file);
-		if(-1 == ch)
-		{
-			line_error(filename, linenumber);
-			file_print("Unmatched \"!\n", stderr);
-			exit(EXIT_FAILURE);
-		}
+		require(EOF != ch, "Unmatched \"!\n");
+
 		if(max_string == i)
 		{
 			line_error(filename, linenumber);
@@ -281,7 +277,9 @@ void identify_macros(struct Token* p)
 		if(match(i->Text, "DEFINE"))
 		{
 			i->type = MACRO;
+			require(NULL != i->next, "Macro name must exist\n");
 			i->Text = i->next->Text;
+			require(NULL != i->next->next, "Macro value must exist\n");
 			if(STR == i->next->next->type)
 			{
 				i->Expression = i->next->next->Text + 1;
@@ -312,7 +310,8 @@ void hexify_string(struct Token* p)
 	char* table = "0123456789ABCDEF";
 	int i = string_length(p->Text);
 
-	char* d = calloc(((i << 2) + 4), sizeof(char));
+	char* d = calloc(((((i >> 2) + 1) << 3) + 1), sizeof(char));
+	require(NULL != d, "Exhusted available memory\n");
 	p->Expression = d;
 	char* S = p->Text;
 
@@ -357,9 +356,11 @@ void process_string(struct Token* p)
 char* pad_nulls(int size, char* nil)
 {
 	if(0 == size) return nil;
+	require(size > 0, "negative null padding not possible\n");
 	size = size * 2;
 
 	char* s = calloc(size + 1, sizeof(char));
+	require(NULL != s, "Exhusted available memory\n");
 
 	int i = 0;
 	while(i < size)
@@ -391,7 +392,7 @@ void preserve_other(struct Token* p)
 			else
 			{
 				line_error(i->filename, i->linenumber);
-				file_print("Recieved invalid other; ", stderr);
+				file_print("Received invalid other; ", stderr);
 				file_print(i->Text, stderr);
 				file_print("\n", stderr);
 				exit(EXIT_FAILURE);
@@ -432,7 +433,7 @@ void range_check(int displacement, int number_of_bytes)
 		return;
 	}
 
-	file_print("Recieved an invalid number of bytes in range_check\n", stderr);
+	file_print("Received an invalid number of bytes in range_check\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -502,6 +503,7 @@ int stringify(char* s, int digits, int divisor, int value, int shift)
 char* express_number(int value, char c)
 {
 	char* ch = calloc(42, sizeof(char));
+	require(NULL != ch, "Exhusted available memory\n");
 	int size;
 	int number_of_bytes;
 	int shift;
@@ -576,7 +578,7 @@ void eval_immediates(struct Token* p)
 		else if(NULL == i->Expression)
 		{
 			int value;
-			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture))
+			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture))
 			{
 				value = numerate_string(i->Text + 1);
 				if(('0' == i->Text[1]) || (0 != value))
@@ -594,7 +596,7 @@ void eval_immediates(struct Token* p)
 			}
 			else
 			{
-				file_print("Unknown architecture recieved in eval_immediates\n", stderr);
+				file_print("Unknown architecture received in eval_immediates\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -655,11 +657,13 @@ int main(int argc, char **argv)
 			else if(match("x86", arch)) Architecture = X86;
 			else if(match("amd64", arch)) Architecture = AMD64;
 			else if(match("armv7l", arch)) Architecture = ARMV7L;
+			else if(match("aarch64", arch)) Architecture = AARM64;
 			else
 			{
 				file_print("Unknown architecture: ", stderr);
 				file_print(arch, stderr);
-				file_print(" know values are: knight-native, knight-posix, x86, amd64 and armv7l", stderr);
+				file_print(" know values are: knight-native, knight-posix, x86, amd64, armv7l and aarch64", stderr);
+				exit(EXIT_FAILURE);
 			}
 			option_index = option_index + 2;
 		}
@@ -713,7 +717,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("M1 0.6.0\n", stdout);
+			file_print("M1 0.7.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

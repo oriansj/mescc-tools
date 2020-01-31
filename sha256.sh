@@ -24,12 +24,12 @@ set -ex
 # accordingly.
 sha256_check()
 {
-	if [ "$(./bin/get_machine --OS)" = "Linux" ]; then
+	if [ -e /usr/bin/sha256sum ]; then
 		LANG=C sha256sum -c "$1"
-	elif [ "$(./bin/get_machine --OS)" = "NetBSD" ]; then
-		sum -a SHA256 -n -c "$1"
-	elif [ "$(./bin/get_machine --OS)" = "FreeBSD" ]; then
-		sha256 -r -c "$1"
+	elif [ -e /usr/bin/sum ]; then
+		LANG=C sum -a SHA256 -n -c "$1"
+	elif [ -e /usr/bin/sha256 ]; then
+		LANG=C sha256 -r -c "$1"
 	else
 		echo "Unsupported sha256 tool, please send a patch to support it"
 		exit 77

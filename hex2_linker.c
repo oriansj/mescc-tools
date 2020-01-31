@@ -38,12 +38,17 @@
 #define AMD64 2
 // CONSTANT ARMV7L 40
 #define ARMV7L 40
+// CONSTANT AARM64 80
+#define AARM64 80
 
-void file_print(char* s, FILE* f);
-int match(char* a, char* b);
+
+/* Imported functions */
 char* numerate_number(int a);
-int numerate_string(char *a);
 int in_set(int c, char* s);
+int match(char* a, char* b);
+int numerate_string(char *a);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
 
 struct input_files
 {
@@ -58,6 +63,8 @@ struct entry
 	char* name;
 };
 
+
+/* Globals */
 FILE* output;
 struct entry* jump_table;
 int BigEndian;
@@ -88,6 +95,8 @@ int consume_token(FILE* source_file)
 		scratch[i] = c;
 		i = i + 1;
 		c = fgetc(source_file);
+		require(max_string > i, "Consumed token exceeds length restriction\n");
+		if(EOF == c) break;
 	}
 
 	return c;
@@ -99,6 +108,7 @@ int Throwaway_token(FILE* source_file)
 	do
 	{
 		c = fgetc(source_file);
+		if(EOF == c) break;
 	} while(!in_set(c, " \t\n>"));
 
 	return c;
@@ -270,6 +280,10 @@ int Architectural_displacement(int target, int base)
 		 */
 		return ((target - base) - 8 + (3 & base));
 	}
+	else if (AARM64 == Architecture)
+	{
+		return ((target - base) - 8 + (3 & base));
+	}
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
@@ -340,6 +354,7 @@ void line_Comment(FILE* source_file)
 	int c = fgetc(source_file);
 	while(!in_set(c, "\n\r"))
 	{
+		if(EOF == c) break;
 		c = fgetc(source_file);
 	}
 	linenumber = linenumber + 1;
@@ -438,7 +453,7 @@ void process_byte(char c, FILE* source_file, int write)
 
 void pad_to_align(int write)
 {
-	if(ARMV7L == Architecture)
+	if((ARMV7L == Architecture) || (AARM64 == Architecture))
 	{
 		if(1 == (ip & 0x1))
 		{
@@ -585,6 +600,7 @@ int main(int argc, char **argv)
 			else if(match("x86", arch)) Architecture = X86;
 			else if(match("amd64", arch)) Architecture = AMD64;
 			else if(match("armv7l", arch)) Architecture = ARMV7L;
+			else if(match("aarch64", arch)) Architecture = AARM64;
 			else
 			{
 				file_print("Unknown architecture: ", stderr);
@@ -642,7 +658,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("hex2 0.6.0\n", stdout);
+			file_print("hex2 0.7.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
