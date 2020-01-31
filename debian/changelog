@@ -1,3 +1,16 @@
+mescc-tools (0.7.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * debian/copyright: Update for 0.7.0.
+  * debian/upstream: Add upstream signing key.
+  * debian/control:
+    - Set Rules-Requires-Root to "no".
+    - Update Standards-Version to 4.5.0.
+  * debian/source: Add lintian overrides regarding unsigned release
+    tarballs.
+
+ -- Vagrant Cascadian <vagrant@debian.org>  Fri, 31 Jan 2020 15:51:52 -0800
+
 mescc-tools (0.6.1-2) unstable; urgency=medium
 
   * debian/control: Update to Standards-Version 4.4.0, no changes.
