@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.7 - 2020-01-30
+** Added
 Added support for AMD64 dwarf footers in blood-elf via --64
 Added hex0 for i386 in NASM, M1 and hex0
 Added hex1 for i386 in NASM, M1, hex1 and hex0
@@ -39,6 +48,7 @@ Added cc_amd64 for x86 in NASM and M1
 ** Fixed
 Removed duplicate in kaem's help
 Fixed regression in M1 in regards to knight null padding
+Removed a series of segfaults
 
 ** Removed
 
