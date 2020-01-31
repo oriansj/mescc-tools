@@ -234,7 +234,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("blood-elf 0.6.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			file_print("blood-elf 0.7.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
