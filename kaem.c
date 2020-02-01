@@ -55,14 +55,15 @@
 char* numerate_number(int a);
 int match(char* a, char* b);
 void collect_comment(FILE* input);
-void collect_string(FILE* input, int index, char* target);
+void collect_string(FILE* input, char* target);
 char* collect_token(FILE* input, char** envp);
 char* find_char(char* string, char a);
 char* prematch(char* search, char* field);
 char* env_lookup(char* token, char** envp);
 char* find_executable(char* name, char* PATH);
 int check_envar(char* token);
-int cd(char* path);
+void cd(char* path);
+void set(char** tokens);
 void execute_commands(FILE* script, char** envp);
 
 int command_done;
@@ -71,8 +72,6 @@ int STRICT;
 int envp_length;
 int i_input;
 int i_token;
-char* pwd;
-char* old_pwd;
 
 /* Function for purging line comments */
 void collect_comment(FILE* input)
@@ -333,33 +332,23 @@ int check_envar(char* token)
 }
 
 /* cd builtin */
-int cd(char* path)
+void cd(char* path)
 {
 	require(NULL != path, "INVALID CD PATH\nABORTING HARD\n");
-	if(match(path, "-"))
-	{
-		file_print("moving -\n", stdout);
-		file_print(old_pwd, stdout);
-		file_print("\n", stdout);
-		cd(old_pwd);
-	}
-	else
-	{
-		chdir(path);
-		old_pwd = pwd;
-		pwd = path;
-	}
+	chdir(path);
 }
 
 /* set builtin */
-int set(char** tokens)
+void set(char** tokens)
 {
 	/* Get the options */
+	char* raw = calloc(MAX_STRING, sizeof(char));
+	copy_string(raw, tokens[1]);
 	char* options = calloc(MAX_STRING, sizeof(char));
 	int i;
-	for(i = 0; i < string_length(tokens[1]) - 1; i = i + 1)
+	for(i = 0; i < string_length(raw) - 1; i = i + 1)
 	{
-		options[i] = tokens[1][i + 1];
+		options[i] = raw[i + 1];
 	}
 	/* Parse the options */
 	for(i = 0; i < string_length(options); i = i + 1)
@@ -466,6 +455,10 @@ void execute_commands(FILE* script, char** envp)
 			{ /* cd builtin */
 				cd(tokens[1]);
 			}
+			else if(match(tokens[0], "set"))
+			{ /* set builtin */
+				set(tokens);
+			}
 			else if(match(tokens[0], ""))
 			{ /* Well, that's weird, but can happen, and leads to segfaults in exec */
 				skip = 1;
@@ -539,10 +532,6 @@ int main(int argc, char** argv, char** envp)
 	{
 		nenvp[i] = "";
 	}
-
-	/* Initialize pwd */
-	getcwd(pwd, MAX_STRING);
-	old_pwd = pwd;
 
 	i = 1;
 	while(i <= argc)
