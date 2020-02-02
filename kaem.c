@@ -338,6 +338,13 @@ void cd(char* path)
 	chdir(path);
 }
 
+/* pwd builtin */
+char* pwd()
+{
+	file_print(get_current_dir_name(), stdout);
+	file_print("\n", stdout);
+}
+
 /* set builtin */
 void set(char** tokens)
 {
@@ -454,6 +461,10 @@ void execute_commands(FILE* script, char** envp)
 			else if(match(tokens[0], "cd"))
 			{ /* cd builtin */
 				cd(tokens[1]);
+			}
+			else if(match(tokens[0], "pwd"))
+			{ /* pwd builtin */
+				pwd();
 			}
 			else if(match(tokens[0], "set"))
 			{ /* set builtin */
