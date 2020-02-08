@@ -328,8 +328,8 @@ void execute_commands(FILE* script, char** envp, int envp_length)
 				char* program = find_executable(tokens[0], PATH);
 				if(NULL == program)
 				{
-					file_print(tokens[0], stderr);
 					file_print("Some weird shit went down with: ", stderr);
+					file_print(tokens[0], stderr);
 					file_print("\n", stderr);
 					exit(EXIT_FAILURE);
 				}
@@ -345,12 +345,12 @@ void execute_commands(FILE* script, char** envp, int envp_length)
 					/* execve() returns only on error */
 					execve(program, tokens, envp);
 					/* Prevent infinite loops */
-					_exit(EXIT_SUCCESS);
+					_exit(EXIT_FAILURE);
 				}
 
 				/* Otherwise we are the parent */
 				/* And we should wait for it to complete */
-				waitpid(f, &status, 0);
+				waitpid(f, &status, 1);
 
 				if(STRICT && (0 != status))
 				{ /* Clearly the script hit an issue that should never have happened */
