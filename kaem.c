@@ -29,6 +29,29 @@
 #define max_args 256
 //CONSTANT max_args 256
 
+/****************************************
+ * There is something unusual involving *
+ * waitpid is happening here.           *
+ *                                      *
+ * When built by GCC, every execve is   *
+ * resulting in a EXIT_FAILURE if not   *
+ * Given 1 (or higher); which means     *
+ * waiting for any child process whose  *
+ * process group ID is equal to that of *
+ * the calling process; is not working  *
+ * For some reason.                     *
+ *                                      *
+ * When built by M2-Planet, the value   *
+ * of zero results in the correct       *
+ * behavior, however a higher value     *
+ * Results in the process not bothering *
+ * To wait before executing the next    *
+ * Command.                             *
+ ****************************************/
+#define waitmode 1
+//CONSTANT waitmode 0
+
+
 char* numerate_number(int a);
 int match(char* a, char* b);
 void file_print(char* s, FILE* f);
@@ -350,7 +373,7 @@ void execute_commands(FILE* script, char** envp, int envp_length)
 
 				/* Otherwise we are the parent */
 				/* And we should wait for it to complete */
-				waitpid(f, &status, 1);
+				waitpid(f, &status, waitmode);
 
 				if(STRICT && (0 != status))
 				{ /* Clearly the script hit an issue that should never have happened */
