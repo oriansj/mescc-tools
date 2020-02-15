@@ -15,10 +15,11 @@
  * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #define FALSE 0
 //CONSTANT FALSE 0
@@ -29,20 +30,27 @@
 #define MAX_ARGS 256
 //CONSTANT MAX_ARGS 256
 
+char* collect_token(FILE* input);
+char* collect_variable(char* input, char** envp, char** argv);
+char* copy_string(char* target, char* source);
+char* env_lookup(char* token, char** envp);
+char* find_char(char* string, char a);
+char* find_executable(char* name, char* PATH);
+char* get_current_dir_name();
 char* numerate_number(int a);
+char* postpend_char(char* s, char a);
+char* prematch(char* search, char* field);
+char* prepend_string(char* add, char* base);
+int check_envar(char* token);
 int match(char* a, char* b);
+int string_length(char* a);
+void cd(char* path);
 void collect_comment(FILE* input);
 void collect_string(FILE* input, char* target);
-char* collect_token(FILE* input, char** envp);
-char* find_char(char* string, char a);
-char* prematch(char* search, char* field);
-char* env_lookup(char* token, char** envp);
-char* find_executable(char* name, char* PATH);
-int check_envar(char* token);
-void cd(char* path);
-void set(char** tokens);
-char* collect_variable(char* input, char** envp, char** argv);
 void execute_commands(FILE* script, char** envp, char** argv);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
+void set(char** tokens);
 
 int command_done;
 int VERBOSE;
@@ -91,7 +99,7 @@ void collect_string(FILE* input, char* target)
 }
 
 /* Function to collect an individual argument or purge a comment */
-char* collect_token(FILE* input, char** envp)
+char* collect_token(FILE* input)
 {
 	char* token = calloc(MAX_STRING, sizeof(char));
 	char c;
@@ -201,7 +209,7 @@ char* find_executable(char* name, char* PATH)
 
 	char* next = find_char(PATH, ':');
 	char* trial = calloc(MAX_STRING, sizeof(char));
-	FILE* t;
+	FILE* t = NULL;
 	while(NULL != next)
 	{
 		next[0] = 0;
@@ -220,7 +228,7 @@ char* find_executable(char* name, char* PATH)
 	return NULL;
 }
 
-/* Function to check if the token is an envar */ 
+/* Function to check if the token is an envar */
 int check_envar(char* token)
 {
 	int j;
@@ -275,7 +283,7 @@ void cd(char* path)
 }
 
 /* pwd builtin */
-char* pwd()
+void pwd()
 {
 	file_print(get_current_dir_name(), stdout);
 	file_print("\n", stdout);
@@ -306,7 +314,7 @@ void set(char** tokens)
 		}
 		else if(options[i] == 'v')
 		{ /* Same as -x currently */
-			options[i] == 'x';
+			options[i] = 'x';
 			continue;
 		}
 		else if(options[i] == 'x')
@@ -453,7 +461,7 @@ char* variable_substitute(char* input, char** envp)
 }
 
 /* Function to concatanate all variables */
-char* variable_all(char* input, char** argv)
+char* variable_all(char** argv)
 {
 	char* output = calloc(MAX_STRING, sizeof(char));
 	int i;
@@ -483,7 +491,7 @@ char* collect_variable(char* input, char** envp, char** argv)
 	}
 	else if(input[1] == '@')
 	{
-		return variable_all(input, argv);
+		return variable_all(argv);
 	}
 	else
 	{
@@ -523,8 +531,7 @@ void execute_commands(FILE* script, char** envp, char** argv)
 		command_done = 0;
 		do
 		{
-			char* result = calloc(MAX_STRING, sizeof(char));
-			result = collect_token(script, envp);
+			char* result = collect_token(script);
 			if(NULL != result)
 			{ /* Not a comment string but an actual argument */
 				if(i >= MAX_ARGS)
@@ -552,9 +559,7 @@ void execute_commands(FILE* script, char** envp, char** argv)
 		int j = 0;
 		while(tokens[j] != NULL)
 		{
-			char* output = calloc(MAX_STRING, sizeof(char));
-			output = collect_variable(tokens[j], envp, argv);
-			int h;
+			char* output = collect_variable(tokens[j], envp, argv);
 			memset(tokens[j], 0, MAX_STRING);
 			copy_string(tokens[j], output);
 			j = j + 1;
@@ -563,7 +568,6 @@ void execute_commands(FILE* script, char** envp, char** argv)
 		if(0 < i)
 		{ /* Not a line comment */
 			/* Find what it is */
-			int skip = 0;
 			if(check_envar(tokens[0]) == 0)
 			{ /* It's an envar! */
 				if(string_length(tokens[0]) > MAX_STRING)
@@ -592,9 +596,10 @@ void execute_commands(FILE* script, char** envp, char** argv)
 			}
 			else if(match(tokens[0], ""))
 			{ /* Well, that's weird, but can happen, and leads to segfaults in exec */
-				skip = 1;
+				file_print("hit edge case\nReport what caused this\n", stderr);
+				continue;
 			}
-			else if(skip == 0)
+			else
 			{ /* Stuff to exec */
 				int status = execute(tokens, envp, PATH);
 				if(STRICT && (0 != status))

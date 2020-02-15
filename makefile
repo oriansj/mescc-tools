@@ -46,8 +46,8 @@ get_machine: get_machine.c | bin
 blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
 
-kaem: kaem.c | bin
-	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c -o bin/kaem
+kaem: kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c functions/require.c functions/string.c | bin
+	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c functions/require.c functions/string.c -o bin/kaem
 
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
