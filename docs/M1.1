@@ -7,7 +7,7 @@ M1 \- The universal Macro assembler
 .SH SYNOPSIS
 .na
 
-M1 --architecture ARCHITECTURE --file FILE [--output FILE --octal    --binary --BigEndian --LittleEndian]
+M1 --architecture ARCHITECTURE --file FILE [--output FILE --octal    --binary --big-endian --little-endian]
 
 .SH DESCRIPTION
 
@@ -42,7 +42,7 @@ You however can not mix integers with definitions as macros
 are always applied first and will not be evaluated further.
 
 Should you wish to specify the bit and byte encoding of the
-integers to match your target --BigEndian and --LittleEndian
+integers to match your target --big-endian and --little-endian
 
 Should you wish for the output to be something other than hex
 format, you can specify the exact output you desire with:
@@ -52,7 +52,7 @@ format, you can specify the exact output you desire with:
 
 Typically, M1 will be called in scripts used in bootstrapping
 .br
-# M1 -f x86.defs -f libc-core.M1 -f cc.M1 -f cc-footer.M1             --LittleEndian --architecture x86 -o cc.hex2
+# M1 -f x86.defs -f libc-core.M1 -f cc.M1 -f cc-footer.M1             --little-endian --architecture x86 -o cc.hex2
 .br
 
 .SH COMPATIBILITY

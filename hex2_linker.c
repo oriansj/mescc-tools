@@ -635,7 +635,7 @@ int main(int argc, char **argv)
 		{
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
-			file_print(" -file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian)", stderr);
+			file_print(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian)", stderr);
 			file_print(" [--base-address 0x12345] [--architecture name]\nArchitecture:", stderr);
 			file_print(" knight-native, knight-posix, x86, amd64, armv7l and aarch64\n", stderr);
 			file_print("To leverage octal or binary input: --octal, --binary\n", stderr);
