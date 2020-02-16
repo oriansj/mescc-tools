@@ -7,7 +7,7 @@ hex2 - The trivially bootstrappable linker that is designed to be introspectable
 .SH SYNOPSIS
 .na
 
-hex2 --architecture ARCHITECTURE --BaseAddress ADDRESS --file FILE [--output FILE --exec_enable]
+hex2 --architecture ARCHITECTURE --base-address ADDRESS --file FILE [--output FILE --non-executable]
 
 .SH DESCRIPTION
 
@@ -21,8 +21,8 @@ binary or octal input if you so desire, using the --octal
 or --binary option.
 .br
 If no output file is specified the output will be send to standard out.
-By default the file will not be executable unless the option:
---exec_enable is also passed.
+By default the file will be executable unless the option:
+--non-executable is also passed.
 .br
 
 The supported ARCHITECTURES are as follows: knight-native,
@@ -32,7 +32,7 @@ will be used.
 .br
 The base address for which the binary is to be loaded into memory
 and thus the relative and absolute pointers should be based,
-is passed via --BaseAddress if it is not provided the default
+is passed via --base-address if it is not provided the default
 value of ZERO will be assumed.
 .br
 
@@ -42,7 +42,7 @@ and absolute pointers to those labels in 8, 16, 24 or 32bit sizes.
 respectively and $LABEL and &LABEL for 16 and 32bit absolute
 addresses respectively.
 Should you wish to specify the bit and byte encoding of the
-addresses to match your target --BigEndian and --LittleEndian
+addresses to match your target --big-endian and --little-endian
 
 On architectures that require word alignment the < and ^
 characters have a special meaning; particulary pad to word
@@ -54,7 +54,7 @@ byte based address calculation; generally seen in the form:
 
 Typically, hex2 will be called in scripts used in bootstrapping
 .br
-# hex2 -f ELF-armv7l.hex2 -f cc.hex2 --LittleEndian --architecture armv7l --BaseAddress 0x10000 -o cc --exec_enable
+# hex2 -f ELF-armv7l.hex2 -f cc.hex2 --little-endian --architecture armv7l --base-address 0x10000 -o cc
 .br
 
 .SH COMPATIBILITY
