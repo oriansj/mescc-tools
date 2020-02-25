@@ -1,0 +1,3 @@
+# Test execution of simple commands.
+printf hi
+printf hi

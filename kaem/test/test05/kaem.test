@@ -1,0 +1,3 @@
+# Test non existent commands without set -e
+thiscommanddoesnotexist
+printf hi

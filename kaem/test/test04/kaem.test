@@ -1,0 +1,4 @@
+# Test use of set -e
+set -e
+thiscommanddoesnotexist
+printf hi

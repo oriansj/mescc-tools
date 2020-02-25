@@ -1,0 +1,4 @@
+# Test use of multiple arguments with set
+set -ex
+thiscommanddoesnotexist
+printf hi

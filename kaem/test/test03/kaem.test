@@ -1,0 +1,3 @@
+# Test use of set -x
+set -x
+printf hi

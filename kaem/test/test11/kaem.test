@@ -1,0 +1,3 @@
+# Test variable subsitution with :- where the var exists
+VAR=exists
+echo ${VAR:-not}
