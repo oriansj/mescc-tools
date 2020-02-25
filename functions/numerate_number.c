@@ -1,32 +1,40 @@
 /* Copyright (C) 2016 Jeremiah Orians
- * This file is part of stage0.
+ * This file is part of mescc-tools.
  *
- * stage0 is free software: you can redistribute it and/or modify
+ * mescc-tools is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * stage0 is distributed in the hope that it will be useful,
+ * mescc-tools is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+ * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include<stdlib.h>
 #include<string.h>
+#include<stdio.h>
 // void* calloc(int count, int size);
 #define TRUE 1
 //CONSTANT TRUE 1
 #define FALSE 0
 //CONSTANT FALSE 0
 int in_set(int c, char* s);
+void file_print(char* s, FILE* f);
+
 
 char* numerate_number(int a)
 {
 	char* result = calloc(16, sizeof(char));
+	if(NULL == result)
+	{
+		file_print("calloc failed in prepend_char\n", stderr);
+		exit(EXIT_FAILURE);
+	}
 	int i = 0;
 
 	/* Deal with Zero case */
@@ -110,11 +118,11 @@ int set_reader(char* set, int mult, char* input)
 	int n = 0;
 	int i = 0;
 	int hold;
-	int negative_p = 0;
+	int negative_p = FALSE;
 
 	if(input[0] == '-')
 	{
-		negative_p = 1;
+		negative_p = TRUE;
 		i = i + 1;
 	}
 
@@ -122,11 +130,14 @@ int set_reader(char* set, int mult, char* input)
 	{
 		n = n * mult;
 		hold = index_number(set, toupper(input[i]));
+
+		/* Input managed to change between in_set and index_number */
 		if(-1 == hold) return 0;
 		n = n + hold;
 		i = i + 1;
 	}
 
+	/* loop exited before NULL and thus invalid input */
 	if(0 != input[i]) return 0;
 
 	if(negative_p)
@@ -154,7 +165,7 @@ int numerate_string(char *a)
 	{
 		return set_reader("0123456789ABCDEFabcdef", 16, a+2);
 	}
-	/* Deal with ocal */
+	/* Deal with octal */
 	else if('0' == a[0])
 	{
 		return set_reader("01234567", 8, a+1);
