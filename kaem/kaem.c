@@ -209,7 +209,8 @@ char** tokens_to_array()
 	{ /* Loop through each node and assign it to an array index */
 		/* Bounds checking */
 		require(i < MAX_ARGS, "LINE TOO LONG\nABORTING HARD\n");
-		array[i] = token->value;
+		array[i] = calloc(MAX_STRING, sizeof(char));
+		copy_string(array[i], token->value);
 		token = token->next;
 		i = i + 1;
 	} while(token != NULL);
@@ -364,12 +365,12 @@ void collect_token(FILE* input)
 			}
 			else if(token->prev == token_tail)
 			{
-				token_tail = token->prev->prev;
-				token = token->prev->prev;
+				token_tail = token->prev;
+				token = token->prev;
 			}
 			else
 			{
-				token = token->prev->prev;
+				token = token->prev;
 			}
 		}
 	}
@@ -761,15 +762,9 @@ void run_script(FILE* script, char** argv)
 		command_done = 0;
 		do
 		{
-			if(token->value == NULL)
-			{ 
-				/* Sometimes token is the same as the last run; we don't want
-				 * to overwrite anything
-				 */
-				token->pos = 0;
-				token->is_comment = FALSE;
-				token->value = calloc(MAX_STRING, sizeof(char));
-			}
+			token->pos = 0;
+			token->is_comment = FALSE;
+			token->value = calloc(MAX_STRING, sizeof(char));
 			/* This does token advancing and everything */
 			collect_token(script);
 		} while(command_done == FALSE);
@@ -793,7 +788,7 @@ void run_script(FILE* script, char** argv)
 			do
 			{ /* Print out each token token */
 				file_print(token->value, stdout);
-				fputc(' ', stdout);
+				file_print(" ", stdout);
 				token = token->next;
 			} while(token != NULL);
 			file_print("\n", stdout);
