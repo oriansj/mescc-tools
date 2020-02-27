@@ -627,7 +627,25 @@ void set()
 	/* Get the options */
 	char* options = calloc(MAX_STRING, sizeof(char));
 	int i;
-	require(token->next != NULL && token->next->value != NULL, "INVALID set COMMAND\nABORTING HARD\n", stderr);
+	/* We have to do two things here because of differing behaviour in
+	 * M2-Planet -- a lack of optomizaitons, AFAICT.
+	 * M2-Planet will evaluate both expressions before performing the OR.
+	 * Hence, this would cause a segfault if the first evaluated false,
+	 * since the second will still evaluate.
+	 * To mitigate this, we have two seperate if blocks to force the 
+	 * evaluation of one before the other.
+	 */
+	if(token->next == NULL) 
+	{
+		file_print("INVALID set COMMAND\nABORTING HARD\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+	if(token->next->value == NULL)
+	{
+		file_print("INVALID set COMMAND\nABORTING HARD\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+	file_print("hi\n", stdout);
 	for(i = 0; i < string_length(token->next->value) - 1; i = i + 1)
 	{
 		options[i] = token->next->value[i + 1];
@@ -816,8 +834,24 @@ void run_script(FILE* script, char** argv)
 		}
 		else if(match(token->value, "cd"))
 		{ /* cd builtin */
-			require(token->next != NULL && token->next->value != NULL,
-				"INVALID cd COMMAND\nABORTING HARD\n", stderr);
+			/* We have to do two things here because of differing behaviour in
+			 * M2-Planet -- a lack of optomizaitons, AFAICT.
+			 * M2-Planet will evaluate both expressions before performing the OR.
+			 * Hence, this would cause a segfault if the first evaluated false,
+			 * since the second will still evaluate.
+			 * To mitigate this, we have two seperate if blocks to force the 
+			 * evaluation of one before the other.
+			 */
+			if(token->next == NULL) 
+			{
+				file_print("INVALID set COMMAND\nABORTING HARD\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			if(token->next->value == NULL)
+			{
+				file_print("INVALID set COMMAND\nABORTING HARD\n", stderr);
+				exit(EXIT_FAILURE);
+			}
 			cd(token->next->value);
 		}
 		else if(match(token->value, "set"))
