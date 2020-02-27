@@ -1,0 +1,3 @@
+# Test end-of-line escapes
+printf \
+    "hi"
