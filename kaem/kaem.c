@@ -185,6 +185,7 @@ char* find_executable(char* name)
 		next[0] = 0;
 		trial = prepend_string(MPATH, prepend_string("/", name));
 
+		require(string_length(trial) < MAX_STRING, "COMMAND TOO LONG!\nABORTING HARD\n");
 		t = fopen(trial, "r");
 		if(NULL != t)
 		{
@@ -324,8 +325,7 @@ void collect_token(FILE* input)
 		}
 		else if('\\' == c)
 		{ /* Support for escapes; drops the char after */
-			c = fgetc(input); /* Skips over \, gets the next char */
-			token_done = TRUE;
+			fgetc(input); /* Skips over \, gets the next char */
 		}
 		else if(0 == c)
 		{ /* We have come to the end of the token */
@@ -480,7 +480,13 @@ void variable_substitute(char* input)
 	token->pos = pos_old;
 
 	/* Substitute the variable */
-	token->value = prepend_string(token->value, env_lookup(var_name));
+	char* value = calloc(MAX_STRING, sizeof(char));
+	value = env_lookup(var_name);
+	if(value != NULL)
+	{
+		/* If there is nothing to substitute, don't substitute anything! */
+		token->value = prepend_string(token->value, value);
+	}
 }
 
 /* Function to concatanate all variables */
@@ -620,6 +626,7 @@ void set()
 	/* Get the options */
 	char* options = calloc(MAX_STRING, sizeof(char));
 	int i;
+	require(token->next != NULL && token->next->value != NULL, "INVALID set COMMAND\nABORTING HARD\n", stderr);
 	for(i = 0; i < string_length(token->next->value) - 1; i = i + 1)
 	{
 		options[i] = token->next->value[i + 1];
@@ -656,6 +663,11 @@ void set()
 /* echo builtin */
 void echo()
 {
+	if(token->next == NULL || token->next->value == NULL)
+	{ /* No arguments */
+		file_print("\n", stdout);
+		return;
+	}
 	token = token->next; /* Skip the actual echo */
 	do
 	{ /* Output each argument to echo to stdout */
@@ -749,12 +761,23 @@ void run_script(FILE* script, char** argv)
 		command_done = 0;
 		do
 		{
-			token->pos = 0;
-			token->is_comment = FALSE;
-			token->value = calloc(MAX_STRING, sizeof(char));
+			if(token->value == NULL)
+			{ 
+				/* Sometimes token is the same as the last run; we don't want
+				 * to overwrite anything
+				 */
+				token->pos = 0;
+				token->is_comment = FALSE;
+				token->value = calloc(MAX_STRING, sizeof(char));
+			}
 			/* This does token advancing and everything */
 			collect_token(script);
 		} while(command_done == FALSE);
+		/* Once we are done, we should remove anything dangling off the end of the
+		 * list -- or the beginning.
+		 */
+		token_tail->next = NULL;
+		token_head->prev = NULL;
 		token = token_head;
 		/* Edge case */
 		if(match(token_head->value, "") || token_head->value == NULL)
@@ -798,15 +821,17 @@ void run_script(FILE* script, char** argv)
 		}
 		else if(match(token->value, "cd"))
 		{ /* cd builtin */
+			require(token->next != NULL && token->next->value != NULL,
+				"INVALID cd COMMAND\nABORTING HARD\n", stderr);
 			cd(token->next->value);
-		}
-		else if(match(token->value, "pwd"))
-		{ /* pwd builtin */
-			pwd();
 		}
 		else if(match(token->value, "set"))
 		{ /* set builtin */
 			set();
+		}
+		else if(match(token->value, "pwd"))
+		{ /* pwd builtin */
+			pwd();
 		}
 		else if(match(token->value, "echo"))
 		{ /* echo builtin */
@@ -865,7 +890,10 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
 		{ /* Set the filename */
-			filename = argv[i + 1];
+			if(argv[i + 1] != NULL)
+			{
+				filename = argv[i + 1];
+			}
 			i = i + 2;
 		}
 		else if(match(argv[i], "n") || match(argv[i], "--nightmare-mode"))
@@ -938,6 +966,8 @@ int main(int argc, char** argv, char** envp)
 	env_tail = env->prev;
 	env = env->prev;
 	env->next = NULL;
+	/* And get rid of anything dangling before head */
+	env_head->prev = NULL;
 	/* Move back to head of env linked-list */
 	env = env_head;
 
