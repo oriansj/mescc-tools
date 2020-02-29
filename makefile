@@ -46,13 +46,8 @@ get_machine: get_machine.c | bin
 blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
 
-<<<<<<< HEAD
-kaem: kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c functions/require.c functions/string.c | bin
-	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c functions/require.c functions/string.c -o bin/kaem
-=======
 kaem: ../M2-Planet/functions/file_print.c ../M2-Planet/functions/string.c ../M2-Planet/functions/require.c ../M2-Planet/functions/match.c ../M2-Planet/functions/in_set.c ../M2-Planet/functions/numerate_number.c kaem/kaem.c bin
 	$(CC) $(CFLAGS) -Wno-int-conversion ../M2-Planet/functions/file_print.c ../M2-Planet/functions/string.c ../M2-Planet/functions/require.c ../M2-Planet/functions/match.c ../M2-Planet/functions/in_set.c ../M2-Planet/functions/numerate_number.c kaem/kaem.c -o bin/kaem
->>>>>>> Update makefile as per kaem refactor
 
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
