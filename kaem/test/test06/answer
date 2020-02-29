@@ -1,4 +1,0 @@
- +> set -ex
- +> thiscommanddoesnotexist 
-WHILE EXECUTING thiscommanddoesnotexist NOT FOUND!
-ABORTING HARD
