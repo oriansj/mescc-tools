@@ -629,7 +629,7 @@ void set()
 	char* options = calloc(MAX_STRING, sizeof(char));
 	int i;
 	/* We have to do two things here because of differing behaviour in
-	 * M2-Planet -- a lack of optomizaitons, AFAICT.
+	 * M2-Planet -- it does not short-circuit the OR.
 	 * M2-Planet will evaluate both expressions before performing the OR.
 	 * Hence, this would cause a segfault if the first evaluated false,
 	 * since the second will still evaluate.
