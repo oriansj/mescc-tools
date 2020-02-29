@@ -38,8 +38,7 @@ char* postpend_char(char* s, char a)
 	char* ret = calloc(MAX_STRING, sizeof(char));
 	if(NULL == ret)
 	{
-		file_print("calloc failed in postpend_char\n", stderr);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 	char* hold = copy_string(ret, s);
 	hold[0] = a;
@@ -51,8 +50,7 @@ char* prepend_char(char a, char* s)
 	char* ret = calloc(MAX_STRING, sizeof(char));
 	if(NULL == ret)
 	{
-		file_print("calloc failed in prepend_char\n", stderr);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 	ret[0] = a;
 	copy_string((ret+1), s);
@@ -64,8 +62,7 @@ char* prepend_string(char* add, char* base)
 	char* ret = calloc(MAX_STRING, sizeof(char));
 	if(NULL == ret)
 	{
-		file_print("calloc failed in prepend_string\n", stderr);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 	copy_string(copy_string(ret, add), base);
 	return ret;

@@ -32,8 +32,7 @@ char* numerate_number(int a)
 	char* result = calloc(16, sizeof(char));
 	if(NULL == result)
 	{
-		file_print("calloc failed in prepend_char\n", stderr);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 	int i = 0;
 
