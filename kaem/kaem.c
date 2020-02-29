@@ -384,8 +384,6 @@ void collect_token(FILE* input)
 
 void variable_substitute_ifset(char* input)
 {
-	int pos_old = token->pos;
-
 	/* Get the variable name */
 	char* var_name = calloc(MAX_STRING, sizeof(char));
 	while(input[token->pos] != ':')
@@ -478,9 +476,6 @@ void variable_substitute(char* input)
 		}
 	}
 
-	/* Reset token->pos */
-	token->pos = pos_old;
-
 	/* Substitute the variable */
 	char* value = calloc(MAX_STRING, sizeof(char));
 	value = env_lookup(var_name);
@@ -549,7 +544,7 @@ void collect_variable(char** argv)
 	/* Now, get the rest */
 	while(input[token->pos] != 0)
 	{ /* Copy everything from the end of the variable to the end of the token */
-		postpend_char(token->value, input[token->pos]);
+		token->value = postpend_char(token->value, input[token->pos]);
 		token->pos = token->pos + 1;
 	}
 }
