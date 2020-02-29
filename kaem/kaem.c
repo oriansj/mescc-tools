@@ -1,4 +1,5 @@
 /* Copyright (C) 2016 Jeremiah Orians
+ * Copyright (C) 2020 fosslinux
  * This file is part of mescc-tools.
  *
  * mescc-tools is free software: you can redistribute it and/or modify
@@ -645,7 +646,6 @@ void set()
 		file_print("INVALID set COMMAND\nABORTING HARD\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-	file_print("hi\n", stdout);
 	for(i = 0; i < string_length(token->next->value) - 1; i = i + 1)
 	{
 		options[i] = token->next->value[i + 1];
