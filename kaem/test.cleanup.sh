@@ -14,4 +14,4 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
-rm kaem/test/results/*
+rm -rf kaem/test/results/

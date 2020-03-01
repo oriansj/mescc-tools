@@ -16,24 +16,18 @@
  */
 
 #include<stdlib.h>
-#include<string.h>
-#include<stdio.h>
 // void* calloc(int count, int size);
 #define TRUE 1
 //CONSTANT TRUE 1
 #define FALSE 0
 //CONSTANT FALSE 0
 int in_set(int c, char* s);
-void file_print(char* s, FILE* f);
-
 
 char* numerate_number(int a)
 {
 	char* result = calloc(16, sizeof(char));
-	if(NULL == result)
-	{
-		return NULL;
-	}
+	if(NULL == result) return NULL;
+
 	int i = 0;
 
 	/* Deal with Zero case */
@@ -150,10 +144,8 @@ int set_reader(char* set, int mult, char* input)
 int numerate_string(char *a)
 {
 	/* If NULL string */
-	if(0 == a[0])
-	{
-		return 0;
-	}
+	if(0 == a[0]) return 0;
+
 	/* Deal with binary*/
 	else if ('0' == a[0] && 'b' == a[1])
 	{

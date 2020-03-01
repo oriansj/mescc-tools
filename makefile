@@ -46,8 +46,8 @@ get_machine: get_machine.c | bin
 blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
 
-kaem: ../M2-Planet/functions/file_print.c ../M2-Planet/functions/string.c ../M2-Planet/functions/require.c ../M2-Planet/functions/match.c ../M2-Planet/functions/in_set.c ../M2-Planet/functions/numerate_number.c kaem/kaem.c bin
-	$(CC) $(CFLAGS) -Wno-int-conversion ../M2-Planet/functions/file_print.c ../M2-Planet/functions/string.c ../M2-Planet/functions/require.c ../M2-Planet/functions/match.c ../M2-Planet/functions/in_set.c ../M2-Planet/functions/numerate_number.c kaem/kaem.c -o bin/kaem
+kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c bin
+	$(CC) $(CFLAGS) functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c -o bin/kaem
 
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
@@ -82,6 +82,9 @@ bin:
 results:
 	mkdir -p test/results
 
+kaem-result:
+	mkdir -p kaem/test/results
+
 # tests
 test: test0-binary \
 	test1-binary \
@@ -99,7 +102,7 @@ test: test0-binary \
 	test-kaem
 	sha256sum -c test/test.answers
 
-test-kaem: kaem hex2
+test-kaem: kaem hex2 | kaem-result
 	kaem/test.sh
 
 test0-binary: results hex2 get_machine

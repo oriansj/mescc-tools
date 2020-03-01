@@ -38,40 +38,18 @@
 #define MAX_ARGS 256
 //CONSTANT MAX_ARGS 256
 
-/*
- * FUNCTION PROTOTYPES
- */
-
-/* Utility */
-char* find_char(char* string, char a);
-char* prematch(char* search, char* field);
-int array_length(char** array);
-char* env_lookup(char* variable);
-char* find_executable(char* name);
-char** tokens_to_array();
-char** env_to_array();
-/* Token */
-void collect_comment(FILE* input);
-void collect_string(FILE* input);
-void collect_token(FILE* input);
-/* Variable */
-void variable_substitute_ifset(char* input);
-void variable_substitute(char* input);
-void variable_all(char** argv);
-void collect_variable(char** argv);
-/* Execute */
-int is_envar(char* token);
-void add_envar(char* token);
-void cd(char* path);
-void pwd();
-void set();
-void echo();
-int execute();
-void run_script(FILE* script, char** argv);
-int main(int argc, char** argv, char** envp);
+/* Imported */
+int match(char* a, char* b);
+void file_print(char* s, FILE* f);
+void require(int bool, char* error);
+char* copy_string(char* target, char* source);
+char* prepend_string(char* add, char* base);
+int string_length(char* a);
+char* postpend_char(char* s, char a);
+char* numerate_number(int a);
 
 /*
- * GLOBALS 
+ * GLOBALS
  */
 
 int command_done;
@@ -93,7 +71,6 @@ struct Token {
 };
 struct Token* token;
 struct Token* token_head;
-struct Token* token_tail;
 
 
 /* Environment struct */
@@ -244,12 +221,12 @@ char** env_to_array()
 /* Function for purging line comments */
 void collect_comment(FILE* input)
 {
-	char c;
+	int c;
 	token->is_comment = TRUE;
 	do
 	{ /* Sanity check that the comment ends with \n and purge the comment from the FILE* */
 		c = fgetc(input);
-		if(-1 == c)
+		if(EOF == c)
 		{ /* We reached an EOF!! */
 			file_print("IMPROPERLY TERMINATED LINE COMMENT!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
@@ -261,18 +238,15 @@ void collect_comment(FILE* input)
 void collect_string(FILE* input)
 {
 	int string_done = FALSE;
-	char c;
+	int c;
 	do
 	{
 		/* Bounds check */
 		require(MAX_STRING > token->pos, "LINE IS TOO LONG\nABORTING HARD\n");
 		c = fgetc(input);
-		if(-1 == c)
-		{ /* We never should hit EOF while collecting a RAW string */
-			file_print("IMPROPERLY TERMINATED RAW STRING!\nABORTING HARD\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		else if('"' == c)
+		require(EOF != c, "IMPROPERLY TERMINATED RAW STRING!\nABORTING HARD\n");
+
+		if('"' == c)
 		{ /* End of string */
 			string_done = TRUE;
 		}
@@ -287,14 +261,14 @@ void collect_string(FILE* input)
 /* Function to parse and assign token->value */
 void collect_token(FILE* input)
 {
-	char c;
+	int c;
 	int token_done = FALSE;
 	do
 	{ /* Loop over each character in the token */
 		c = fgetc(input);
 		/* Bounds checking */
 		require(MAX_STRING > token->pos, "LINE IS TOO LONG\nABORTING HARD\n");
-		if(-1 == c)
+		if(EOF == c)
 		{ /* End of file -- this means script complete */
 			/* We don't actually exit here. This logically makes more sense;
 			 * let the code follow its natural path of execution and exit
@@ -362,12 +336,6 @@ void collect_token(FILE* input)
 				/* Get is_comment from old token */
 				token->is_comment = token_head->is_comment;
 				token_head = token;
-				token_tail = token;
-			}
-			else if(token->prev == token_tail)
-			{
-				token_tail = token->prev;
-				token = token->prev;
 			}
 			else
 			{
@@ -375,7 +343,6 @@ void collect_token(FILE* input)
 			}
 		}
 	}
-	token_tail = token;
 }
 
 /*
@@ -419,7 +386,7 @@ void variable_substitute(char* input)
 	char* var_name = calloc(MAX_STRING, sizeof(char));
 	token->pos = token->pos + 1; /* We don't want the { */
 
-	/* Check for "special" types 
+	/* Check for "special" types
 	 * If we do find a special type we return here.
 	 * We don't want to go through the rest of the code for a normal
 	 * substitution.
@@ -450,7 +417,7 @@ void variable_substitute(char* input)
 	{
 		char c = input[token->pos];
 		require(MAX_STRING > token->pos, "LINE IS TOO LONG\nABORTING HARD\n");
-		if(-1 == c)
+		if(EOF == c)
 		{ /* We never should hit EOF while collecting a variable */
 			file_print("IMPROPERLY TERMINATED VARIABLE!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
@@ -477,8 +444,7 @@ void variable_substitute(char* input)
 	}
 
 	/* Substitute the variable */
-	char* value = calloc(MAX_STRING, sizeof(char));
-	value = env_lookup(var_name);
+	char* value = env_lookup(var_name);
 	if(value != NULL)
 	{
 		/* If there is nothing to substitute, don't substitute anything! */
@@ -521,7 +487,7 @@ void collect_variable(char** argv)
 		token->value = postpend_char(token->value, input[token->pos]);
 		token->pos = token->pos + 1;
 	}
-		
+
 	token->pos = token->pos + 1; /* We are uninterested in the $ */
 
 	/* Run the substitution */
@@ -553,7 +519,7 @@ void collect_variable(char** argv)
  * EXECUTION FUNCTIONS
  */
 
-/* Function to check if the token is an envar */ 
+/* Function to check if the token is an envar */
 int is_envar(char* token)
 {
 	int i = 0;
@@ -628,11 +594,11 @@ void set()
 	 * M2-Planet will evaluate both expressions before performing the OR.
 	 * Hence, this would cause a segfault if the first evaluated false,
 	 * since the second will still evaluate.
-	 * To mitigate this, we have two seperate if blocks to force the 
+	 * To mitigate this, we have two seperate if blocks to force the
 	 * evaluation of one before the other.
 	 */
-	require(token->next == NULL, "INVALID set COMMAND\nABORTING HARD\n");
-	require(token->next->value == NULL, "INVALID set COMMAND\nABORTING HARD\n");
+	require(NULL != token->next, "INVALID set COMMAND\nABORTING HARD\n");
+	require(NULL != token->next->value, "INVALID set COMMAND\nABORTING HARD\n");
 
 	for(i = 0; i < string_length(token->next->value) - 1; i = i + 1)
 	{
@@ -656,7 +622,8 @@ void set()
 			/* Output the set -x because VERBOSE didn't catch it before */
 			file_print(" +> set -", stdout);
 			file_print(options, stdout);
-			file_print("\n", stdout);
+			fputc('\n', stdout);
+			fflush(stdout);
 		}
 		else
 		{ /* Invalid */
@@ -675,7 +642,7 @@ void echo()
 	 * M2-Planet will evaluate both expressions before performing the OR.
 	 * Hence, this would cause a segfault if the first evaluated false,
 	 * since the second will still evaluate.
-	 * To mitigate this, we have two seperate if blocks to force the 
+	 * To mitigate this, we have two seperate if blocks to force the
 	 * evaluation of one before the other.
 	 */
 	if(token->next == NULL)
@@ -699,9 +666,51 @@ void echo()
 }
 
 /* Execute program */
-int execute()
+int execute(char** argv)
 {
+	/* Run the command */
+	token = token_head;
+	do
+	{ /* Substitute variables into each token */
+		collect_variable(argv);
+		/* Advance to next node */
+		token = token->next;
+	} while(token != NULL);
+
+	token = token_head;
+	/* Actually do the execution */
+	if(token->is_comment == TRUE) return 0;
+	else if(is_envar(token->value) == 1)
+	{ /* It's an envar! */
+		add_envar(token->value);
+		return 0;
+	}
+	else if(match(token->value, "cd"))
+	{ /* cd builtin */
+		require(NULL != token->next, "INVALID cd COMMAND\nABORTING HARD\n");
+		require(NULL != token->next->value, "INVALID cd COMMAND\nABORTING HARD\n");
+		cd(token->next->value);
+		return 0;
+	}
+	else if(match(token->value, "set"))
+	{ /* set builtin */
+		set();
+		return 0;
+	}
+	else if(match(token->value, "pwd"))
+	{ /* pwd builtin */
+		pwd();
+		return 0;
+	}
+	else if(match(token->value, "echo"))
+	{ /* echo builtin */
+		echo();
+		return 0;
+	}
+
 	int status; /* i.e. return code */
+	char** array;
+	char** envp;
 	/* Get the full path to the program */
 	char* program = find_executable(token->value);
 	if(NULL == program)
@@ -729,21 +738,19 @@ int execute()
 	}
 	else if (f == 0)
 	{ /* Child */
-		if(FUZZING == TRUE)
-		{
-			/* We are fuzzing.
-			 * Fuzzing produces random stuff; we don't want it running
-			 * dangerous commands. So we just don't execve.
-			 * But, we still do tokens_to_array and env_to_array to check
-			 * for segfaults.
-			 */
-			tokens_to_array();
-			env_to_array();
-		}
-		else
+		/**************************************************************
+		 * Fuzzing produces random stuff; we don't want it running    *
+		 * dangerous commands. So we just don't execve.               *
+		 * But, we still do tokens_to_array and env_to_array to check *
+		 * for segfaults.                                             *
+		 **************************************************************/
+		array = tokens_to_array();
+		envp = env_to_array();
+
+		if(FALSE == FUZZING)
 		{ /* We are not fuzzing */
 			/* execve() returns only on error */
-			execve(program, tokens_to_array(), env_to_array());
+			execve(program, array, envp);
 		}
 		/* Prevent infinite loops */
 		_exit(EXIT_SUCCESS);
@@ -756,125 +763,72 @@ int execute()
 	return status;
 }
 
+void collect_command(FILE* script)
+{
+	command_done = FALSE;
+	/* Initialize token
+	 * ----------------
+	 * This has to be reset each time, as we need a new linked-list for
+	 * each line.
+	 * See, the program flows like this as a high level overview:
+	 * Get line -> Sanitize line and perform variable replacement etc ->
+	 * Execute line -> Next.
+	 * We don't need the previous lines once they are done with, so tokens
+	 * are hence for each line.
+	 */
+	token = calloc(1, sizeof(struct Token));
+	token_head = token;
+
+	/* Get the tokens */
+	do
+	{
+		token->pos = 0;
+		token->is_comment = FALSE;
+		token->value = calloc(MAX_STRING, sizeof(char));
+		/* This does token advancing and everything */
+		collect_token(script);
+	} while(command_done == FALSE);
+	/* Once we are done, we should remove anything dangling off the end of the
+	 * list -- or the beginning.
+	 */
+	if(token->is_comment) return;
+	if(0 == token->pos) return;
+
+	/* Output the command if verbose is set */
+	if(VERBOSE)
+	{
+		file_print(" +> ", stdout);
+		/* Navigate to head */
+		token = token_head;
+		do
+		{ /* Print out each token token */
+			file_print(token->value, stdout);
+			file_print(" ", stdout);
+			token = token->next;
+		} while(token != NULL);
+		fputc('\n', stdout);
+		fflush(stdout);
+	}
+}
+
 /* Function for executing our programs with desired arguments */
 void run_script(FILE* script, char** argv)
 {
-	command_done = FALSE;
 	script_done = FALSE;
 	while(script_done == FALSE)
 	{
-		/* Initialize token 
-		 * ----------------
-		 * This has to be reset each time, as we need a new linked-list for
-		 * each line.
-		 * See, the program flows like this as a high level overview:
-		 * Get line -> Sanitize line and perform variable replacement etc ->
-		 * Execute line -> Next.
-		 * We don't need the previous lines once they are done with, so tokens
-		 * are hence for each line.
-		 */
-		token = calloc(1, sizeof(struct Token));
-		token_head = token;
-		token_tail = token;
+		collect_command(script);
 
-		/* Get the tokens */
-		command_done = 0;
-		do
-		{
-			token->pos = 0;
-			token->is_comment = FALSE;
-			token->value = calloc(MAX_STRING, sizeof(char));
-			/* This does token advancing and everything */
-			collect_token(script);
-		} while(command_done == FALSE);
-		/* Once we are done, we should remove anything dangling off the end of the
-		 * list -- or the beginning.
-		 */
-		token_tail->next = NULL;
-		token_head->prev = NULL;
-		token = token_head;
-		/* Edge case */
-		if(match(token_head->value, "") || token_head->value == NULL)
-		{
-			continue;
+		/* Stuff to exec */
+		int status = execute(argv);
+		if(STRICT == TRUE && (0 != status))
+		{ /* Clearly the script hit an issue that should never have happened */
+			file_print("Subprocess error ", stderr);
+			file_print(numerate_number(status), stderr);
+			file_print("\nABORTING HARD\n", stderr);
+			/* Exit, we failed */
+			exit(EXIT_FAILURE);
 		}
-		/* Output the command if verbose is set */
-		if(VERBOSE)
-		{
-			file_print(" +> ", stdout);
-			/* Navigate to head */
-			token = token_head;
-			do
-			{ /* Print out each token token */
-				file_print(token->value, stdout);
-				file_print(" ", stdout);
-				token = token->next;
-			} while(token != NULL);
-			file_print("\n", stdout);
-			token = token_head;
-		}
-
-		/* Run the command */
-		token = token_head;
-		do
-		{ /* Substitute variables into each token */
-			collect_variable(argv);
-			/* Advance to next node */
-			token = token->next;
-		} while(token != NULL);
-
-		token = token_head;
-		/* Actually do the execution */
-		if(token->is_comment == TRUE)
-		{ 
-			/* Do nothing */ 
-		}
-		else if(is_envar(token->value) == 1)
-		{ /* It's an envar! */
-			add_envar(token->value);
-		}
-		else if(match(token->value, "cd"))
-		{ /* cd builtin */
-			/* We have to do two things here because of differing behaviour in
-			 * M2-Planet -- it does not short-circuit the OR.
-			 * M2-Planet will evaluate both expressions before performing the OR.
-			 * Hence, this would cause a segfault if the first evaluated false,
-			 * since the second will still evaluate.
-			 * To mitigate this, we have two seperate if blocks to force the 
-			 * evaluation of one before the other.
-			 */
-			require(token->next == NULL, "INVALID cd COMMAND\nABORTING HARD\n");
-			require(token->next->value == NULL, "INVALID cd COMMAND\nABORTING HARD\n");
-			cd(token->next->value);
-		}
-		else if(match(token->value, "set"))
-		{ /* set builtin */
-			set();
-		}
-		else if(match(token->value, "pwd"))
-		{ /* pwd builtin */
-			pwd();
-		}
-		else if(match(token->value, "echo"))
-		{ /* echo builtin */
-			echo();
-		}
-		else
-		{ /* Stuff to exec */
-			int status = execute();
-			if(STRICT == TRUE && (0 != status))
-			{ /* Clearly the script hit an issue that should never have happened */
-				file_print("Subprocess error ", stderr);
-				file_print(numerate_number(status), stderr);
-				file_print("\nABORTING HARD\n", stderr);
-				/* Exit, we failed */
-				exit(EXIT_FAILURE);
-			}
-		}
-		/* Next line! 
-		 * This restarts the loop and goes to the next line...
-		 * assuming that we haven't finished :)
-		 */
 	}
 }
 
@@ -890,7 +844,6 @@ int main(int argc, char** argv, char** envp)
 	token = calloc(1, sizeof(struct Token));
 	require(token != NULL, "Memory initialization of token failed\n");
 	token_head = token;
-	token_tail = token;
 
 	env = calloc(1, sizeof(struct Environment));
 	require(token != NULL, "Memory initialization of env failed\n");

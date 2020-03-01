@@ -36,10 +36,8 @@ char* copy_string(char* target, char* source)
 char* postpend_char(char* s, char a)
 {
 	char* ret = calloc(MAX_STRING, sizeof(char));
-	if(NULL == ret)
-	{
-		return NULL;
-	}
+	if(NULL == ret) return NULL;
+
 	char* hold = copy_string(ret, s);
 	hold[0] = a;
 	return ret;
@@ -48,10 +46,8 @@ char* postpend_char(char* s, char a)
 char* prepend_char(char a, char* s)
 {
 	char* ret = calloc(MAX_STRING, sizeof(char));
-	if(NULL == ret)
-	{
-		return NULL;
-	}
+	if(NULL == ret) return NULL;
+
 	ret[0] = a;
 	copy_string((ret+1), s);
 	return ret;
@@ -60,10 +56,8 @@ char* prepend_char(char a, char* s)
 char* prepend_string(char* add, char* base)
 {
 	char* ret = calloc(MAX_STRING, sizeof(char));
-	if(NULL == ret)
-	{
-		return NULL;
-	}
+	if(NULL == ret) return NULL;
+
 	copy_string(copy_string(ret, add), base);
 	return ret;
 }
