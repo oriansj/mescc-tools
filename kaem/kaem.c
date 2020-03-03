@@ -340,6 +340,7 @@ void collect_token(FILE* input)
 			else
 			{
 				token = token->prev;
+				token->next = NULL;
 			}
 		}
 	}
