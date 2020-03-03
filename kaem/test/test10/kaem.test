@@ -16,4 +16,6 @@
 #
 # Test simple variable substitution
 VAR=text
-echo text-${VAR}-text
+ANOTHER=more
+echo text-${VAR}-${ANOTHER}-text
+../bin/kaem -f test/test10/subkaem.test

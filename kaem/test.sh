@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
+echo "Starting kaem tests"
 for i in $(seq 0 15) ; do
 	TEST=$(printf "%02d" $i)
-	./bin/kaem -f "kaem/test/test${TEST}/kaem.test" &> "kaem/test/results/test${TEST}-output"
+	../bin/kaem -f test/test${TEST}/kaem.test > test/results/test${TEST}-output 2>&1
 done
-sha256sum -c kaem/test/test.answers
+sha256sum -c test/test.answers
+echo "kaem tests complete"

@@ -15,4 +15,4 @@
 # along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Test substitution of $@
-echo $@
+echo $@ -- foo

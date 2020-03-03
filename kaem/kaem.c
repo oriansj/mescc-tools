@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Jeremiah Orians
+/* Copyright (C) 2016-2020 Jeremiah Orians
  * Copyright (C) 2020 fosslinux
  * This file is part of mescc-tools.
  *
@@ -16,73 +16,14 @@
  * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * INCLUDES
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include "kaem.h"
 
-/*
- * DEFINES
- */
-
-#define FALSE 0
-//CONSTANT FALSE 0
-#define TRUE 1
-//CONSTANT TRUE 1
-#define MAX_STRING 4096
-//CONSTANT MAX_STRING 4096
-#define MAX_ARGS 256
-//CONSTANT MAX_ARGS 256
-
-/* Imported */
-int match(char* a, char* b);
-void file_print(char* s, FILE* f);
-void require(int bool, char* error);
-char* copy_string(char* target, char* source);
-char* prepend_string(char* add, char* base);
-int string_length(char* a);
-char* postpend_char(char* s, char a);
-char* numerate_number(int a);
-
-/*
- * GLOBALS
- */
-
-int command_done;
-int script_done;
-int VERBOSE;
-int STRICT;
-int NIGHTMARE;
-int FUZZING;
-char* PATH;
-char* USERNAME;
-
-/* Token struct */
-struct Token {
-	char* value;
-	int pos;
-	int is_comment;
-	struct Token* next;
-	struct Token* prev;
-};
-struct Token* token;
-struct Token* token_head;
-
-
-/* Environment struct */
-struct Environment {
-	char* var;
-	char* value;
-	struct Environment* next;
-	struct Environment* prev;
-};
-struct Environment* env;
-struct Environment* env_head;
-struct Environment* env_tail;
+/* Prototypes from other files */
+void handle_variables(char** argv, struct Token* n);
 
 /*
  * UTILITY FUNCTIONS
@@ -100,19 +41,7 @@ char* find_char(char* string, char a)
 	return string;
 }
 
-/* Function to match for a string */
-char* prematch(char* search, char* field)
-{
-	do
-	{
-		if(search[0] != field[0]) return NULL;
-		search = search + 1;
-		field = field + 1;
-	} while(0 != search[0]);
-	return field;
-}
-
-/* Function to find the length of an array */
+/* Function to find the length of a char**; an array of strings */
 int array_length(char** array)
 {
 	int length = 0;
@@ -126,21 +55,18 @@ int array_length(char** array)
 /* Search for a variable in the env linked-list */
 char* env_lookup(char* variable)
 {
-	char* ret = calloc(MAX_STRING, sizeof(char));
 	/* Start at the head */
-	env = env_head;
-	do
-	{ /* Loop over the linked-list */
-		if(match(variable, env->var))
+	struct Token* n = env;
+	/* Loop over the linked-list */
+	while(n != NULL)
+	{
+		if(match(variable, n->var))
 		{ /* We have found the correct node */
-			ret = env->value;
-			/* Move back to the head */
-			env = env_head;
-			return ret; /* Done */
+			return n->value; /* Done */
 		}
 		/* Nope, try the next */
-		env = env->next;
-	} while(env != NULL); /* Until we reach the end of the linked-list */
+		n = n->next;
+	}
 	/* We didn't find anything! */
 	return NULL;
 }
@@ -148,21 +74,51 @@ char* env_lookup(char* variable)
 /* Find the full path to an executable */
 char* find_executable(char* name)
 {
+	if(match("", name)) return NULL;
 	if(('.' == name[0]) || ('/' == name[0]))
 	{ /* assume names that start with . or / are relative or absolute */
 		return name;
 	}
 
-	char* next = find_char(PATH, ':');
 	char* trial = calloc(MAX_STRING, sizeof(char));
 	char* MPATH = calloc(MAX_STRING, sizeof(char)); /* Modified PATH */
+	require(MPATH != NULL, "Memory initialization of MPATH in find_executable failed\n");
 	copy_string(MPATH, PATH);
 	FILE* t;
+	char* next = find_char(MPATH, ':');
+	int index;
+	int offset;
+	int mpath_length;
+	int name_length;
+	int trial_length;
 	while(NULL != next)
 	{
-		next[0] = 0;
-		trial = prepend_string(MPATH, prepend_string("/", name));
+		/* Reset trial */
+		trial_length = string_length(trial);
+		for(index = 0; index < trial_length; index = index + 1)
+		{
+			trial[index] = 0;
+		}
 
+		next[0] = 0;
+
+		/* prepend_string(MPATH, prepend_string("/", name)) */
+		mpath_length = string_length(MPATH);
+		for(index = 0; index < mpath_length; index = index + 1)
+		{
+			require(MAX_STRING > index, "Element of PATH is too long\n");
+			trial[index] = MPATH[index];
+		}
+		trial[index] = '/';
+		offset = string_length(trial);
+		name_length = string_length(name);
+		for(index = 0; index < name_length; index = index + 1)
+		{
+			require(MAX_STRING > index, "Element of PATH is too long\n");
+			trial[index + offset] = name[index];
+		}
+
+		/* Try the trial */
 		require(string_length(trial) < MAX_STRING, "COMMAND TOO LONG!\nABORTING HARD\n");
 		t = fopen(trial, "r");
 		if(NULL != t)
@@ -170,47 +126,63 @@ char* find_executable(char* name)
 			fclose(t);
 			return trial;
 		}
+
 		MPATH = next + 1;
 		next = find_char(MPATH, ':');
-		free(trial);
 	}
 	return NULL;
 }
 
-/* Function to convert the tokens struct into an array */
-char** tokens_to_array()
+/* Function to convert a Token linked-list into an array of strings */
+char** list_to_array(struct Token* s)
 {
-	char** array = calloc(MAX_ARGS, sizeof(char*));
-	int i = 0;
-	token = token_head;
-	do
+	struct Token* n;
+	n = s;
+	char** array = calloc(MAX_ARRAY, sizeof(char*));
+	require(array != NULL, "Memory initialization of array in conversion of list to array failed\n");
+	char* element = calloc(MAX_STRING, sizeof(char));
+	require(element != NULL, "Memory initalization of element in conversion of list to array failed\n");
+	int index = 0;
+	int i;
+	int value_length;
+	int var_length;
+	int offset;
+	while(n != NULL)
 	{ /* Loop through each node and assign it to an array index */
+		array[index] = calloc(MAX_STRING, sizeof(char));
+		require(array[index] != NULL, "Memory initialization of array[index] in conversion of list to array failed\n");
 		/* Bounds checking */
-		require(i < MAX_ARGS, "LINE TOO LONG\nABORTING HARD\n");
-		array[i] = calloc(MAX_STRING, sizeof(char));
-		copy_string(array[i], token->value);
-		token = token->next;
-		i = i + 1;
-	} while(token != NULL);
-	token = token_head;
-	return array;
-}
+		/* No easy way to tell which it is, output generic message */
+		require(index < MAX_ARRAY, "SCRIPT TOO LONG or TOO MANY ENVARS\nABORTING HARD\n");
+		if(n->var == NULL)
+		{ /* It is a line */
+			array[index] = n->value;
+		}
+		else
+		{ /* It is a var */
+			/* prepend_string(n->var, prepend_string("=", n->value)) */
+			var_length = string_length(n->var);
+			for(i = 0; i < var_length; i = i + 1)
+			{
+				element[i] = n->var[i];
+			}
+			element[i] = '=';
+			i = i + 1;
+			offset = i;
+			value_length = string_length(n->value);
+			for(i = 0; i < value_length; i = i + 1)
+			{
+				element[i + offset] = n->value[i];
+			}
+		}
+		copy_string(array[index], element);
 
-/* Function to convert the env struct into an array */
-char** env_to_array()
-{
-	char** array = calloc(MAX_ARGS, sizeof(char*));
-	int i = 0;
-	env = env_head;
-	while(env->next != NULL)
-	{ /* Loop through each node and assign it to node->value */
-		/* Bounds checking */
-		require(i < MAX_ARGS, "TOO MANY ARGUMENTS\nABORTING HARD\n");
-		array[i] = prepend_string(env->var, prepend_string("=", env->value));
-		env = env->next;
-		i = i + 1;
+		n = n->next;
+		index = index + 1;
+
+		/* Reset element */
+		for(i = 0; i < MAX_STRING; i = i + 1) element[i] = 0;
 	}
-	env = env_head;
 	return array;
 }
 
@@ -218,33 +190,34 @@ char** env_to_array()
  * TOKEN COLLECTION FUNCTIONS
  */
 
-/* Function for purging line comments */
+/* Function for skipping over line comments */
 void collect_comment(FILE* input)
 {
 	int c;
-	token->is_comment = TRUE;
+	/* Eat up the comment, one character at a time */
+	/*
+	 * Sanity check that the comment ends with \n.
+	 * Remove the comment from the FILE*
+	 */
 	do
-	{ /* Sanity check that the comment ends with \n and purge the comment from the FILE* */
+	{
 		c = fgetc(input);
-		if(EOF == c)
-		{ /* We reached an EOF!! */
-			file_print("IMPROPERLY TERMINATED LINE COMMENT!\nABORTING HARD\n", stderr);
-			exit(EXIT_FAILURE);
-		}
+		/* We reached an EOF!! */
+		require(EOF != c, "IMPROPERLY TERMINATED LINE COMMENT!\nABORTING HARD\n");
 	} while('\n' != c); /* We can now be sure it ended with \n -- and have purged the comment */
 }
 
-/* Function for collecting RAW strings and removing the " that goes with them */
-void collect_string(FILE* input)
+/* Function for collecting strings and removing the "" pair that goes with them */
+int collect_string(FILE* input, struct Token* n, int index)
 {
 	int string_done = FALSE;
 	int c;
 	do
 	{
 		/* Bounds check */
-		require(MAX_STRING > token->pos, "LINE IS TOO LONG\nABORTING HARD\n");
+		require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
 		c = fgetc(input);
-		require(EOF != c, "IMPROPERLY TERMINATED RAW STRING!\nABORTING HARD\n");
+		require(EOF != c, "IMPROPERLY TERMINATED STRING!\nABORTING HARD\n");
 
 		if('"' == c)
 		{ /* End of string */
@@ -252,32 +225,36 @@ void collect_string(FILE* input)
 		}
 		else
 		{
-			token->value = postpend_char(token->value, c);
-			token->pos = token->pos + 1;
+			require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
+			n->value[index] = c;
+			index = index + 1;
 		}
 	} while(string_done == FALSE);
+	return index;
 }
 
 /* Function to parse and assign token->value */
-void collect_token(FILE* input)
+int collect_token(FILE* input, struct Token* n)
 {
 	int c;
 	int token_done = FALSE;
+	char* token = calloc(MAX_STRING, sizeof(char));
+	require(token != NULL, "Memory initialization of token in collect_token failed\n");
+	int index = 0;
 	do
 	{ /* Loop over each character in the token */
 		c = fgetc(input);
 		/* Bounds checking */
-		require(MAX_STRING > token->pos, "LINE IS TOO LONG\nABORTING HARD\n");
+		require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
 		if(EOF == c)
 		{ /* End of file -- this means script complete */
 			/* We don't actually exit here. This logically makes more sense;
 			 * let the code follow its natural path of execution and exit
 			 * sucessfuly at the end of main().
-			 * However we set the done marker.
 			 */
-			script_done = TRUE;
-			command_done = TRUE;
 			token_done = TRUE;
+			command_done = TRUE;
+			return -1;
 		}
 		else if((' ' == c) || ('\t' == c))
 		{ /* Space and tab are token seperators */
@@ -289,8 +266,8 @@ void collect_token(FILE* input)
 			token_done = TRUE;
 		}
 		else if('"' == c)
-		{ /* Handle RAW strings -- everything between a pair of "" */
-			collect_string(input);
+		{ /* Handle strings -- everything between a pair of "" */
+			index = collect_string(input, n, index);
 			token_done = TRUE;
 		}
 		else if('#' == c)
@@ -301,7 +278,25 @@ void collect_token(FILE* input)
 		}
 		else if('\\' == c)
 		{ /* Support for escapes; drops the char after */
-			fgetc(input); /* Skips over \, gets the next char */
+			/******************************************************************
+			 * This is a design decision; it is primarily made for newlines.  *
+			 * Unlike the way normal shells do escapes (making the next char  *
+			 * actually do something), this just eats it up. Why? Simply, to  *
+			 * aid formatting (mostly through newlines). Eventually, we will  *
+			 * make it do it the proper way... but for now it's staying like  *
+			 * this. Feel free to send in a patch if you have a solution!     *
+			 * Because of this, I have decided that since the behaviour is    *
+			 * signficant enough, when warnings are enabled, we will give a   *
+			 * warning about this.                                            *
+			 ******************************************************************/
+			c = fgetc(input); /* Skips over \, gets the next char */
+			if(WARNINGS && c != '\n')
+			{
+				file_print("WARNING: The character '", stdout);
+				fputc(c, stdout);
+				file_print("' just got eaten up because of an unsupported escape sequence; see kaem.c:collect_token for more information.\n", stdout);
+			}
+			index = index + 2;
 		}
 		else if(0 == c)
 		{ /* We have come to the end of the token */
@@ -309,306 +304,145 @@ void collect_token(FILE* input)
 		}
 		else
 		{ /* It's a character to assign */
-			token->value = postpend_char(token->value, c);
-			token->pos = token->pos + 1;
+			require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
+			n->value[index] = c;
+			index = index + 1;
 		}
 	} while (token_done == FALSE);
-
-	/* Initialize the next node */
-	if(command_done == FALSE)
-	{
-		token->next = calloc(1, sizeof(struct Token));
-		token->next->prev = token;
-		token = token->next;
-		/* Check if our efforts yielded nothing */
-		/* This might be confusing... it is because the next node initializing happens before
-		 * So our data is actually in token->prev
-		 */
-		if(match(token->prev->value, "") || token->prev->value == NULL)
-		{ /* That was useless! */
-			/* Let's remove ourselves from the linked-list */
-			if(token->prev == token_head)
-			{
-				/* Literally make a new linked-list */
-				token = calloc(1, sizeof(struct Token));
-				token->pos = 0;
-				token->value = calloc(1, sizeof(struct Token));
-				/* Get is_comment from old token */
-				token->is_comment = token_head->is_comment;
-				token_head = token;
-			}
-			else
-			{
-				token = token->prev;
-			}
-		}
-	}
-}
-
-/*
- * VARIABLE FUNCTIONS
- */
-
-void variable_substitute_ifset(char* input)
-{
-	/* Get the variable name */
-	char* var_name = calloc(MAX_STRING, sizeof(char));
-	while(input[token->pos] != ':')
-	{ /* Copy into var_name until :- */
-		var_name = postpend_char(var_name, input[token->pos]);
-		token->pos = token->pos + 1;
-	}
-
-	/* Get the alternative text */
-	char* text = calloc(MAX_STRING, sizeof(char));
-	token->pos = token->pos + 2; /* Skip over :- */
-	while(input[token->pos] != '}')
-	{ /* Copy into text until \} */
-		text = postpend_char(text, input[token->pos]);
-		token->pos = token->pos + 1;
-	}
-
-	/* Do the substitution */
-	if(env_lookup(var_name) != NULL)
-	{ /* var_name is valid, subsitute it */
-		token->value = prepend_string(token->value, env_lookup(var_name));
-	}
-	else
-	{ /* Not valid, subsitute alternative text */
-		token->value = prepend_string(token->value, text);
-	}
-}
-
-void variable_substitute(char* input)
-{
-	/* NOTE: token->pos is the pos of input */
-	/* Initialize stuff */
-	char* var_name = calloc(MAX_STRING, sizeof(char));
-	token->pos = token->pos + 1; /* We don't want the { */
-
-	/* Check for "special" types
-	 * If we do find a special type we return here.
-	 * We don't want to go through the rest of the code for a normal
-	 * substitution.
-	 */
-	int pos_old = token->pos;
-	while(token->pos < string_length(input))
-	{ /* Loop over each character */
-		if(input[token->pos] == ':')
-		{ /* Special stuffs! */
-			token->pos = token->pos + 1;
-			if(input[token->pos] == '-')
-			{ /* ${VARNAME:-text} if varname is not set substitute text */
-				token->pos = pos_old; /* Reset token->pos */
-				variable_substitute_ifset(input);
-				return; /* We are done here */
-			}
-		}
-		token->pos = token->pos + 1;
-	}
-	token->pos = pos_old; /* Reset token->pos */
-
-	/* If we reach here it is a normal substitution
-	 * Let's do it!
-	 */
-	/* Get the variable name */
-	int substitute_done = FALSE;
-	while(substitute_done == FALSE)
-	{
-		char c = input[token->pos];
-		require(MAX_STRING > token->pos, "LINE IS TOO LONG\nABORTING HARD\n");
-		if(EOF == c)
-		{ /* We never should hit EOF while collecting a variable */
-			file_print("IMPROPERLY TERMINATED VARIABLE!\nABORTING HARD\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		else if('\n' == c)
-		{ /* We should not hit EOL */
-			/* This also catches token->pos > string_length(input) */
-			file_print("IMPROPERLY TERMINATED VARIABLE!\nABORTING HARD\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		else if('\\' == c)
-		{ /* Drop the \\ */
-			token->pos = token->pos + 1;
-		}
-		else if('}' == c)
-		{ /* End of variable name */
-			substitute_done = TRUE;
-		}
-		else
-		{
-			var_name = postpend_char(var_name, c);
-			token->pos = token->pos + 1;
-		}
-	}
-
-	/* Substitute the variable */
-	char* value = env_lookup(var_name);
-	if(value != NULL)
-	{
-		/* If there is nothing to substitute, don't substitute anything! */
-		token->value = prepend_string(token->value, value);
-	}
-}
-
-/* Function to concatanate all variables */
-void variable_all(char** argv)
-{
-	int length = array_length(argv);
-	int i;
-	/* We don't want argv[0], as that contains the path to kaem */
-	for(i = 1; i < length; i = i + 1)
-	{
-		token->value = prepend_string(token->value, argv[i]);
-		token->value = prepend_string(token->value, " ");
-	}
-}
-
-/* Function to substitute variables */
-void collect_variable(char** argv)
-{
-	/* NOTE: token->pos is the position of input */
-	token->pos = 0;
-
-	/* Create input */
-	char* input = calloc(MAX_STRING, sizeof(char));
-	copy_string(input, token->value);
-	/* Reset token->value */
-	token->value = calloc(MAX_STRING, sizeof(char));
-
-	while(input[token->pos] != '$')
-	{ /* Copy over everything up to the $ */
-		if(input[token->pos] == 0)
-		{ /* No variable in it */
-			token->value = input;
-			return; /* We don't need to do anything more */
-		}
-		token->value = postpend_char(token->value, input[token->pos]);
-		token->pos = token->pos + 1;
-	}
-
-	token->pos = token->pos + 1; /* We are uninterested in the $ */
-
-	/* Run the substitution */
-	if(input[token->pos] == '{')
-	{ /* Handles everything ${ related */
-		variable_substitute(input);
-		token->pos = token->pos + 1; /* We don't want the closing } */
-	}
-	else if(input[token->pos] == '@')
-	{ /* Handles $@ */
-		variable_all(argv);
-		token->pos = token->pos + 1; /* We don't want the @ */
-	}
-	else
-	{ /* We don't know that */
-		file_print("IMPROPERLY USED VARIABLE!\nABORTING HARD\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	/* Now, get the rest */
-	while(input[token->pos] != 0)
-	{ /* Copy everything from the end of the variable to the end of the token */
-		token->value = postpend_char(token->value, input[token->pos]);
-		token->pos = token->pos + 1;
-	}
+	return index;
 }
 
 /*
  * EXECUTION FUNCTIONS
+ * Note: All of the builtins return FALSE (0) when they exit successfully
+ * and TRUE (1) when they fail.
  */
 
 /* Function to check if the token is an envar */
 int is_envar(char* token)
 {
 	int i = 0;
-	int equal_found;
-	equal_found = FALSE;
-	while(equal_found == FALSE && i < string_length(token))
+	int token_length = string_length(token);
+	while(i < token_length)
 	{
 		if(token[i] == '=')
-		{ /* After = can be anything */
-			equal_found = 1;
+		{
+			return TRUE;
 		}
 		i = i + 1;
 	}
-	return equal_found;
+	return FALSE;
 }
 
 /* Add an envar */
-void add_envar(char* token)
+int add_envar()
 {
+	/* If we are in init-mode and this is the first var env == NULL, rectify */
+	if(env == NULL)
+	{
+		env = calloc(1, sizeof(struct Token));
+		require(env != NULL, "Memory initialization of env failed\n");
+	}
+
+	struct Token* n;
+	n = env;
+	/* Traverse to end of linked-list */
+	while(n->next != NULL)
+	{
+		if(n->next->value == NULL || n->next->var == NULL) break;
+		n = n->next;
+	}
 	/* Initialize new node */
-	env = env_tail;
-	env->next = calloc(1, sizeof(struct Token));
-	env->next->prev = env;
-	env = env->next;
-	env_tail = env;
-
-	/* Get env->var */
-	int i = 0;
-	env->var = calloc(MAX_STRING, sizeof(char));
-	while(token[i] != '=')
-	{ /* Copy into env->var up to = */
-		require(i < string_length(token), "ERROR IN ENVAR PARSING!\nABORTING HARD\n");
-		env->var = postpend_char(env->var, token[i]);
-		i = i + 1;
+	/* See first comment, this situation means no new node */
+	if(n->value != NULL || n->var != NULL || n->next != NULL)
+	{
+		n->next = calloc(1, sizeof(struct Token));
+		require(n->next != NULL, "Memory initialization of next env node in add_envar failed\n");
+		n = n->next;
 	}
 
-	/* Get env->value */
-	i = i + 1; /* Skip over = */
-	env->value = calloc(MAX_STRING, sizeof(char));
-	while(token[i] != 0)
-	{ /* Copy into env->value up to end of token */
-		require(i < string_length(token), "ERROR IN ENVAR PARSING!\nABORTING HARD\n");
-		env->value = postpend_char(env->value, token[i]);
-		i = i + 1;
+	/*
+	 * If you are confused about n->* and token->value here:
+	 * token->value: is the token with the raw data. Part of token linked list.
+	 * n->*: is where it goes. Part of env linked list.
+	 */
+	/* Get n->var */
+	int index = 0;
+	n->var = calloc(MAX_STRING, sizeof(char));
+	require(n->var != NULL, "Memory initialization of n->var in add_envar failed\n");
+	int token_length = string_length(token->value);
+	/* Copy into n->var up to = */
+	while(token->value[index] != '=')
+	{
+		if(index >= token_length) return TRUE;
+		n->var[index] = token->value[index];
+		index = index + 1;
 	}
+
+	/* Get n->value */
+	index = index + 1; /* Skip over = */
+	int offset = index;
+	n->value = calloc(MAX_STRING, sizeof(char));
+	require(n->value != NULL, "Memory initialization of n->value in add_envar failed\n");
+	/* Copy into n->value up to end of token */
+	while(token->value[index] != 0)
+	{
+		if(index >= token_length) return TRUE;
+		n->value[index - offset] = token->value[index];
+		index = index + 1;
+	}
+	return FALSE;
 }
 
 /* cd builtin */
-void cd(char* path)
+int cd()
 {
-	require(NULL != path, "INVALID CD PATH\nABORTING HARD\n");
-	chdir(path);
+	if(NULL == token->next) return TRUE;
+	token = token->next;
+	if(NULL == token->value) return TRUE;
+	int ret = chdir(token->value);
+	if(0 > ret) return TRUE;
+	return FALSE;
 }
 
 /* pwd builtin */
-void pwd()
+int pwd()
 {
 	char* path = calloc(MAX_STRING, sizeof(char));
+	require(path != NULL, "Memory initialization of path in pwd failed\n");
 	getcwd(path, MAX_STRING);
+	require(!match("", path), "getcwd() failed\n");
 	file_print(path, stdout);
 	file_print("\n", stdout);
+	return FALSE;
 }
 
 /* set builtin */
-void set()
+int set()
 {
 	/* Get the options */
-	char* options = calloc(MAX_STRING, sizeof(char));
 	int i;
-	/* We have to do two things here because of differing behaviour in
-	 * M2-Planet -- it does not short-circuit the OR.
-	 * M2-Planet will evaluate both expressions before performing the OR.
-	 * Hence, this would cause a segfault if the first evaluated false,
-	 * since the second will still evaluate.
-	 * To mitigate this, we have two seperate if blocks to force the
-	 * evaluation of one before the other.
-	 */
-	require(NULL != token->next, "INVALID set COMMAND\nABORTING HARD\n");
-	require(NULL != token->next->value, "INVALID set COMMAND\nABORTING HARD\n");
+	if(NULL == token->next) goto cleanup_set;
+	token = token->next;
+	if(NULL == token->value) goto cleanup_set;
+	char* options = calloc(MAX_STRING, sizeof(char));
+	require(options != NULL, "Memory initialization of options in set failed\n");
 
-	for(i = 0; i < string_length(token->next->value) - 1; i = i + 1)
+	int last_position = string_length(token->value) - 1;
+	for(i = 0; i < last_position; i = i + 1)
 	{
-		options[i] = token->next->value[i + 1];
+		options[i] = token->value[i + 1];
 	}
 	/* Parse the options */
-	for(i = 0; i < string_length(options); i = i + 1)
+	int options_length = string_length(options);
+	for(i = 0; i < options_length; i = i + 1)
 	{
 		if(options[i] == 'a')
 		{ /* set -a is on by default and cannot be disabled at this time */
+			if(WARNINGS)
+			{
+				file_print("set -a is on by default and cannot be disabled\n", stdout);
+			}
 			continue;
 		}
 		else if(options[i] == 'e')
@@ -619,10 +453,14 @@ void set()
 		{ /* Show commands as executed */
 			/* TODO: this currently behaves like -v. Make it do what it should */
 			VERBOSE = TRUE;
-			/* Output the set -x because VERBOSE didn't catch it before */
+			/*
+			 * Output the set -x because VERBOSE didn't catch it before.
+			 * We don't do just -x because we support multiple options in one command,
+			 * eg set -ex.
+			 */
 			file_print(" +> set -", stdout);
 			file_print(options, stdout);
-			fputc('\n', stdout);
+			file_print("\n", stdout);
 			fflush(stdout);
 		}
 		else
@@ -632,19 +470,14 @@ void set()
 			exit(EXIT_FAILURE);
 		}
 	}
+	return FALSE;
+cleanup_set:
+	return TRUE;
 }
 
 /* echo builtin */
 void echo()
 {
-	/* We have to do two things here because of differing behaviour in
-	 * M2-Planet -- it does not short-circuit the OR.
-	 * M2-Planet will evaluate both expressions before performing the OR.
-	 * Hence, this would cause a segfault if the first evaluated false,
-	 * since the second will still evaluate.
-	 * To mitigate this, we have two seperate if blocks to force the
-	 * evaluation of one before the other.
-	 */
 	if(token->next == NULL)
 	{ /* No arguments */
 		file_print("\n", stdout);
@@ -656,65 +489,96 @@ void echo()
 		return;
 	}
 	token = token->next; /* Skip the actual echo */
-	do
+	while(token != NULL)
 	{ /* Output each argument to echo to stdout */
+		/* M2-Planet doesn't let us do this in the while */
+		if(token->value == NULL) break;
 		file_print(token->value, stdout);
 		file_print(" ", stdout);
 		token = token->next;
-	} while(token != NULL);
+	}
 	file_print("\n", stdout);
 }
 
-/* Execute program */
-int execute(char** argv)
+/* unset builtin */
+void unset()
 {
-	/* Run the command */
-	token = token_head;
-	do
-	{ /* Substitute variables into each token */
-		collect_variable(argv);
-		/* Advance to next node */
-		token = token->next;
-	} while(token != NULL);
+	struct Token* e;
+	/* We support multiple variables on the same line */
+	struct Token* t;
+	t = token->next;
+	while(t != NULL)
+	{
+		e = env;
+		/* Look for the variable; we operate on ->next because we need to remove ->next */
+		while(e->next != NULL)
+		{
+			if(match(e->next->var, t->value))
+			{
+				break;
+			}
+			e = e->next;
+		}
+		t = t->next;
+		/* If it's NULL nothing was found */
+		if(e->next == NULL) continue;
+		/* Otherwise there is something to unset */
+		e->next = e->next->next;
+	}
+}
 
-	token = token_head;
+/* Execute program */
+int execute()
+{ /* Run the command */
+
+	/* rc = return code */
+	int rc;
+
 	/* Actually do the execution */
-	if(token->is_comment == TRUE) return 0;
-	else if(is_envar(token->value) == 1)
-	{ /* It's an envar! */
-		add_envar(token->value);
+	if(is_envar(token->value) == TRUE)
+	{
+		rc = add_envar();
+		if(STRICT) require(rc == FALSE, "Adding of an envar failed!\n");
 		return 0;
 	}
 	else if(match(token->value, "cd"))
-	{ /* cd builtin */
-		require(NULL != token->next, "INVALID cd COMMAND\nABORTING HARD\n");
-		require(NULL != token->next->value, "INVALID cd COMMAND\nABORTING HARD\n");
-		cd(token->next->value);
+	{
+		rc = cd();
+		if(STRICT) require(rc == FALSE, "cd failed!\n");
 		return 0;
 	}
 	else if(match(token->value, "set"))
-	{ /* set builtin */
-		set();
+	{
+		rc = set();
+		if(STRICT) require(rc == FALSE, "set failed!\n");
 		return 0;
 	}
 	else if(match(token->value, "pwd"))
-	{ /* pwd builtin */
-		pwd();
+	{
+		rc = pwd();
+		if(STRICT) require(rc == FALSE, "pwd failed!\n");
 		return 0;
 	}
 	else if(match(token->value, "echo"))
-	{ /* echo builtin */
+	{
 		echo();
 		return 0;
 	}
+	else if(match(token->value, "unset"))
+	{
+		unset();
+		return 0;
+	}
 
+	/* If it is not a builtin, run it as an executable */
 	int status; /* i.e. return code */
 	char** array;
 	char** envp;
-	/* Get the full path to the program */
+	/* Get the full path to the executable */
 	char* program = find_executable(token->value);
+	/* Check we can find the executable */
 	if(NULL == program)
-	{ /* Sanity check */
+	{
 		if(STRICT == TRUE)
 		{
 			file_print("WHILE EXECUTING ", stderr);
@@ -722,15 +586,14 @@ int execute(char** argv)
 			file_print(" NOT FOUND!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
-		else
-		{
-			return 0;
-		}
+		/* If we are not strict simply return */
+		return 0;
 	}
 
 	int f = fork();
+	/* Ensure fork succeeded */
 	if (f == -1)
-	{ /* Another sanity check */
+	{
 		file_print("WHILE EXECUTING ", stderr);
 		file_print(token->value, stderr);
 		file_print("fork() FAILED\nABORTING HARD\n", stderr);
@@ -741,11 +604,11 @@ int execute(char** argv)
 		/**************************************************************
 		 * Fuzzing produces random stuff; we don't want it running    *
 		 * dangerous commands. So we just don't execve.               *
-		 * But, we still do tokens_to_array and env_to_array to check *
-		 * for segfaults.                                             *
+		 * But, we still do the list_to_array calls to check for      *
+		 * segfaults.                                                 *
 		 **************************************************************/
-		array = tokens_to_array();
-		envp = env_to_array();
+		array = list_to_array(token);
+		envp = list_to_array(env);
 
 		if(FALSE == FUZZING)
 		{ /* We are not fuzzing */
@@ -763,92 +626,160 @@ int execute(char** argv)
 	return status;
 }
 
-void collect_command(FILE* script)
+int collect_command(FILE* script, char** argv)
 {
 	command_done = FALSE;
-	/* Initialize token
-	 * ----------------
-	 * This has to be reset each time, as we need a new linked-list for
-	 * each line.
-	 * See, the program flows like this as a high level overview:
-	 * Get line -> Sanitize line and perform variable replacement etc ->
-	 * Execute line -> Next.
-	 * We don't need the previous lines once they are done with, so tokens
-	 * are hence for each line.
-	 */
+	/* Initialize token */
 	token = calloc(1, sizeof(struct Token));
-	token_head = token;
-
+	require(token != NULL, "Memory initialization of token in collect_command failed\n");
+	struct Token* n;
+	n = token;
+	int index = 0;
 	/* Get the tokens */
-	do
+	while(command_done == FALSE)
 	{
-		token->pos = 0;
-		token->is_comment = FALSE;
-		token->value = calloc(MAX_STRING, sizeof(char));
-		/* This does token advancing and everything */
-		collect_token(script);
-	} while(command_done == FALSE);
-	/* Once we are done, we should remove anything dangling off the end of the
-	 * list -- or the beginning.
-	 */
-	if(token->is_comment) return;
-	if(0 == token->pos) return;
+		n->value = calloc(MAX_STRING, sizeof(char));
+		index = collect_token(script, n);
+		/* Don't allocate another node if the current one yielded nothing, OR
+		 * if we are done.
+		 */
+		if((n->value != NULL && match(n->value, "") == FALSE) && command_done == FALSE)
+		{
+			n->next = calloc(MAX_STRING, sizeof(char));
+			require(token != NULL, "Memory initialization of next token node in collect_command failed\n");
+			n = n->next;
+		}
+	}
+	/* -1 means the script is done */
+	if(EOF == index) return index;
+
+	n = token;
+	while(n != NULL)
+	{ /* Substitute variables into each token */
+		if(n->value == NULL) break;
+		handle_variables(argv, n);
+		/* Advance to next node */
+		n = n->next;
+	}
 
 	/* Output the command if verbose is set */
-	if(VERBOSE)
+	/* Also if there is nothing in the command skip over */
+	if(VERBOSE && match(token->value, "") == FALSE)
 	{
+		n = token;
 		file_print(" +> ", stdout);
-		/* Navigate to head */
-		token = token_head;
-		do
+		while(n != NULL)
 		{ /* Print out each token token */
-			file_print(token->value, stdout);
+			/* M2-Planet doesn't let us do this in the while */
+			if(n->value == NULL) break;
+			file_print(n->value, stdout);
 			file_print(" ", stdout);
-			token = token->next;
-		} while(token != NULL);
+			n = n->next;
+		}
 		fputc('\n', stdout);
 		fflush(stdout);
 	}
+	return index;
 }
 
 /* Function for executing our programs with desired arguments */
 void run_script(FILE* script, char** argv)
 {
-	script_done = FALSE;
-	while(script_done == FALSE)
+	while(TRUE)
 	{
-		collect_command(script);
+		/*
+		 * Tokens has to be reset each time, as we need a new linked-list for
+		 * each line.
+		 * See, the program flows like this as a high level overview:
+		 * Get line -> Sanitize line and perform variable replacement etc ->
+		 * Execute line -> Next.
+		 * We don't need the previous lines once they are done with, so tokens
+		 * are hence for each line.
+		 */
+		int index = collect_command(script, argv);
+		/* -1 means the script is done */
+		if(EOF == index) break;
 
 		/* Stuff to exec */
-		int status = execute(argv);
+		int status = execute();
 		if(STRICT == TRUE && (0 != status))
 		{ /* Clearly the script hit an issue that should never have happened */
 			file_print("Subprocess error ", stderr);
 			file_print(numerate_number(status), stderr);
 			file_print("\nABORTING HARD\n", stderr);
-			/* Exit, we failed */
 			exit(EXIT_FAILURE);
 		}
 	}
 }
 
+/* Function to populate env */
+void populate_env(char** envp)
+{
+	/* Initialize env and n */
+	env = calloc(1, sizeof(struct Token));
+	require(env != NULL, "Memory initialization of env failed\n");
+	struct Token* n;
+	n = env;
+
+	int i;
+	for(i = 0; i < array_length(envp); i = i + 1)
+	{
+		n->var = calloc(MAX_STRING, sizeof(char));
+		require(n->var != NULL, "Memory initialization of n->var in population of env failed\n");
+		n->value = calloc(MAX_STRING, sizeof(char));
+		require(n->value != NULL, "Memory initialization of n->var in population of env failed\n");
+		int j = 0;
+		/*
+		 * envp is weird.
+		 * When referencing envp[i]'s characters directly, they were all jumbled.
+		 * So just copy envp[i] to envp_line, and work with that - that seems
+		 * to fix it.
+		 */
+		char* envp_line = calloc(MAX_STRING, sizeof(char));
+		require(envp_line != NULL, "Memory initialization of envp_line in population of env failed\n");
+		copy_string(envp_line, envp[i]);
+		while(envp_line[j] != '=')
+		{ /* Copy over everything up to = to var */
+			n->var[j] = envp_line[j];
+			j = j + 1;
+		}
+		/* If we get strange input, we need to ignore it */
+		if(n->var == NULL) continue;
+		j = j + 1; /* Skip over = */
+		int k = 0; /* As envp[i] will continue as j but n->value begins at 0 */
+		while(envp_line[j] != 0)
+		{ /* Copy everything else to value */
+			n->value[k] = envp_line[j];
+			j = j + 1;
+			k = k + 1;
+		}
+		/* Sometimes, we get lines like VAR=, indicating nothing is in the variable */
+		if(n->value == NULL) n->value = "";
+		/* Advance to next part of linked list */
+		n->next = calloc(1, sizeof(struct Token));
+		require(n->next != NULL, "Memory initialization of n->next in population of env failed\n");
+		n = n->next;
+	}
+	/* Get rid of node on the end */
+	n = NULL;
+	/* Also destroy the n->next reference */
+	n = env;
+	while(n->next->var != NULL) n = n->next;
+	n->next = NULL;
+}
 
 int main(int argc, char** argv, char** envp)
 {
 	VERBOSE = FALSE;
 	STRICT = FALSE;
+	FUZZING = FALSE;
+	WARNINGS = FALSE;
 	char* filename = "kaem.run";
 	FILE* script = NULL;
 
 	/* Initalize structs */
 	token = calloc(1, sizeof(struct Token));
 	require(token != NULL, "Memory initialization of token failed\n");
-	token_head = token;
-
-	env = calloc(1, sizeof(struct Environment));
-	require(token != NULL, "Memory initialization of env failed\n");
-	env_head = env;
-	env_tail = env;
 
 	int i = 1;
 	/* Loop over arguments */
@@ -860,7 +791,9 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "-h") || match(argv[i], "--help"))
 		{ /* Help information */
-			file_print("kaem only accepts --help, --version, --file, --verbose, --nightmare-mode, --fuzz or no arguments\n", stdout);
+			file_print("Usage: ", stdout);
+			file_print(argv[0], stdout);
+			file_print(" [-h | --help] [-V | --version] [--file filename | -f filename] [-i | --init-mode] [-v | --verbose] [--strict] [--warn] [--fuzz]\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
@@ -871,18 +804,17 @@ int main(int argc, char** argv, char** envp)
 			}
 			i = i + 2;
 		}
-		else if(match(argv[i], "n") || match(argv[i], "--nightmare-mode"))
-		{ /* Nightmare mode does not populate env */
-			file_print("Begin nightmare\n", stdout);
-			NIGHTMARE = TRUE;
+		else if(match(argv[i], "-i") || match(argv[i], "--init-mode"))
+		{ /* init mode does not populate env */
+			INIT_MODE = TRUE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
 		{ /* Output version */
-			file_print("kaem version 0.7.0\n", stdout);
+			file_print("kaem version 1.0.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
-		else if(match(argv[i], "--verbose"))
+		else if(match(argv[i], "-v") || match(argv[i], "--verbose"))
 		{ /* Set verbose */
 			VERBOSE = TRUE;
 			i = i + 1;
@@ -892,10 +824,19 @@ int main(int argc, char** argv, char** envp)
 			STRICT = TRUE;
 			i = i + 1;
 		}
+		else if(match(argv[i], "--warn"))
+		{ /* Set warnings */
+			WARNINGS = TRUE;
+			i = i + 1;
+		}
 		else if(match(argv[i], "--fuzz"))
 		{ /* Set fuzzing */
 			FUZZING = TRUE;
 			i = i + 1;
+		}
+		else if(match(argv[i], "--"))
+		{ /* Nothing more after this */
+			break;
 		}
 		else
 		{ /* We don't know this argument */
@@ -905,59 +846,24 @@ int main(int argc, char** argv, char** envp)
 	}
 
 	/* Populate env */
-	for(i = 0; i < array_length(envp); i = i + 1)
+	if(INIT_MODE == FALSE)
 	{
-		env->var = calloc(MAX_STRING, sizeof(char));
-		env->value = calloc(MAX_STRING, sizeof(char));
-		int j = 0;
-		/* Gosh darn.
-		 * envp is /weird/.
-		 * Super strange stuff when referenceing envp[i].
-		 * So just copy envp[i] to envp_line, and work with that.
-		 */
-		char* envp_line = calloc(MAX_STRING, sizeof(char));
-		copy_string(envp_line, envp[i]);
-		while(envp_line[j] != '=')
-		{ /* Copy over everything up to = to var */
-			env->var[j] = envp_line[j];
-			j = j + 1;
-		}
-		j = j + 1; /* Skip over = */
-		int k = 0; /* As envp[i] will continue as j but env->value begins at 0 */
-		while(envp_line[j] != 0)
-		{ /* Copy everything else to value */
-			env->value[k] = envp_line[j];
-			j = j + 1;
-			k = k + 1;
-		}
-		/* Advance to next part of linked list */
-		env->next = calloc(1, sizeof(struct Environment));
-		require(token != NULL, "Memory initialization of env->next failed\n");
-		env->next->prev = env;
-		env = env->next;
-		env_tail = env;
+		populate_env(envp);
 	}
-	/* If we are here we have an unneeded node on the end */
-	env_tail = env->prev;
-	env = env->prev;
-	env->next = NULL;
-	/* And get rid of anything dangling before head */
-	env_head->prev = NULL;
-	/* Move back to head of env linked-list */
-	env = env_head;
 
 	/* Populate PATH variable
 	 * We don't need to calloc() because env_lookup() does this for us.
 	 */
 	PATH = env_lookup("PATH");
 
-	/* Populate USERNMAE variable */
-	USERNAME = env_lookup("LOGNAME");
+	/* Populate USERNAME variable */
+	char* USERNAME = env_lookup("LOGNAME");
 
 	/* Handle edge cases */
 	if((NULL == PATH) && (NULL == USERNAME))
 	{ /* We didn't find either of PATH or USERNAME -- use a generic PATH */
 		PATH = calloc(MAX_STRING, sizeof(char));
+		require(PATH != NULL, "Memory initialization of PATH failed\n");
 		copy_string(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	}
 	else if(NULL == PATH)
