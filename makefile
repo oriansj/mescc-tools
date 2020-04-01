@@ -47,7 +47,7 @@ blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/requir
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
 
 kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c bin
-	$(CC) $(CFLAGS) functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c -o bin/kaem
+	$(CC) $(CFLAGS) functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c kaem/variable.c -o bin/kaem
 
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
@@ -67,7 +67,7 @@ clean:
 	./test/test9/cleanup.sh
 	./test/test10/cleanup.sh
 	./test/test11/cleanup.sh
-	./kaem/test.cleanup.sh
+	cd kaem && make clean
 
 # A cleanup option we probably don't need
 .PHONY: clean-hard
@@ -103,7 +103,7 @@ test: test0-binary \
 	sha256sum -c test/test.answers
 
 test-kaem: kaem hex2 | kaem-result
-	kaem/test.sh
+	cd kaem && make test
 
 test0-binary: results hex2 get_machine
 	test/test0/hello.sh
