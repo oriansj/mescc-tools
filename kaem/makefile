@@ -20,7 +20,7 @@ VPATH = bin:test:test/results
 
 all: kaem
 
-CC?=gcc
+CC=gcc
 CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
 
 kaem: kaem.c

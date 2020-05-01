@@ -16,6 +16,16 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+Fixed makefiles so guix is able to build
+
+** Removed
+
+* 1.0 - 2020-05-01
+** Added
 Added builtin cd into kaem
 Added builtin set into kaem
 Added builtin pwd into kaem
