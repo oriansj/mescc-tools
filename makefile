@@ -43,8 +43,8 @@ hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) functions/file_print.c functions/match.c get_machine.c -o bin/get_machine
 
-blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c | bin
-	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
+blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/numerate_number.c | bin
+	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c functions/numerate_number.c -o bin/blood-elf
 
 kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c bin
 	cd kaem && make kaem

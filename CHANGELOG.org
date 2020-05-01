@@ -16,10 +16,26 @@
 
 * Current
 ** Added
+Added builtin cd into kaem
+Added builtin set into kaem
+Added builtin pwd into kaem
+Added working variable substitution into kaem
+Added kaem subtests
+Seperate kaem makefile
+Added fuzzing argument to kaem to prevent damage during fuzzing
 
 ** Changed
+Prevent buffer overflows in kaem
+Made hex2 argument names more standard
+Made M1 argument names more standard
+Moved kaem and its tests into a seperate directory
 
 ** Fixed
+kaem behavior in regards to failing execve
+kaem segfaults from messy inputs caught
+Multiple segfaults found from fuzzing
+Fixed kaem truncation bug
+Got kaem to run properly on armv7l
 
 ** Removed
 

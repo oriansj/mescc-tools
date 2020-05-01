@@ -766,7 +766,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("M1 0.7.0\n", stdout);
+			file_print("M1 1.0.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

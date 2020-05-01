@@ -39,12 +39,12 @@
 (define-public mescc-tools
     (package
       (name "mescc-tools")
-      (version "0.5.2")
+      (version "1.0.0")
       (source (origin
                 (method url-fetch)
                 (uri (string-append "http://git.savannah.nongnu.org/cgit/mescc-tools.git/snapshot/mescc-tools-Release_" version ".tar.gz"))
                 (sha256
-                 (base32 "01x7bhmgwyf6mc2g1hcvibhps98nllacqm4f0j5l51b1mbi18pc2"))))
+                 (base32 "01x7bhmgwyf6mc2g1hcvibhps98nllacqm4f0j5l51b1mbi18pc2")))) ; Will be fixed after release
       (build-system gnu-build-system)
       (arguments
        `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))

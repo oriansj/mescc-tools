@@ -51,7 +51,7 @@ manual labor to implement.
 
 * DEBUG
 The default build process will generate debuggable binaries.
-However the output for build.sh will not be debuggable due to bootstrapping constraints.
+as blood-elf will generate the segments and text section required for proper debugging
 
 * Bugs
 mescc-tools is the most unforgiving assembly development environment possible.
