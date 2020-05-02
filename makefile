@@ -82,9 +82,6 @@ bin:
 results:
 	mkdir -p test/results
 
-kaem-result:
-	mkdir -p kaem/test/results
-
 # tests
 test: test0-binary \
 	test1-binary \
@@ -98,12 +95,8 @@ test: test0-binary \
 	test9-binary \
 	test10-binary \
 	test11-binary \
-	test12-binary | results \
-	test-kaem
-	sha256sum -c test/test.answers
-
-test-kaem: kaem hex2 | kaem-result
-	cd kaem && make test
+	test12-binary | results
+	./test.sh
 
 test0-binary: results hex2 get_machine
 	test/test0/hello.sh

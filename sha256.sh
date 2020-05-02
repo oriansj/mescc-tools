@@ -24,11 +24,11 @@ set -ex
 # accordingly.
 sha256_check()
 {
-	if [ -e /usr/bin/sha256sum ]; then
+	if [ -e "$(which sha256sum)" ]; then
 		LANG=C sha256sum -c "$1"
-	elif [ -e /usr/bin/sum ]; then
+	elif [ -e "$(which sum)" ]; then
 		LANG=C sum -a SHA256 -n -c "$1"
-	elif [ -e /usr/bin/sha256 ]; then
+	elif [ -e "$(which sha256)" ]; then
 		LANG=C sha256 -r -c "$1"
 	else
 		echo "Unsupported sha256 tool, please send a patch to support it"

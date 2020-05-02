@@ -18,7 +18,8 @@
 echo "Starting kaem tests"
 for i in $(seq 0 15) ; do
 	TEST=$(printf "%02d" $i)
-	../bin/kaem -f test/test${TEST}/kaem.test > test/results/test${TEST}-output 2>&1
+	../bin/kaem -f "test/test${TEST}/kaem.test" >| "test/results/test${TEST}-output" 2>&1
 done
-sha256sum -c test/test.answers
+. ../sha256.sh
+sha256_check test/test.answers
 echo "kaem tests complete"
