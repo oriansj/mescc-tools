@@ -42,6 +42,7 @@
              (ice-9 rdelim)
              (gnu packages)
              (gnu packages gcc)
+             (gnu packages base)
              ((guix build utils) #:select (with-directory-excursion))
              (guix build-system gnu)
              (guix gexp)
@@ -73,6 +74,7 @@
   (package
      (name "mescc-tools.git")
      (build-system gnu-build-system)
+     (inputs `(("which", which) ("coreutils", coreutils)))
      (arguments
       `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
         #:test-target "test"

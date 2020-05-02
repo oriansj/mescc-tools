@@ -16,7 +16,7 @@
 ## along with mescc-tools. If not, see <http://www.gnu.org/licenses/>.
 
 # Prevent rebuilding
-VPATH = bin:test:test/results
+VPATH = ../bin:test/results
 
 all: kaem
 

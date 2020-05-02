@@ -15,7 +15,7 @@
 ## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
 # Prevent rebuilding
-VPATH = bin:test:test/results
+VPATH = bin:test/results
 PACKAGE = mescc-tools
 
 all: M1 hex2 get_machine blood-elf kaem catm
@@ -46,8 +46,8 @@ get_machine: get_machine.c | bin
 blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/numerate_number.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c functions/numerate_number.c -o bin/blood-elf
 
-kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c bin
-	cd kaem && make kaem
+kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c Kaem/kaem.c | bin
+	cd Kaem && make kaem
 
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm

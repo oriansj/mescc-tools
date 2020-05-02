@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /usr/bin/env sh
 # Copyright (C) 2019 ng0 <ng0@n0.is>
 # Copyright (C) 2019 Jeremiah Orians
 #
