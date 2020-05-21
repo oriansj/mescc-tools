@@ -41,6 +41,13 @@
 // CONSTANT AARM64 80
 #define AARM64 80
 
+// CONSTANT HEX 16
+#define HEX 16
+// CONSTANT OCTAL 8
+#define OCTAL 8
+// CONSTANT BINARY 2
+#define BINARY 2
+
 
 /* Imported functions */
 char* numerate_number(int a);
@@ -391,7 +398,7 @@ int hold;
 int toggle;
 void process_byte(char c, FILE* source_file, int write)
 {
-	if(16 == ByteMode)
+	if(HEX == ByteMode)
 	{
 		if(0 <= hex(c, source_file))
 		{
@@ -408,7 +415,7 @@ void process_byte(char c, FILE* source_file, int write)
 			toggle = !toggle;
 		}
 	}
-	else if(8 ==ByteMode)
+	else if(OCTAL ==ByteMode)
 	{
 		if(0 <= octal(c, source_file))
 		{
@@ -431,7 +438,7 @@ void process_byte(char c, FILE* source_file, int write)
 			}
 		}
 	}
-	else if(2 == ByteMode)
+	else if(BINARY == ByteMode)
 	{
 		if(0 <= binary(c, source_file))
 		{
@@ -566,8 +573,8 @@ int main(int argc, char **argv)
 	struct input_files* input = NULL;
 	output = stdout;
 	char* output_file = "";
-	exec_enable = FALSE;
-	ByteMode = 16;
+	exec_enable = TRUE;
+	ByteMode = HEX;
 	scratch = calloc(max_string + 1, sizeof(char));
 	char* arch;
 
@@ -578,19 +585,24 @@ int main(int argc, char **argv)
 		{
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "--BigEndian"))
+		else if(match(argv[option_index], "--BigEndian") || match(argv[option_index], "--big-endian"))
 		{
 			BigEndian = TRUE;
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "--LittleEndian"))
+		else if(match(argv[option_index], "--LittleEndian") || match(argv[option_index], "--little-endian"))
 		{
 			BigEndian = FALSE;
 			option_index = option_index + 1;
 		}
 		else if(match(argv[option_index], "--exec_enable"))
 		{
-			exec_enable = TRUE;
+			/* Effectively a NOP */
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--non-executable"))
+		{
+			exec_enable = FALSE;
 			option_index = option_index + 1;
 		}
 		else if(match(argv[option_index], "-A") || match(argv[option_index], "--architecture"))
@@ -611,10 +623,10 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
 		{
-			ByteMode = 2;
+			ByteMode = BINARY;
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "-B") || match(argv[option_index], "--BaseAddress"))
+		else if(match(argv[option_index], "-B") || match(argv[option_index], "--BaseAddress") || match(argv[option_index], "--base-address"))
 		{
 			Base_Address = numerate_string(argv[option_index + 1]);
 			option_index = option_index + 2;
@@ -623,9 +635,9 @@ int main(int argc, char **argv)
 		{
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
-			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian)", stderr);
-			file_print(" [--BaseAddress 12345] [--architecture name]\nArchitecture:", stderr);
-			file_print(" knight-native, knight-posix, x86, amd64 and armv7\n", stderr);
+			file_print(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian)", stderr);
+			file_print(" [--base-address 0x12345] [--architecture name]\nArchitecture:", stderr);
+			file_print(" knight-native, knight-posix, x86, amd64, armv7l and aarch64\n", stderr);
 			file_print("To leverage octal or binary input: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
@@ -653,12 +665,12 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-O") || match(argv[option_index], "--octal"))
 		{
-			ByteMode = 8;
+			ByteMode = OCTAL;
 			option_index = option_index + 1;
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("hex2 0.7.0\n", stdout);
+			file_print("hex2 1.0.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
@@ -683,7 +695,7 @@ int main(int argc, char **argv)
 	second_pass(input);
 
 	/* Set file as executable */
-	if(exec_enable)
+	if(exec_enable && (output != stdout))
 	{
 		/* 488 = 750 in octal */
 		if(0 != chmod(output_file, 488))

@@ -16,6 +16,41 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+Fixed makefiles so guix is able to build
+
+** Removed
+
+* 1.0 - 2020-05-01
+** Added
+Added builtin cd into kaem
+Added builtin set into kaem
+Added builtin pwd into kaem
+Added working variable substitution into kaem
+Added kaem subtests
+Seperate kaem makefile
+Added fuzzing argument to kaem to prevent damage during fuzzing
+
+** Changed
+Prevent buffer overflows in kaem
+Made hex2 argument names more standard
+Made M1 argument names more standard
+Moved kaem and its tests into a seperate directory
+
+** Fixed
+kaem behavior in regards to failing execve
+kaem segfaults from messy inputs caught
+Multiple segfaults found from fuzzing
+Fixed kaem truncation bug
+Got kaem to run properly on armv7l
+
+** Removed
+
+* 0.7 - 2020-01-30
+** Added
 Added support for AMD64 dwarf footers in blood-elf via --64
 Added hex0 for i386 in NASM, M1 and hex0
 Added hex1 for i386 in NASM, M1, hex1 and hex0
@@ -39,6 +74,7 @@ Added cc_amd64 for x86 in NASM and M1
 ** Fixed
 Removed duplicate in kaem's help
 Fixed regression in M1 in regards to knight null padding
+Removed a series of segfaults
 
 ** Removed
 

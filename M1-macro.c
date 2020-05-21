@@ -47,6 +47,13 @@
 // CONSTANT AARM64 80
 #define AARM64 80
 
+// CONSTANT HEX 16
+#define HEX 16
+// CONSTANT OCTAL 8
+#define OCTAL 8
+// CONSTANT BINARY 2
+#define BINARY 2
+
 
 /* Imported functions */
 char* numerate_number(int a);
@@ -309,15 +316,22 @@ void hexify_string(struct Token* p)
 {
 	char* table = "0123456789ABCDEF";
 	int i = string_length(p->Text);
+	int size;
 
-	char* d = calloc(((((i >> 2) + 1) << 3) + 1), sizeof(char));
+	if(HEX == ByteMode) size = (((i << 1) + i) + 12);
+	else if(OCTAL == ByteMode) size = (i << 2) + 1;
+	else if(BINARY == ByteMode) size = (i << 3) + i + 1;
+	else size = 1;
+
+	require(1 != size, "hexify_string lacked a valid bytemode\n");
+	char* d = calloc(size, sizeof(char));
 	require(NULL != d, "Exhusted available memory\n");
 	p->Expression = d;
 	char* S = p->Text;
 
-	if(KNIGHT == Architecture)
+	if((KNIGHT == Architecture) && (HEX == ByteMode))
 	{
-		i = ((((i - 1) >> 2) + 1) << 3);
+		i = (((((i - 1) >> 2) + 1) << 3) + i);
 		while( 0 < i)
 		{
 			i = i - 1;
@@ -325,12 +339,45 @@ void hexify_string(struct Token* p)
 		}
 	}
 
-	while( 0 != S[0])
+	if(HEX == ByteMode)
 	{
-		S = S + 1;
-		d[0] = table[S[0] >> 4];
-		d[1] = table[S[0] & 0xF];
-		d = d + 2;
+		while(0 != S[0])
+		{
+			S = S + 1;
+			d[0] = table[S[0] >> 4];
+			d[1] = table[S[0] & 0xF];
+			d[2] = ' ';
+			d = d + 3;
+		}
+	}
+	else if(OCTAL == ByteMode)
+	{
+		while(0 != S[0])
+		{
+			S = S + 1;
+			d[0] = table[S[0] >> 6];
+			d[1] = table[(S[0] >> 3) & 0x7];
+			d[2] = table[S[0] & 0x7];
+			d[3] = ' ';
+			d = d + 4;
+		}
+	}
+	else if(BINARY == ByteMode)
+	{
+		while(0 != S[0])
+		{
+			S = S + 1;
+			d[0] = table[S[0] >> 7];
+			d[1] = table[(S[0] >> 6) & 0x1];
+			d[2] = table[(S[0] >> 5) & 0x1];
+			d[3] = table[(S[0] >> 4) & 0x1];
+			d[4] = table[(S[0] >> 3) & 0x1];
+			d[5] = table[(S[0] >> 2) & 0x1];
+			d[6] = table[(S[0] >> 1) & 0x1];
+			d[7] = table[S[0] & 0x1];
+			d[8] = ' ';
+			d = d + 9;
+		}
 	}
 }
 
@@ -357,7 +404,9 @@ char* pad_nulls(int size, char* nil)
 {
 	if(0 == size) return nil;
 	require(size > 0, "negative null padding not possible\n");
-	size = size * 2;
+	if(HEX == ByteMode) size = size * 2;
+	else if (OCTAL == ByteMode) size = size * 3;
+	else if (BINARY == ByteMode) size = size * 8;
 
 	char* s = calloc(size + 1, sizeof(char));
 	require(NULL != s, "Exhusted available memory\n");
@@ -443,19 +492,19 @@ void reverseBitOrder(char* c)
 	if(0 == c[1]) return;
 	int hold = c[0];
 
-	if(16 == ByteMode)
+	if(HEX == ByteMode)
 	{
 		c[0] = c[1];
 		c[1] = hold;
 		reverseBitOrder(c+2);
 	}
-	else if(8 == ByteMode)
+	else if(OCTAL == ByteMode)
 	{
 		c[0] = c[2];
 		c[2] = hold;
 		reverseBitOrder(c+3);
 	}
-	else if(2 == ByteMode)
+	else if(BINARY == ByteMode)
 	{
 		c[0] = c[7];
 		c[7] = hold;
@@ -539,17 +588,17 @@ char* express_number(int value, char c)
 
 	range_check(value, number_of_bytes);
 
-	if(16 == ByteMode)
+	if(HEX == ByteMode)
 	{
 		size = number_of_bytes * 2;
 		shift = 4;
 	}
-	else if(8 == ByteMode)
+	else if(OCTAL == ByteMode)
 	{
 		size = number_of_bytes * 3;
 		shift = 3;
 	}
-	else if(2 == ByteMode)
+	else if(BINARY == ByteMode)
 	{
 		size = number_of_bytes * 8;
 		shift = 1;
@@ -629,7 +678,7 @@ int main(int argc, char **argv)
 	Architecture = KNIGHT;
 	destination_file = stdout;
 	BigBitEndian = TRUE;
-	ByteMode = 16;
+	ByteMode = HEX;
 	char* filename;
 	char* arch;
 
@@ -640,12 +689,12 @@ int main(int argc, char **argv)
 		{
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "--BigEndian"))
+		else if(match(argv[option_index], "--BigEndian") || match(argv[option_index], "--big-endian"))
 		{
 			BigEndian = TRUE;
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "--LittleEndian"))
+		else if(match(argv[option_index], "--LittleEndian") || match(argv[option_index], "--little-endian"))
 		{
 			BigEndian = FALSE;
 			option_index = option_index + 1;
@@ -669,14 +718,14 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
 		{
-			ByteMode = 2;
+			ByteMode = BINARY;
 			option_index = option_index + 1;
 		}
 		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
 		{
 			file_print("Usage: ", stderr);
 			file_print(argv[0], stderr);
-			file_print(" -f FILENAME1 {-f FILENAME2} (--BigEndian|--LittleEndian) ", stderr);
+			file_print(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian) ", stderr);
 			file_print("[--architecture name]\nArchitectures: knight-native, knight-posix, x86, amd64 and armv7\n", stderr);
 			file_print("To leverage octal or binary output: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
@@ -712,12 +761,12 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-O") || match(argv[option_index], "--octal"))
 		{
-			ByteMode = 8;
+			ByteMode = OCTAL;
 			option_index = option_index + 1;
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("M1 0.7.0\n", stdout);
+			file_print("M1 1.0.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

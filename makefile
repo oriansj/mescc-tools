@@ -20,7 +20,7 @@ PACKAGE = mescc-tools
 
 all: M1 hex2 get_machine blood-elf kaem catm
 
-CC?=gcc
+CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
 
 M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c functions/require.c functions/in_set.c | bin
@@ -43,11 +43,11 @@ hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_
 get_machine: get_machine.c | bin
 	$(CC) $(CFLAGS) functions/file_print.c functions/match.c get_machine.c -o bin/get_machine
 
-blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c | bin
-	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c -o bin/blood-elf
+blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/numerate_number.c | bin
+	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c functions/numerate_number.c -o bin/blood-elf
 
-kaem: kaem.c | bin
-	$(CC) $(CFLAGS) kaem.c functions/match.c functions/file_print.c functions/in_set.c functions/numerate_number.c -o bin/kaem
+kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c bin
+	cd kaem && make kaem
 
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
@@ -67,6 +67,7 @@ clean:
 	./test/test9/cleanup.sh
 	./test/test10/cleanup.sh
 	./test/test11/cleanup.sh
+	cd kaem && make clean
 
 # A cleanup option we probably don't need
 .PHONY: clean-hard
@@ -81,6 +82,9 @@ bin:
 results:
 	mkdir -p test/results
 
+kaem-result:
+	mkdir -p kaem/test/results
+
 # tests
 test: test0-binary \
 	test1-binary \
@@ -94,8 +98,12 @@ test: test0-binary \
 	test9-binary \
 	test10-binary \
 	test11-binary \
-	test12-binary | results
+	test12-binary | results \
+	test-kaem
 	sha256sum -c test/test.answers
+
+test-kaem: kaem hex2 | kaem-result
+	cd kaem && make test
 
 test0-binary: results hex2 get_machine
 	test/test0/hello.sh
