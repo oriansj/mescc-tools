@@ -7,4 +7,4 @@ export PREFIX=/usr
 	dh $@
 
 override_dh_auto_install:
-	dh_auto_install -- PREFIX=/usr
+	dh_install
