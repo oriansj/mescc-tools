@@ -21,7 +21,7 @@ VPATH = ../bin:test/results
 all: kaem
 
 CC=gcc
-CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
+CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
 
 kaem: kaem.c
 	$(CC) $(CFLAGS) kaem.c variable.c ../functions/file_print.c ../functions/match.c ../functions/in_set.c ../functions/string.c ../functions/require.c ../functions/numerate_number.c -o ../bin/kaem
