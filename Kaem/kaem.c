@@ -141,7 +141,7 @@ char** list_to_array(struct Token* s)
 	char** array = calloc(MAX_ARRAY, sizeof(char*));
 	require(array != NULL, "Memory initialization of array in conversion of list to array failed\n");
 	char* element = calloc(MAX_STRING, sizeof(char));
-	require(element != NULL, "Memory initalization of element in conversion of list to array failed\n");
+	require(element != NULL, "Memory initialization of element in conversion of list to array failed\n");
 	int index = 0;
 	int i;
 	int value_length;
