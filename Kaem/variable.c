@@ -182,44 +182,35 @@ void variable_all(char** argv, struct Token* n)
 {
 	fflush(stdout);
 	/* index refernences the index of n->value, unlike other functions */
-	int index;
+	int index = 0;
 	int argv_length = array_length(argv);
 	int i;
 	int j;
-	int argv_element_length;
 	char* argv_element = calloc(MAX_STRING, sizeof(char));
-	/* We don't want argv[0], as that contains the path to kaem */
-	for(i = 1; i < argv_length; i = i + 1)
+	char* hold;
+	n->value = argv_element;
+	/* Assuming the form kaem -f script or kaem -f script -- 123 we want matching results to bash, so skip the kaem, -f and script */
+	for(i = 3; i < argv_length; i = i + 1)
 	{
 		/* Ends up with (n->value) (argv[i]) */
 		/* If we don't do this we get jumbled results in M2-Planet */
-		copy_string(argv_element, argv[i]);
-		if(match(argv_element, "--"))
+		hold = argv[i];
+		copy_string(argv_element + index, argv[i]);
+		index = string_length(argv_element);
+		if(match(hold, "--"))
 		{ /* -- signifies everything after this */
 			/* Reset n->value */
-			for(j = 0; j < MAX_STRING; j = j + 1)
+			for(j = index; j >= 0; j = j - 1)
 			{
 				n->value[j] = 0;
 			}
-			index = 0;
-			/* Skip the rest of the loop */
-			continue;
+			copy_string(argv_element, argv[i]);
+			index = string_length(argv_element);
 		}
-		/* Copy argv_element into n->value */
-		argv_element_length = string_length(argv[i]);
-		for(j = 0; j < argv_element_length; j = j + 1)
-		{
-			n->value[index] = argv_element[j];
-			index = index + 1;
-		}
+
 		/* Add space on the end */
 		n->value[index] = ' ';
 		index = index + 1;
-		/* Reset argv_element */
-		for(j = 0; j < MAX_STRING; j = j + 1)
-		{
-			argv_element[j] = 0;
-		}
 	}
 	/* Remove trailing space */
 	index = index - 1;

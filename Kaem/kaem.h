@@ -16,6 +16,8 @@
  * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+
 /*
  * DEFINES
  */
@@ -45,7 +47,7 @@ char* numerate_number(int a);
 int command_done;
 int VERBOSE;
 int STRICT;
-int INIT_MODE; 
+int INIT_MODE;
 int FUZZING;
 int WARNINGS;
 char* PATH;
@@ -54,7 +56,7 @@ char* PATH;
  * Here is the token struct. It is used for both the token linked-list and
  * env linked-list.
  */
-struct Token 
+struct Token
 {
 	/*
 	 * For the token linked-list, this stores the token; for the env linked-list
@@ -66,7 +68,7 @@ struct Token
 	 * name of the var.
 	 */
 	char* var;
-	/* 
+	/*
 	 * This struct stores a node of a singly linked list, store the pointer to
 	 * the next node.
 	 */

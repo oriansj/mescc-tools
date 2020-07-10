@@ -21,6 +21,7 @@
 
 ** Fixed
 Fixed makefiles so guix is able to build
+Fixed kaem 32bit regression.
 
 ** Removed
 

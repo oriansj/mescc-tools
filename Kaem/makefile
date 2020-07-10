@@ -23,7 +23,7 @@ all: kaem
 CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
 
-kaem: kaem.c
+kaem: kaem.c | bin
 	$(CC) $(CFLAGS) kaem.c variable.c ../functions/file_print.c ../functions/match.c ../functions/in_set.c ../functions/string.c ../functions/require.c ../functions/numerate_number.c -o ../bin/kaem
 
 # Always run the tests
@@ -39,11 +39,14 @@ Generate-test-answers:
 # Clean up after ourselves
 .PHONY: clean
 clean:
-	rm -rf bin/
+	rm -rf ../bin/
 	rm -rf test/results/
 
 results:
 	mkdir -p test/results
+
+bin:
+	mkdir -p ../bin
 
 DESTDIR:=
 PREFIX:=/usr/local
