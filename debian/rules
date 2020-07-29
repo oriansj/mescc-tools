@@ -3,6 +3,10 @@ export DH_VERBOSE = 1
 
 export PREFIX=/usr
 
+include /usr/share/dpkg/buildflags.mk
+
+export CFLAGS += -fcommon
+
 %:
 	dh $@
 
