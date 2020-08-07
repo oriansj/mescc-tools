@@ -234,7 +234,7 @@ int collect_string(FILE* input, struct Token* n, int index)
 }
 
 /* Function to parse and assign token->value */
-int collect_token(FILE* input, struct Token* n)
+int collect_token(FILE* input, struct Token* n, int last_index)
 {
 	int c;
 	int token_done = FALSE;
@@ -264,6 +264,7 @@ int collect_token(FILE* input, struct Token* n)
 		{ /* Command terminates at end of a line */
 			command_done = TRUE;
 			token_done = TRUE;
+			if(0 == index) index = last_index;
 		}
 		else if('"' == c)
 		{ /* Handle strings -- everything between a pair of "" */
@@ -275,6 +276,7 @@ int collect_token(FILE* input, struct Token* n)
 			collect_comment(input);
 			command_done = TRUE;
 			token_done = TRUE;
+			if(0 == index) index = last_index;
 		}
 		else if('\\' == c)
 		{ /* Support for escapes; drops the char after */
@@ -639,7 +641,7 @@ int collect_command(FILE* script, char** argv)
 	while(command_done == FALSE)
 	{
 		n->value = calloc(MAX_STRING, sizeof(char));
-		index = collect_token(script, n);
+		index = collect_token(script, n, index);
 		/* Don't allocate another node if the current one yielded nothing, OR
 		 * if we are done.
 		 */
@@ -699,6 +701,7 @@ void run_script(FILE* script, char** argv)
 		int index = collect_command(script, argv);
 		/* -1 means the script is done */
 		if(EOF == index) break;
+		if(0 == index) continue;
 
 		/* Stuff to exec */
 		int status = execute();
