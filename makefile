@@ -46,8 +46,8 @@ get_machine: get_machine.c | bin
 blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/numerate_number.c | bin
 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c functions/numerate_number.c -o bin/blood-elf
 
-kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c Kaem/kaem.c | bin
-	cd Kaem && make kaem
+kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem.c | bin
+	$(CC) $(CFLAGS) functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem.c -o bin/kaem
 
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
@@ -67,7 +67,6 @@ clean:
 	./test/test9/cleanup.sh
 	./test/test10/cleanup.sh
 	./test/test11/cleanup.sh
-	cd Kaem && make clean
 
 # A cleanup option we probably don't need
 .PHONY: clean-hard
