@@ -52,7 +52,7 @@ FB 00 60 00 00 00 00 00 ## e_entry Address of the entry point
 
 ## Program Header table
 01 00 00 00             ## p_type
-06 00 00 00             ## Flags
+07 00 00 00             ## ph_flags: PF-X|PF-W|PF-R = 7
 00 00 00 00 00 00 00 00 ## p_offset
 00 00 60 00 00 00 00 00 ## p_vaddr
 00 00 00 00 00 00 00 00 ## Undefined
