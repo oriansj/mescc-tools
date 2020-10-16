@@ -36,7 +36,6 @@ char* copy_string(char* target, char* source);
 char* env_lookup(char* token, char** envp);
 char* find_char(char* string, char a);
 char* find_executable(char* name, char* PATH);
-char* get_current_dir_name();
 char* numerate_number(int a);
 char* postpend_char(char* s, char a);
 char* prematch(char* search, char* field);
@@ -285,7 +284,7 @@ void cd(char* path)
 /* pwd builtin */
 void pwd()
 {
-	file_print(get_current_dir_name(), stdout);
+	file_print(getcwd(calloc(MAX_STRING, sizeof(char)), MAX_STRING), stdout);
 	file_print("\n", stdout);
 }
 
