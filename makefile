@@ -103,37 +103,37 @@ test0-binary: results hex2 get_machine
 test1-binary: results hex2 M1 get_machine
 	test/test1/hello.sh
 
-test2-binary: results hex2 M1
+test2-binary: results hex2 M1 get_machine
 	test/test2/hello.sh
 
-test3-binary: results hex2 M1
+test3-binary: results hex2 M1 get_machine
 	test/test3/hello.sh
 
-test4-binary: results hex2 M1
+test4-binary: results hex2 M1 get_machine
 	test/test4/hello.sh
 
-test5-binary: results hex2 M1
+test5-binary: results hex2 M1 get_machine
 	test/test5/hello.sh
 
-test6-binary: results hex2 M1
+test6-binary: results hex2 M1 get_machine
 	test/test6/hello.sh
 
-test7-binary: results hex2 M1
+test7-binary: results hex2 M1 get_machine
 	test/test7/hello.sh
 
-test8-binary: results hex2 M1
+test8-binary: results hex2 M1 get_machine
 	test/test8/hello.sh
 
-test9-binary: results hex2 M1 blood-elf
+test9-binary: results hex2 M1 blood-elf get_machine
 	test/test9/hello.sh
 
-test10-binary: results hex2 M1
+test10-binary: results hex2 M1 get_machine
 	test/test10/hello.sh
 
-test11-binary: results hex2 M1 blood-elf
+test11-binary: results hex2 M1 blood-elf get_machine
 	test/test11/hello.sh
 
-test12-binary: results hex2 M1 blood-elf
+test12-binary: results hex2 M1 blood-elf get_machine
 	test/test12/hello.sh
 
 # Generate test answers
