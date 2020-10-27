@@ -14,7 +14,7 @@
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
-set -eux
+set -ex
 ./bin/M1 -f test/test3/defs -f test/test3/lisp.s --BigEndian --architecture knight-native -o test/test3/hold
 ./bin/hex2 -f test/test3/hold --BigEndian --architecture knight-native --BaseAddress 0 -o test/results/test3-binary
 
