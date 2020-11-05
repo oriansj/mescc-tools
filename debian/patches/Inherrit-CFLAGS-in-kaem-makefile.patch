@@ -1,0 +1,28 @@
+From 37f3ce4278770f42da06d9dddab9d0f8148998e2 Mon Sep 17 00:00:00 2001
+From: Vagrant Cascadian <vagrant@reproducible-builds.org>
+Date: Mon, 25 May 2020 19:16:39 -0700
+Subject: [PATCH 04/17] Inherrit CFLAGS in kaem makefile.
+
+This fixes reproducibility issues on Debian, as it allows
+-ffile-prefix-map or -fdebug-prefix-map to strip out the build path,
+which otherwise gets embedded in the binaries.
+---
+ Kaem/makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Kaem/makefile b/Kaem/makefile
+index c3b5a67..10bf8f2 100644
+--- a/kaem/makefile
++++ b/kaem/makefile
+@@ -21,7 +21,7 @@ VPATH = ../bin:test/results
+ all: kaem
+ 
+ CC=gcc
+-CFLAGS=-D_GNU_SOURCE -std=c99 -ggdb
++CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
+ 
+ kaem: kaem.c
+ 	$(CC) $(CFLAGS) kaem.c variable.c ../functions/file_print.c ../functions/match.c ../functions/in_set.c ../functions/string.c ../functions/require.c ../functions/numerate_number.c -o ../bin/kaem
+-- 
+2.20.1
+
