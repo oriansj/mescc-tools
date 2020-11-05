@@ -1,1 +1,2 @@
 Inherrit-CFLAGS-in-kaem-makefile.patch
+Fix-ELF-headers-to-be-more-well-behaved.patch
