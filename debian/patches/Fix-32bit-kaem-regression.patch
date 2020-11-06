@@ -1,0 +1,159 @@
+From 2f5e1aa61f978741270a5cf90ac1d7b2af1d6398 Mon Sep 17 00:00:00 2001
+From: Jeremiah Orians <jeremiah@pdp10.guru>
+Date: Fri, 10 Jul 2020 19:08:45 -0400
+Subject: [PATCH 06/17] Fix 32bit kaem regression. Sorry fosslinux, my bad
+
+---
+ CHANGELOG.org   |  1 +
+ Kaem/kaem.h     |  8 +++++---
+ Kaem/makefile   |  7 +++++--
+ Kaem/variable.c | 35 +++++++++++++----------------------
+ 4 files changed, 24 insertions(+), 27 deletions(-)
+
+diff --git a/CHANGELOG.org b/CHANGELOG.org
+index d673d39..964ff52 100644
+--- a/CHANGELOG.org
++++ b/CHANGELOG.org
+@@ -21,6 +21,7 @@
+ 
+ ** Fixed
+ Fixed makefiles so guix is able to build
++Fixed kaem 32bit regression.
+ 
+ ** Removed
+ 
+diff --git a/kaem/kaem.h b/kaem/kaem.h
+index c8bf14a..ff2b4bd 100644
+--- a/kaem/kaem.h
++++ b/kaem/kaem.h
+@@ -16,6 +16,8 @@
+  * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
+  */
+ 
++#include <stdio.h>
++
+ /*
+  * DEFINES
+  */
+@@ -45,7 +47,7 @@ char* numerate_number(int a);
+ int command_done;
+ int VERBOSE;
+ int STRICT;
+-int INIT_MODE; 
++int INIT_MODE;
+ int FUZZING;
+ int WARNINGS;
+ char* PATH;
+@@ -54,7 +56,7 @@ char* PATH;
+  * Here is the token struct. It is used for both the token linked-list and
+  * env linked-list.
+  */
+-struct Token 
++struct Token
+ {
+ 	/*
+ 	 * For the token linked-list, this stores the token; for the env linked-list
+@@ -66,7 +68,7 @@ struct Token
+ 	 * name of the var.
+ 	 */
+ 	char* var;
+-	/* 
++	/*
+ 	 * This struct stores a node of a singly linked list, store the pointer to
+ 	 * the next node.
+ 	 */
+diff --git a/kaem/makefile b/kaem/makefile
+index 10bf8f2..18f9c65 100644
+--- a/kaem/makefile
++++ b/kaem/makefile
+@@ -23,7 +23,7 @@ all: kaem
+ CC=gcc
+ CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
+ 
+-kaem: kaem.c
++kaem: kaem.c | bin
+ 	$(CC) $(CFLAGS) kaem.c variable.c ../functions/file_print.c ../functions/match.c ../functions/in_set.c ../functions/string.c ../functions/require.c ../functions/numerate_number.c -o ../bin/kaem
+ 
+ # Always run the tests
+@@ -39,12 +39,15 @@ Generate-test-answers:
+ # Clean up after ourselves
+ .PHONY: clean
+ clean:
+-	rm -rf bin/
++	rm -rf ../bin/
+ 	rm -rf test/results/
+ 
+ results:
+ 	mkdir -p test/results
+ 
++bin:
++	mkdir -p ../bin
++
+ DESTDIR:=
+ PREFIX:=/usr/local
+ bindir:=$(DESTDIR)$(PREFIX)/bin
+diff --git a/kaem/variable.c b/kaem/variable.c
+index 49cca36..37ee6f8 100644
+--- a/kaem/variable.c
++++ b/kaem/variable.c
+@@ -182,44 +182,35 @@ void variable_all(char** argv, struct Token* n)
+ {
+ 	fflush(stdout);
+ 	/* index refernences the index of n->value, unlike other functions */
+-	int index;
++	int index = 0;
+ 	int argv_length = array_length(argv);
+ 	int i;
+ 	int j;
+-	int argv_element_length;
+ 	char* argv_element = calloc(MAX_STRING, sizeof(char));
+-	/* We don't want argv[0], as that contains the path to kaem */
+-	for(i = 1; i < argv_length; i = i + 1)
++	char* hold;
++	n->value = argv_element;
++	/* Assuming the form kaem -f script or kaem -f script -- 123 we want matching results to bash, so skip the kaem, -f and script */
++	for(i = 3; i < argv_length; i = i + 1)
+ 	{
+ 		/* Ends up with (n->value) (argv[i]) */
+ 		/* If we don't do this we get jumbled results in M2-Planet */
+-		copy_string(argv_element, argv[i]);
+-		if(match(argv_element, "--"))
++		hold = argv[i];
++		copy_string(argv_element + index, argv[i]);
++		index = string_length(argv_element);
++		if(match(hold, "--"))
+ 		{ /* -- signifies everything after this */
+ 			/* Reset n->value */
+-			for(j = 0; j < MAX_STRING; j = j + 1)
++			for(j = index; j >= 0; j = j - 1)
+ 			{
+ 				n->value[j] = 0;
+ 			}
+-			index = 0;
+-			/* Skip the rest of the loop */
+-			continue;
+-		}
+-		/* Copy argv_element into n->value */
+-		argv_element_length = string_length(argv[i]);
+-		for(j = 0; j < argv_element_length; j = j + 1)
+-		{
+-			n->value[index] = argv_element[j];
+-			index = index + 1;
++			copy_string(argv_element, argv[i]);
++			index = string_length(argv_element);
+ 		}
++
+ 		/* Add space on the end */
+ 		n->value[index] = ' ';
+ 		index = index + 1;
+-		/* Reset argv_element */
+-		for(j = 0; j < MAX_STRING; j = j + 1)
+-		{
+-			argv_element[j] = 0;
+-		}
+ 	}
+ 	/* Remove trailing space */
+ 	index = index - 1;
+-- 
+2.20.1
+
