@@ -1,0 +1,263 @@
+From 09b870c50378e137a8017752e7426cb278d39ceb Mon Sep 17 00:00:00 2001
+From: Jeremiah Orians <jeremiah@pdp10.guru>
+Date: Sat, 2 May 2020 14:21:07 -0400
+Subject: [PATCH 02/17] first attempt at fixing guix build problems
+
+---
+ {kaem => Kaem}/.gitignore               | 0
+ {kaem => Kaem}/README                   | 0
+ {kaem => Kaem}/kaem.c                   | 0
+ {kaem => Kaem}/kaem.h                   | 0
+ {kaem => Kaem}/kaem.run                 | 0
+ {kaem => Kaem}/makefile                 | 2 +-
+ {kaem => Kaem}/test.sh                  | 0
+ {kaem => Kaem}/test/.gitignore          | 0
+ {kaem => Kaem}/test/test.answers        | 0
+ {kaem => Kaem}/test/test00/kaem.test    | 0
+ {kaem => Kaem}/test/test01/kaem.test    | 0
+ {kaem => Kaem}/test/test02/kaem.test    | 0
+ {kaem => Kaem}/test/test03/kaem.test    | 0
+ {kaem => Kaem}/test/test04/kaem.test    | 0
+ {kaem => Kaem}/test/test05/kaem.test    | 0
+ {kaem => Kaem}/test/test06/kaem.test    | 0
+ {kaem => Kaem}/test/test07/kaem.test    | 0
+ {kaem => Kaem}/test/test08/kaem.test    | 0
+ {kaem => Kaem}/test/test09/kaem.test    | 0
+ {kaem => Kaem}/test/test10/kaem.test    | 0
+ {kaem => Kaem}/test/test10/subkaem.test | 0
+ {kaem => Kaem}/test/test11/kaem.test    | 0
+ {kaem => Kaem}/test/test12/kaem.test    | 0
+ {kaem => Kaem}/test/test13/kaem.test    | 0
+ {kaem => Kaem}/test/test14/kaem.test    | 0
+ {kaem => Kaem}/test/test15/kaem.test    | 0
+ {kaem => Kaem}/variable.c               | 0
+ guix.scm                                | 2 ++
+ makefile                                | 6 +++---
+ mescc-tools.scm                         | 2 ++
+ sha256.sh                               | 2 +-
+ 31 files changed, 9 insertions(+), 5 deletions(-)
+ rename {kaem => Kaem}/.gitignore (100%)
+ rename {kaem => Kaem}/README (100%)
+ rename {kaem => Kaem}/kaem.c (100%)
+ rename {kaem => Kaem}/kaem.h (100%)
+ rename {kaem => Kaem}/kaem.run (100%)
+ rename {kaem => Kaem}/makefile (98%)
+ rename {kaem => Kaem}/test.sh (100%)
+ rename {kaem => Kaem}/test/.gitignore (100%)
+ rename {kaem => Kaem}/test/test.answers (100%)
+ rename {kaem => Kaem}/test/test00/kaem.test (100%)
+ rename {kaem => Kaem}/test/test01/kaem.test (100%)
+ rename {kaem => Kaem}/test/test02/kaem.test (100%)
+ rename {kaem => Kaem}/test/test03/kaem.test (100%)
+ rename {kaem => Kaem}/test/test04/kaem.test (100%)
+ rename {kaem => Kaem}/test/test05/kaem.test (100%)
+ rename {kaem => Kaem}/test/test06/kaem.test (100%)
+ rename {kaem => Kaem}/test/test07/kaem.test (100%)
+ rename {kaem => Kaem}/test/test08/kaem.test (100%)
+ rename {kaem => Kaem}/test/test09/kaem.test (100%)
+ rename {kaem => Kaem}/test/test10/kaem.test (100%)
+ rename {kaem => Kaem}/test/test10/subkaem.test (100%)
+ rename {kaem => Kaem}/test/test11/kaem.test (100%)
+ rename {kaem => Kaem}/test/test12/kaem.test (100%)
+ rename {kaem => Kaem}/test/test13/kaem.test (100%)
+ rename {kaem => Kaem}/test/test14/kaem.test (100%)
+ rename {kaem => Kaem}/test/test15/kaem.test (100%)
+ rename {kaem => Kaem}/variable.c (100%)
+
+diff --git a/kaem/.gitignore b/Kaem/.gitignore
+similarity index 100%
+rename from kaem/.gitignore
+rename to Kaem/.gitignore
+diff --git a/kaem/README b/Kaem/README
+similarity index 100%
+rename from kaem/README
+rename to Kaem/README
+diff --git a/kaem/kaem.c b/Kaem/kaem.c
+similarity index 100%
+rename from kaem/kaem.c
+rename to Kaem/kaem.c
+diff --git a/kaem/kaem.h b/Kaem/kaem.h
+similarity index 100%
+rename from kaem/kaem.h
+rename to Kaem/kaem.h
+diff --git a/kaem/kaem.run b/Kaem/kaem.run
+similarity index 100%
+rename from kaem/kaem.run
+rename to Kaem/kaem.run
+diff --git a/kaem/makefile b/Kaem/makefile
+similarity index 98%
+rename from kaem/makefile
+rename to Kaem/makefile
+index bb9ada1..c3b5a67 100644
+--- a/kaem/makefile
++++ b/Kaem/makefile
+@@ -16,7 +16,7 @@
+ ## along with mescc-tools. If not, see <http://www.gnu.org/licenses/>.
+ 
+ # Prevent rebuilding
+-VPATH = bin:test:test/results
++VPATH = ../bin:test/results
+ 
+ all: kaem
+ 
+diff --git a/kaem/test.sh b/Kaem/test.sh
+similarity index 100%
+rename from kaem/test.sh
+rename to Kaem/test.sh
+diff --git a/kaem/test/.gitignore b/Kaem/test/.gitignore
+similarity index 100%
+rename from kaem/test/.gitignore
+rename to Kaem/test/.gitignore
+diff --git a/kaem/test/test.answers b/Kaem/test/test.answers
+similarity index 100%
+rename from kaem/test/test.answers
+rename to Kaem/test/test.answers
+diff --git a/kaem/test/test00/kaem.test b/Kaem/test/test00/kaem.test
+similarity index 100%
+rename from kaem/test/test00/kaem.test
+rename to Kaem/test/test00/kaem.test
+diff --git a/kaem/test/test01/kaem.test b/Kaem/test/test01/kaem.test
+similarity index 100%
+rename from kaem/test/test01/kaem.test
+rename to Kaem/test/test01/kaem.test
+diff --git a/kaem/test/test02/kaem.test b/Kaem/test/test02/kaem.test
+similarity index 100%
+rename from kaem/test/test02/kaem.test
+rename to Kaem/test/test02/kaem.test
+diff --git a/kaem/test/test03/kaem.test b/Kaem/test/test03/kaem.test
+similarity index 100%
+rename from kaem/test/test03/kaem.test
+rename to Kaem/test/test03/kaem.test
+diff --git a/kaem/test/test04/kaem.test b/Kaem/test/test04/kaem.test
+similarity index 100%
+rename from kaem/test/test04/kaem.test
+rename to Kaem/test/test04/kaem.test
+diff --git a/kaem/test/test05/kaem.test b/Kaem/test/test05/kaem.test
+similarity index 100%
+rename from kaem/test/test05/kaem.test
+rename to Kaem/test/test05/kaem.test
+diff --git a/kaem/test/test06/kaem.test b/Kaem/test/test06/kaem.test
+similarity index 100%
+rename from kaem/test/test06/kaem.test
+rename to Kaem/test/test06/kaem.test
+diff --git a/kaem/test/test07/kaem.test b/Kaem/test/test07/kaem.test
+similarity index 100%
+rename from kaem/test/test07/kaem.test
+rename to Kaem/test/test07/kaem.test
+diff --git a/kaem/test/test08/kaem.test b/Kaem/test/test08/kaem.test
+similarity index 100%
+rename from kaem/test/test08/kaem.test
+rename to Kaem/test/test08/kaem.test
+diff --git a/kaem/test/test09/kaem.test b/Kaem/test/test09/kaem.test
+similarity index 100%
+rename from kaem/test/test09/kaem.test
+rename to Kaem/test/test09/kaem.test
+diff --git a/kaem/test/test10/kaem.test b/Kaem/test/test10/kaem.test
+similarity index 100%
+rename from kaem/test/test10/kaem.test
+rename to Kaem/test/test10/kaem.test
+diff --git a/kaem/test/test10/subkaem.test b/Kaem/test/test10/subkaem.test
+similarity index 100%
+rename from kaem/test/test10/subkaem.test
+rename to Kaem/test/test10/subkaem.test
+diff --git a/kaem/test/test11/kaem.test b/Kaem/test/test11/kaem.test
+similarity index 100%
+rename from kaem/test/test11/kaem.test
+rename to Kaem/test/test11/kaem.test
+diff --git a/kaem/test/test12/kaem.test b/Kaem/test/test12/kaem.test
+similarity index 100%
+rename from kaem/test/test12/kaem.test
+rename to Kaem/test/test12/kaem.test
+diff --git a/kaem/test/test13/kaem.test b/Kaem/test/test13/kaem.test
+similarity index 100%
+rename from kaem/test/test13/kaem.test
+rename to Kaem/test/test13/kaem.test
+diff --git a/kaem/test/test14/kaem.test b/Kaem/test/test14/kaem.test
+similarity index 100%
+rename from kaem/test/test14/kaem.test
+rename to Kaem/test/test14/kaem.test
+diff --git a/kaem/test/test15/kaem.test b/Kaem/test/test15/kaem.test
+similarity index 100%
+rename from kaem/test/test15/kaem.test
+rename to Kaem/test/test15/kaem.test
+diff --git a/kaem/variable.c b/Kaem/variable.c
+similarity index 100%
+rename from kaem/variable.c
+rename to Kaem/variable.c
+diff --git a/guix.scm b/guix.scm
+index 5a8f0ef..cec06a2 100644
+--- a/guix.scm
++++ b/guix.scm
+@@ -42,6 +42,7 @@
+              (ice-9 rdelim)
+              (gnu packages)
+              (gnu packages gcc)
++             (gnu packages base)
+              ((guix build utils) #:select (with-directory-excursion))
+              (guix build-system gnu)
+              (guix gexp)
+@@ -73,6 +74,7 @@
+   (package
+      (name "mescc-tools.git")
+      (build-system gnu-build-system)
++     (inputs `(("which", which) ("coreutils", coreutils)))
+      (arguments
+       `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
+         #:test-target "test"
+diff --git a/makefile b/makefile
+index 3938b3e..a35024c 100644
+--- a/makefile
++++ b/makefile
+@@ -15,7 +15,7 @@
+ ## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ # Prevent rebuilding
+-VPATH = bin:test:test/results
++VPATH = bin:test/results
+ PACKAGE = mescc-tools
+ 
+ all: M1 hex2 get_machine blood-elf kaem catm
+@@ -46,8 +46,8 @@ get_machine: get_machine.c | bin
+ blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/numerate_number.c | bin
+ 	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c functions/numerate_number.c -o bin/blood-elf
+ 
+-kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c kaem/kaem.c bin
+-	cd kaem && make kaem
++kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c Kaem/kaem.c | bin
++	cd Kaem && make kaem
+ 
+ catm: catm.c functions/file_print.c | bin
+ 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
+diff --git a/mescc-tools.scm b/mescc-tools.scm
+index 38a60b3..3bf10a3 100644
+--- a/mescc-tools.scm
++++ b/mescc-tools.scm
+@@ -31,6 +31,7 @@
+ (use-modules (ice-9 match)
+              (gnu packages)
+              (gnu packages gcc)
++             (gnu packages base)
+              (guix build-system gnu)
+              (guix download)
+              (guix licenses)
+@@ -40,6 +41,7 @@
+     (package
+       (name "mescc-tools")
+       (version "1.0.1")
++      (inputs `(("which", which) ("coreutils", coreutils)))
+       (source (origin
+                 (method url-fetch)
+                 (uri (string-append "http://git.savannah.nongnu.org/cgit/mescc-tools.git/snapshot/mescc-tools-Release_" version ".tar.gz"))
+diff --git a/sha256.sh b/sha256.sh
+index 9e6c020..71e496d 100644
+--- a/sha256.sh
++++ b/sha256.sh
+@@ -1,4 +1,4 @@
+-#! /bin/sh
++#! /usr/bin/env sh
+ # Copyright (C) 2019 ng0 <ng0@n0.is>
+ # Copyright (C) 2019 Jeremiah Orians
+ #
+-- 
+2.20.1
+

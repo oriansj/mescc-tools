@@ -1,0 +1,25 @@
+From 4a953d287655805d4997d96d82555b29dd567447 Mon Sep 17 00:00:00 2001
+From: Vagrant Cascadian <vagrant@debian.org>
+Date: Sun, 24 May 2020 08:37:22 -0700
+Subject: [PATCH 03/17] kaem.c: Fix spelling of "initialization".
+
+---
+ Kaem/kaem.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Kaem/kaem.c b/Kaem/kaem.c
+index 6a547de..f638c9d 100644
+--- a/Kaem/kaem.c
++++ b/Kaem/kaem.c
+@@ -141,7 +141,7 @@ char** list_to_array(struct Token* s)
+ 	char** array = calloc(MAX_ARRAY, sizeof(char*));
+ 	require(array != NULL, "Memory initialization of array in conversion of list to array failed\n");
+ 	char* element = calloc(MAX_STRING, sizeof(char));
+-	require(element != NULL, "Memory initalization of element in conversion of list to array failed\n");
++	require(element != NULL, "Memory initialization of element in conversion of list to array failed\n");
+ 	int index = 0;
+ 	int i;
+ 	int value_length;
+-- 
+2.20.1
+

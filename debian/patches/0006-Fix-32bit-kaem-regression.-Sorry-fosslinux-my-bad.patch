@@ -22,10 +22,10 @@ index d673d39..964ff52 100644
  
  ** Removed
  
-diff --git a/kaem/kaem.h b/kaem/kaem.h
+diff --git a/Kaem/kaem.h b/Kaem/kaem.h
 index c8bf14a..ff2b4bd 100644
---- a/kaem/kaem.h
-+++ b/kaem/kaem.h
+--- a/Kaem/kaem.h
++++ b/Kaem/kaem.h
 @@ -16,6 +16,8 @@
   * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
   */
@@ -62,10 +62,10 @@ index c8bf14a..ff2b4bd 100644
  	 * This struct stores a node of a singly linked list, store the pointer to
  	 * the next node.
  	 */
-diff --git a/kaem/makefile b/kaem/makefile
+diff --git a/Kaem/makefile b/Kaem/makefile
 index 10bf8f2..18f9c65 100644
---- a/kaem/makefile
-+++ b/kaem/makefile
+--- a/Kaem/makefile
++++ b/Kaem/makefile
 @@ -23,7 +23,7 @@ all: kaem
  CC=gcc
  CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
@@ -92,10 +92,10 @@ index 10bf8f2..18f9c65 100644
  DESTDIR:=
  PREFIX:=/usr/local
  bindir:=$(DESTDIR)$(PREFIX)/bin
-diff --git a/kaem/variable.c b/kaem/variable.c
+diff --git a/Kaem/variable.c b/Kaem/variable.c
 index 49cca36..37ee6f8 100644
---- a/kaem/variable.c
-+++ b/kaem/variable.c
+--- a/Kaem/variable.c
++++ b/Kaem/variable.c
 @@ -182,44 +182,35 @@ void variable_all(char** argv, struct Token* n)
  {
  	fflush(stdout);

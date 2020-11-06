@@ -1,0 +1,100 @@
+From 1fd803814f7c0e22c19098e34f29b32f744dd524 Mon Sep 17 00:00:00 2001
+From: nimaje <nimaje@bootstrappable.irc_channel>
+Date: Thu, 15 Oct 2020 19:33:40 -0400
+Subject: [PATCH 13/17] fix missed files
+
+---
+ test/test1/hex0.hex0     | 2 +-
+ test/test1/hex1.hex0     | 2 +-
+ test/test1/proof1.answer | 2 +-
+ test/test1/proof2.answer | 2 +-
+ test/test2/hex0.hex0     | 2 +-
+ test/test7/hex1.hex1     | 4 ++--
+ test/test7/proof.answer  | 2 +-
+ 7 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/test/test1/hex0.hex0 b/test/test1/hex0.hex0
+index 611a86f..3c42d74 100644
+--- a/test/test1/hex0.hex0
++++ b/test/test1/hex0.hex0
+@@ -33,7 +33,7 @@
+ 02                 ## e_ident[EI_CLASS] Indicating 64 bit
+ 01                 ## e_ident[EI_DATA] Indicating little endianness
+ 01                 ## e_ident[EI_VERSION] Indicating original elf
+-00                 ## e_ident[EI_OSABI] Set at 0 because none cares
++03                 ## e_ident[EI_OSABI] Set at 3 because FreeBSD is strict
+ 00                 ## e_ident[EI_ABIVERSION] See above
+ 00 00 00 00 00 00 00 ## e_ident[EI_PAD]
+ 02 00              ## e_type Indicating Executable
+diff --git a/test/test1/hex1.hex0 b/test/test1/hex1.hex0
+index 1c6e0bf..bf3b955 100644
+--- a/test/test1/hex1.hex0
++++ b/test/test1/hex1.hex0
+@@ -19,7 +19,7 @@
+ 02                              # e_ident[EI_CLASS] Indicating 64 bit
+ 01                              # e_ident[EI_DATA] Indicating little endianness
+ 01                              # e_ident[EI_VERSION] Indicating original elf
+-00                              # e_ident[EI_OSABI] Set at 0 because none cares
++03                              # e_ident[EI_OSABI] Set at 3 because FreeBSD is strict
+ 00                              # e_ident[EI_ABIVERSION] See above
+ 00 00 00 00 00 00 00            # e_ident[EI_PAD]
+ 02 00                           # e_type Indicating Executable
+diff --git a/test/test1/proof1.answer b/test/test1/proof1.answer
+index 8c441ba..947e0f3 100644
+--- a/test/test1/proof1.answer
++++ b/test/test1/proof1.answer
+@@ -1 +1 @@
+-d1172d0456de0ae4d05705fc7d81c424f4a277b7725d449829322ce07224bebf  test/test1/proof1
++a9a48fdbff46b4d7e1596bae4bd44c23f554a285b404dc151b63a073b2efce62  test/test1/proof1
+diff --git a/test/test1/proof2.answer b/test/test1/proof2.answer
+index 6edd102..bfb171b 100644
+--- a/test/test1/proof2.answer
++++ b/test/test1/proof2.answer
+@@ -1 +1 @@
+-e6b14d3e5935e52a49beff99b766dcd7c842ae2a8d76f4d4c8b10c2d6d146181  test/test1/proof2
++bcf188a5ea5afb1a56a716f21715d554b95f1babc679b2a9596aeeee6a7c09e3  test/test1/proof2
+diff --git a/test/test2/hex0.hex0 b/test/test2/hex0.hex0
+index 6697221..cfef26b 100644
+--- a/test/test2/hex0.hex0
++++ b/test/test2/hex0.hex0
+@@ -23,7 +23,7 @@
+ 02                 ## e_ident[EI_CLASS] Indicating 64 bit
+ 01                 ## e_ident[EI_DATA] Indicating little endianness
+ 01                 ## e_ident[EI_VERSION] Indicating original elf
+-00                 ## e_ident[EI_OSABI] Set at 0 because none cares
++03                 ## e_ident[EI_OSABI] Set at 3 because FreeBSD is strict
+ 00                 ## e_ident[EI_ABIVERSION] See above
+ 00 00 00 00 00 00 00 ## e_ident[EI_PAD]
+ 02 00              ## e_type Indicating Executable
+diff --git a/test/test7/hex1.hex1 b/test/test7/hex1.hex1
+index 1130f82..f83b014 100644
+--- a/test/test7/hex1.hex1
++++ b/test/test7/hex1.hex1
+@@ -19,7 +19,7 @@
+ 02                              # e_ident[EI_CLASS] Indicating 64 bit
+ 01                              # e_ident[EI_DATA] Indicating little endianness
+ 01                              # e_ident[EI_VERSION] Indicating original elf
+-00                              # e_ident[EI_OSABI] Set at 0 because none cares
++03                              # e_ident[EI_OSABI] Set at 3 because FreeBSD is strict
+ 00                              # e_ident[EI_ABIVERSION] See above
+ 00 00 00 00 00 00 00            # e_ident[EI_PAD]
+ 02 00                           # e_type Indicating Executable
+@@ -38,7 +38,7 @@
+ 
+ ## Program Header table
+ 01 00 00 00                     # p_type
+-06 00 00 00                     # Flags
++07 00 00 00                     # ph_flags: PF-X|PF-W|PF-R = 7
+ 00 00 00 00 00 00 00 00         # p_offset
+ 00 00 60 00 00 00 00 00         # p_vaddr
+ 00 00 00 00 00 00 00 00         # Undefined
+diff --git a/test/test7/proof.answer b/test/test7/proof.answer
+index d141d37..5a784d0 100644
+--- a/test/test7/proof.answer
++++ b/test/test7/proof.answer
+@@ -1 +1 @@
+-5ac7c9c6671709682e06153310c112df5b9352af6f6fef93a3370566d28a9a90  test/test7/proof
++bcf188a5ea5afb1a56a716f21715d554b95f1babc679b2a9596aeeee6a7c09e3  test/test7/proof
+-- 
+2.20.1
+

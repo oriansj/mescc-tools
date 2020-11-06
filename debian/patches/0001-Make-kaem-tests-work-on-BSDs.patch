@@ -1,0 +1,128 @@
+From 45b5c72c9fcbdef55f4663f3ddc66944ff8f5eae Mon Sep 17 00:00:00 2001
+From: Jeremiah Orians <jeremiah@pdp10.guru>
+Date: Sat, 2 May 2020 10:30:28 -0400
+Subject: [PATCH 01/17] Make kaem tests work on BSDs
+
+---
+ kaem/test.sh    |  5 +++--
+ makefile        | 11 ++---------
+ mescc-tools.scm |  4 ++--
+ sha256.sh       |  6 +++---
+ test.sh         | 23 +++++++++++++++++++++++
+ 5 files changed, 33 insertions(+), 16 deletions(-)
+ create mode 100755 test.sh
+
+diff --git a/kaem/test.sh b/kaem/test.sh
+index b1801de..1b5df19 100755
+--- a/kaem/test.sh
++++ b/kaem/test.sh
+@@ -18,7 +18,8 @@
+ echo "Starting kaem tests"
+ for i in $(seq 0 15) ; do
+ 	TEST=$(printf "%02d" $i)
+-	../bin/kaem -f test/test${TEST}/kaem.test > test/results/test${TEST}-output 2>&1
++	../bin/kaem -f "test/test${TEST}/kaem.test" >| "test/results/test${TEST}-output" 2>&1
+ done
+-sha256sum -c test/test.answers
++. ../sha256.sh
++sha256_check test/test.answers
+ echo "kaem tests complete"
+diff --git a/makefile b/makefile
+index c41e458..3938b3e 100644
+--- a/makefile
++++ b/makefile
+@@ -82,9 +82,6 @@ bin:
+ results:
+ 	mkdir -p test/results
+ 
+-kaem-result:
+-	mkdir -p kaem/test/results
+-
+ # tests
+ test: test0-binary \
+ 	test1-binary \
+@@ -98,12 +95,8 @@ test: test0-binary \
+ 	test9-binary \
+ 	test10-binary \
+ 	test11-binary \
+-	test12-binary | results \
+-	test-kaem
+-	sha256sum -c test/test.answers
+-
+-test-kaem: kaem hex2 | kaem-result
+-	cd kaem && make test
++	test12-binary | results
++	./test.sh
+ 
+ test0-binary: results hex2 get_machine
+ 	test/test0/hello.sh
+diff --git a/mescc-tools.scm b/mescc-tools.scm
+index edb60ce..38a60b3 100644
+--- a/mescc-tools.scm
++++ b/mescc-tools.scm
+@@ -39,12 +39,12 @@
+ (define-public mescc-tools
+     (package
+       (name "mescc-tools")
+-      (version "1.0.0")
++      (version "1.0.1")
+       (source (origin
+                 (method url-fetch)
+                 (uri (string-append "http://git.savannah.nongnu.org/cgit/mescc-tools.git/snapshot/mescc-tools-Release_" version ".tar.gz"))
+                 (sha256
+-                 (base32 "125fh1sln9y7fsyxa6nw9gfn09p191iqhdp0327zngpd8jwhyxmc"))))
++                 (base32 "1wqj70h4rrxl1d1aqpxhy47964r5dilvll6gvqv75y9qk6pwx5is"))))
+       (build-system gnu-build-system)
+       (arguments
+        `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
+diff --git a/sha256.sh b/sha256.sh
+index 9feaf2b..9e6c020 100644
+--- a/sha256.sh
++++ b/sha256.sh
+@@ -24,11 +24,11 @@ set -ex
+ # accordingly.
+ sha256_check()
+ {
+-	if [ -e /usr/bin/sha256sum ]; then
++	if [ -e "$(which sha256sum)" ]; then
+ 		LANG=C sha256sum -c "$1"
+-	elif [ -e /usr/bin/sum ]; then
++	elif [ -e "$(which sum)" ]; then
+ 		LANG=C sum -a SHA256 -n -c "$1"
+-	elif [ -e /usr/bin/sha256 ]; then
++	elif [ -e "$(which sha256)" ]; then
+ 		LANG=C sha256 -r -c "$1"
+ 	else
+ 		echo "Unsupported sha256 tool, please send a patch to support it"
+diff --git a/test.sh b/test.sh
+new file mode 100755
+index 0000000..4ca85e7
+--- /dev/null
++++ b/test.sh
+@@ -0,0 +1,23 @@
++#! /bin/sh
++## Copyright (C) 2017 Jeremiah Orians
++## This file is part of stage0.
++##
++## stage0 is free software: you can redistribute it and/or modify
++## it under the terms of the GNU General Public License as published by
++## the Free Software Foundation, either version 3 of the License, or
++## (at your option) any later version.
++##
++## stage0 is distributed in the hope that it will be useful,
++## but WITHOUT ANY WARRANTY; without even the implied warranty of
++## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++## GNU General Public License for more details.
++##
++## You should have received a copy of the GNU General Public License
++## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
++
++set -ex
++. ./sha256.sh
++echo "Beginning mescc-tools-tests"
++sha256_check test/test.answers
++cd kaem && make test
++echo "mescc-tools-tests done"
+-- 
+2.20.1
+

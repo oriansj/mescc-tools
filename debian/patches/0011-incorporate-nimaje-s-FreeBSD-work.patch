@@ -1,0 +1,36 @@
+From 4c7dcaa66023d2f3d1dfa559226c0f261fe0575c Mon Sep 17 00:00:00 2001
+From: nimaje <nimaje@bootstrappable.irc_channel>
+Date: Thu, 15 Oct 2020 12:30:18 -0400
+Subject: [PATCH 11/17] incorporate nimaje's FreeBSD work
+
+---
+ sha256.sh | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/sha256.sh b/sha256.sh
+index 71e496d..a40109f 100644
+--- a/sha256.sh
++++ b/sha256.sh
+@@ -26,6 +26,19 @@ sha256_check()
+ {
+ 	if [ -e "$(which sha256sum)" ]; then
+ 		LANG=C sha256sum -c "$1"
++	elif [ "$(./bin/get_machine --OS)" = "FreeBSD" ]; then
++		LANG=C awk '
++		BEGIN { status = 0 }
++		{
++			rc=system(">/dev/null sha256 -q -c "$1" "$2);
++			if (rc == 0) print($2": OK")
++			else {
++				print($2": NOT OK");
++				status=rc
++			}
++		}
++		END { exit status}
++		' "$1"
+ 	elif [ -e "$(which sum)" ]; then
+ 		LANG=C sum -a SHA256 -n -c "$1"
+ 	elif [ -e "$(which sha256)" ]; then
+-- 
+2.20.1
+

@@ -1,0 +1,33 @@
+From ff9a4136964c3f4c37b3c02eda8896a40b9c7b2c Mon Sep 17 00:00:00 2001
+From: nimaje <nimaje@bootstrappable.irc_channel>
+Date: Fri, 16 Oct 2020 11:50:03 -0400
+Subject: [PATCH 14/17] get_current_dir_name isn't valid on FreeBSD
+
+---
+ kaem.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/kaem.c b/kaem.c
+index a866fbb..15147fc 100644
+--- a/kaem.c
++++ b/kaem.c
+@@ -36,7 +36,6 @@ char* copy_string(char* target, char* source);
+ char* env_lookup(char* token, char** envp);
+ char* find_char(char* string, char a);
+ char* find_executable(char* name, char* PATH);
+-char* get_current_dir_name();
+ char* numerate_number(int a);
+ char* postpend_char(char* s, char a);
+ char* prematch(char* search, char* field);
+@@ -285,7 +284,7 @@ void cd(char* path)
+ /* pwd builtin */
+ void pwd()
+ {
+-	file_print(get_current_dir_name(), stdout);
++	file_print(getcwd(calloc(MAX_STRING, sizeof(char)), MAX_STRING), stdout);
+ 	file_print("\n", stdout);
+ }
+ 
+-- 
+2.20.1
+

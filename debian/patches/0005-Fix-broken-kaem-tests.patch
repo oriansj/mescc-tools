@@ -1,0 +1,37 @@
+From be437350ae1589c202e824ecdb97fe9ac6c470a3 Mon Sep 17 00:00:00 2001
+From: Jeremiah Orians <jeremiah@pdp10.guru>
+Date: Tue, 2 Jun 2020 14:16:48 -0400
+Subject: [PATCH 05/17] Fix broken kaem tests
+
+---
+ makefile | 2 +-
+ test.sh  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/makefile b/makefile
+index a35024c..d2f13e8 100644
+--- a/makefile
++++ b/makefile
+@@ -67,7 +67,7 @@ clean:
+ 	./test/test9/cleanup.sh
+ 	./test/test10/cleanup.sh
+ 	./test/test11/cleanup.sh
+-	cd kaem && make clean
++	cd Kaem && make clean
+ 
+ # A cleanup option we probably don't need
+ .PHONY: clean-hard
+diff --git a/test.sh b/test.sh
+index 4ca85e7..2b8efca 100755
+--- a/test.sh
++++ b/test.sh
+@@ -19,5 +19,5 @@ set -ex
+ . ./sha256.sh
+ echo "Beginning mescc-tools-tests"
+ sha256_check test/test.answers
+-cd kaem && make test
++cd Kaem && make test
+ echo "mescc-tools-tests done"
+-- 
+2.20.1
+

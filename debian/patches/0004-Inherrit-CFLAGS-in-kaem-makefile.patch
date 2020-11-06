@@ -12,8 +12,8 @@ which otherwise gets embedded in the binaries.
 
 diff --git a/Kaem/makefile b/Kaem/makefile
 index c3b5a67..10bf8f2 100644
---- a/kaem/makefile
-+++ b/kaem/makefile
+--- a/Kaem/makefile
++++ b/Kaem/makefile
 @@ -21,7 +21,7 @@ VPATH = ../bin:test/results
  all: kaem
  

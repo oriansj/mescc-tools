@@ -1,0 +1,38 @@
+From 148d01f7eee71c5c501228621a0b85d542e944d6 Mon Sep 17 00:00:00 2001
+From: Jeremiah Orians <jeremiah@pdp10.guru>
+Date: Thu, 6 Aug 2020 19:54:26 -0400
+Subject: [PATCH 08/17] Address GCC-10 bug report
+
+---
+ functions/numerate_number.c | 1 +
+ makefile                    | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/functions/numerate_number.c b/functions/numerate_number.c
+index c4b09dc..222aecf 100644
+--- a/functions/numerate_number.c
++++ b/functions/numerate_number.c
+@@ -22,6 +22,7 @@
+ #define FALSE 0
+ //CONSTANT FALSE 0
+ int in_set(int c, char* s);
++//CONSTANT NULL 0
+ 
+ char* numerate_number(int a)
+ {
+diff --git a/makefile b/makefile
+index d2f13e8..8511a51 100644
+--- a/makefile
++++ b/makefile
+@@ -21,7 +21,7 @@ PACKAGE = mescc-tools
+ all: M1 hex2 get_machine blood-elf kaem catm
+ 
+ CC=gcc
+-CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
++CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -fno-common
+ 
+ M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c functions/require.c functions/in_set.c | bin
+ 	$(CC) $(CFLAGS) M1-macro.c \
+-- 
+2.20.1
+
