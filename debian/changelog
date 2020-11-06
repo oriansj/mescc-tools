@@ -1,3 +1,11 @@
+mescc-tools (1.0.1-5) unstable; urgency=medium
+
+  * debian/patches:
+    - Fix 32bit kaem regression.
+    - Do not error out on unset variable in test3/hello.sh.
+
+ -- Vagrant Cascadian <vagrant@debian.org>  Thu, 05 Nov 2020 23:49:09 -0800
+
 mescc-tools (1.0.1-4) unstable; urgency=medium
 
   * debian/control: Update to debhelper compat 13.
