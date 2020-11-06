@@ -2,3 +2,4 @@ Inherrit-CFLAGS-in-kaem-makefile.patch
 Fix-ELF-headers-to-be-more-well-behaved.patch
 ensure-get-machine-is-available-for-all-tests.patch
 Fix-32bit-kaem-regression.patch
+Fix-broken-test.patch
