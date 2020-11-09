@@ -240,9 +240,10 @@ void outputPointer(int displacement, int number_of_bytes)
 	}
 	else
 	{ /* Deal with LittleEndian */
+		unsigned byte;
 		while(number_of_bytes > 0)
 		{
-			unsigned byte = value % 256;
+			byte = value % 256;
 			value = value / 256;
 			fputc(byte, output);
 			number_of_bytes = number_of_bytes - 1;
@@ -577,6 +578,7 @@ int main(int argc, char **argv)
 	ByteMode = HEX;
 	scratch = calloc(max_string + 1, sizeof(char));
 	char* arch;
+	struct input_files* temp;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -643,7 +645,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
-			struct input_files* temp = calloc(1, sizeof(struct input_files));
+			temp = calloc(1, sizeof(struct input_files));
 			temp->filename = argv[option_index + 1];
 			temp->next = input;
 			input = temp;

@@ -231,8 +231,9 @@ char* find_executable(char* name, char* PATH)
 int check_envar(char* token)
 {
 	int j;
-	int equal_found;
-	equal_found = 0;
+	int equal_found = 0;
+	int found;
+	char c;
 	for(j = 0; j < string_length(token); j = j + 1)
 	{
 		if(token[j] == '=')
@@ -242,9 +243,7 @@ int check_envar(char* token)
 		}
 		else
 		{ /* Should be A-z */
-			int found;
 			found = 0;
-			char c;
 			/* Represented numerically; 0 = 48 through 9 = 57 */
 			for(c = 48; c <= 57; c = c + 1)
 			{
@@ -301,6 +300,7 @@ void set(char** tokens)
 		options[i] = raw[i + 1];
 	}
 	/* Parse the options */
+	char* erroneous_option;
 	for(i = 0; i < string_length(options); i = i + 1)
 	{
 		if(options[i] == 'a')
@@ -324,7 +324,7 @@ void set(char** tokens)
 		}
 		else
 		{
-			char* erroneous_option = calloc(2, sizeof(char));
+			erroneous_option = calloc(2, sizeof(char));
 			erroneous_option[0] = options[i];
 			file_print(erroneous_option, stderr);
 			file_print(" is an invalid set option!\n", stderr);
@@ -383,9 +383,10 @@ char* variable_substitute(char* input, char** envp)
 	char* var_name = calloc(MAX_STRING, sizeof(char));
 	int eval_var = 0;
 	int i = 2;
+	char c;
 	while(i < string_length(input))
 	{
-		char c = input[i];
+		c = input[i];
 		require(MAX_STRING > i_input, "LINE IS TOO LONG\nABORTING HARD\n");
 		require(MAX_STRING > i_token, "LINE IS TOO LONG\nABORTING HARD\n");
 		if(-1 == c)
@@ -504,18 +505,27 @@ char* collect_variable(char* input, char** envp, char** argv)
 /* Function for executing our programs with desired arguments */
 void execute_commands(FILE* script, char** envp, char** argv)
 {
+	char** tokens;
+	char* PATH;
+	char* USERNAME;
+	int i;
+	int j;
+	char* result;
+	char* output;
+	int status;
+
 	while(1)
 	{
-		char** tokens = calloc(MAX_ARGS, sizeof(char*));
+		tokens = calloc(MAX_ARGS, sizeof(char*));
 
-		char* PATH = env_lookup("PATH=", envp);
+		PATH = env_lookup("PATH=", envp);
 		if(NULL != PATH)
 		{
 			PATH = calloc(MAX_STRING, sizeof(char));
 			copy_string(PATH, env_lookup("PATH=", envp));
 		}
 
-		char* USERNAME = env_lookup("LOGNAME=", envp);
+		USERNAME = env_lookup("LOGNAME=", envp);
 		if((NULL == PATH) && (NULL == USERNAME))
 		{
 			PATH = calloc(MAX_STRING, sizeof(char));
@@ -526,11 +536,11 @@ void execute_commands(FILE* script, char** envp, char** argv)
 			PATH = prepend_string("/home/", prepend_string(USERNAME,"/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"));
 		}
 
-		int i = 0;
+		i = 0;
 		command_done = 0;
 		do
 		{
-			char* result = collect_token(script);
+			result = collect_token(script);
 			if(NULL != result)
 			{ /* Not a comment string but an actual argument */
 				if(i >= MAX_ARGS)
@@ -546,7 +556,6 @@ void execute_commands(FILE* script, char** envp, char** argv)
 		if(VERBOSE && (0 < i))
 		{
 			file_print(" +> ", stdout);
-			int j;
 			for(j = 0; j < i; j = j + 1)
 			{
 				file_print(tokens[j], stdout);
@@ -555,10 +564,10 @@ void execute_commands(FILE* script, char** envp, char** argv)
 			file_print("\n", stdout);
 		}
 
-		int j = 0;
+		j = 0;
 		while(tokens[j] != NULL)
 		{
-			char* output = collect_variable(tokens[j], envp, argv);
+			output = collect_variable(tokens[j], envp, argv);
 			memset(tokens[j], 0, MAX_STRING);
 			copy_string(tokens[j], output);
 			j = j + 1;
@@ -600,7 +609,7 @@ void execute_commands(FILE* script, char** envp, char** argv)
 			}
 			else
 			{ /* Stuff to exec */
-				int status = execute(tokens, envp, PATH);
+				status = execute(tokens, envp, PATH);
 				if(STRICT && (0 != status))
 				{ /* Clearly the script hit an issue that should never have happened */
 					file_print("Subprocess error ", stderr);
