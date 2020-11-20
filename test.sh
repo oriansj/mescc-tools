@@ -19,4 +19,5 @@ set -ex
 . ./sha256.sh
 echo "Beginning mescc-tools-tests"
 sha256_check test/test.answers
+cd Kaem && make test
 echo "mescc-tools-tests done"

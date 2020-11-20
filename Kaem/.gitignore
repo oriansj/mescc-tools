@@ -1,0 +1,12 @@
+# Ignore build directory
+bin/
+
+# Ignore Temp directory
+temp/
+
+# Ignore test result directory
+test/results/
+
+# Ignore temp and special files
+*.tst
+*.qst
