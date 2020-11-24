@@ -23,8 +23,8 @@ all: kaem
 CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
 
-kaem: kaem.c | bin
-	$(CC) $(CFLAGS) kaem.c variable.c ../functions/file_print.c ../functions/match.c ../functions/in_set.c ../functions/string.c ../functions/require.c ../functions/numerate_number.c -o ../bin/kaem
+kaem: kaem.c kaem_globals.c variable.c | bin
+	$(CC) $(CFLAGS) kaem.c kaem_globals.c variable.c ../functions/file_print.c ../functions/match.c ../functions/in_set.c ../functions/string.c ../functions/require.c ../functions/numerate_number.c -o ../bin/kaem
 
 # Always run the tests
 .PHONY: test

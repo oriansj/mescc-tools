@@ -41,18 +41,6 @@ int string_length(char* a);
 char* numerate_number(int a);
 
 /*
- * GLOBALS
- */
-
-int command_done;
-int VERBOSE;
-int STRICT;
-int INIT_MODE;
-int FUZZING;
-int WARNINGS;
-char* PATH;
-
-/*
  * Here is the token struct. It is used for both the token linked-list and
  * env linked-list.
  */
@@ -75,7 +63,4 @@ struct Token
 	struct Token* next;
 };
 
-/* Token linked-list; stores the tokens of each line */
-struct Token* token;
-/* Env linked-list; stores the environment variables */
-struct Token* env;
+#include "kaem_globals.h"
