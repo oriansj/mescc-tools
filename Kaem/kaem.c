@@ -687,6 +687,8 @@ int collect_command(FILE* script, char** argv)
 /* Function for executing our programs with desired arguments */
 void run_script(FILE* script, char** argv)
 {
+	int index;
+	int status;
 	while(TRUE)
 	{
 		/*
@@ -698,13 +700,13 @@ void run_script(FILE* script, char** argv)
 		 * We don't need the previous lines once they are done with, so tokens
 		 * are hence for each line.
 		 */
-		int index = collect_command(script, argv);
+		index = collect_command(script, argv);
 		/* -1 means the script is done */
 		if(EOF == index) break;
 		if(0 == index) continue;
 
 		/* Stuff to exec */
-		int status = execute();
+		status = execute();
 		if(STRICT == TRUE && (0 != status))
 		{ /* Clearly the script hit an issue that should never have happened */
 			file_print("Subprocess error ", stderr);
@@ -725,20 +727,23 @@ void populate_env(char** envp)
 	n = env;
 
 	int i;
+	int j;
+	int k;
+	char* envp_line;
 	for(i = 0; i < array_length(envp); i = i + 1)
 	{
 		n->var = calloc(MAX_STRING, sizeof(char));
 		require(n->var != NULL, "Memory initialization of n->var in population of env failed\n");
 		n->value = calloc(MAX_STRING, sizeof(char));
 		require(n->value != NULL, "Memory initialization of n->var in population of env failed\n");
-		int j = 0;
+		j = 0;
 		/*
 		 * envp is weird.
 		 * When referencing envp[i]'s characters directly, they were all jumbled.
 		 * So just copy envp[i] to envp_line, and work with that - that seems
 		 * to fix it.
 		 */
-		char* envp_line = calloc(MAX_STRING, sizeof(char));
+		envp_line = calloc(MAX_STRING, sizeof(char));
 		require(envp_line != NULL, "Memory initialization of envp_line in population of env failed\n");
 		copy_string(envp_line, envp[i]);
 		while(envp_line[j] != '=')
@@ -749,7 +754,7 @@ void populate_env(char** envp)
 		/* If we get strange input, we need to ignore it */
 		if(n->var == NULL) continue;
 		j = j + 1; /* Skip over = */
-		int k = 0; /* As envp[i] will continue as j but n->value begins at 0 */
+		k = 0; /* As envp[i] will continue as j but n->value begins at 0 */
 		while(envp_line[j] != 0)
 		{ /* Copy everything else to value */
 			n->value[k] = envp_line[j];

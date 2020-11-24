@@ -146,9 +146,10 @@ int variable_substitute(char* input, struct Token* n, int index)
 
 	/* Get the variable name */
 	int substitute_done = FALSE;
+	char c;
 	while(substitute_done == FALSE)
 	{
-		char c = input[index];
+		c = input[index];
 		require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
 		if(EOF == c || '\n' == c || index > string_length(input))
 		{ /* We never should hit EOF, EOL or run past the end of the line 
