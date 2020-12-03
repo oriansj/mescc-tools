@@ -287,6 +287,11 @@ int Architectural_displacement(int target, int base)
 		 */
 		return ((target - base) - 8 + (3 & base));
 	}
+	else if(ALIGNED && (AARM64 == Architecture))
+	{
+			ALIGNED = FALSE;
+			return (target - (~3 & base)) >> 2;
+	}
 	else if (AARM64 == Architecture)
 	{
 		return ((target - base) - 8 + (3 & base));
