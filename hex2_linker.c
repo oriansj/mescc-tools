@@ -687,6 +687,13 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/* Catch a common mistake */
+	if((KNIGHT != Architecture) && (0 == Base_Address))
+	{
+		file_print(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
+		file_print("If you are not generating a ROM image this binary will likely not work\n", stderr);
+	}
+
 	/* Make sure we have a program tape to run */
 	if (NULL == input)
 	{
