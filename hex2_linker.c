@@ -694,6 +694,14 @@ int main(int argc, char **argv)
 		file_print("If you are not generating a ROM image this binary will likely not work\n", stderr);
 	}
 
+	/* Catch implicitly false assumptions */
+	if(BigEndian && ((X86 == Architecture) || ( AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture)))
+	{
+		file_print(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
+		file_print("You have specified big endian output on likely a little endian processor\n", stderr);
+		file_print("if this is a mistake please pass --little-endian next time\n", stderr);
+	}
+
 	/* Make sure we have a program tape to run */
 	if (NULL == input)
 	{
