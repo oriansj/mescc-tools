@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	int bytes;
 	char* buffer = calloc(BUFFER_SIZE + 1, sizeof(char));
 	int input;
-	for(i = 2; i <= argc ; i =  i + 1)
+	for(i = 2; i < argc ; i =  i + 1)
 	{
 		input = open(argv[i], 0, 0);
 		if(-1 == input)
