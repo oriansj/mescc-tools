@@ -47,6 +47,7 @@ struct entry
 
 FILE* output;
 struct entry* jump_table;
+struct entry* jump_table_curr;
 int count;
 char* entry;
 
@@ -69,9 +70,9 @@ void storeLabel(FILE* source_file)
 {
 	struct entry* entry = calloc(1, sizeof(struct entry));
 
-	/* Prepend to list */
-	entry->next = jump_table;
-	jump_table = entry;
+	/* Append to list */
+	jump_table_curr->next = entry;
+	jump_table_curr = entry;
 
 	/* Store string */
 	entry->name = calloc((max_string + 1), sizeof(char));
@@ -206,20 +207,6 @@ void output_symbol_table(struct entry* node)
 	file_print("# END Generated symbol table\n", output);
 }
 
-struct entry* reverse_list(struct entry* head)
-{
-	struct entry* root = NULL;
-	struct entry* next;
-	while(NULL != head)
-	{
-		next = head->next;
-		head->next = root;
-		root = head;
-		head = next;
-	}
-	return root;
-}
-
 void write_int(char* field, char* label)
 {
 	file_print(field, output);
@@ -270,7 +257,9 @@ void write_section(char* label, char* name, char* type, char* flags, char* addre
 /* Standard C main program */
 int main(int argc, char **argv)
 {
-	jump_table = NULL;
+	/* add one dummy entry to the start of the jump table */
+	jump_table = calloc(1, sizeof(struct entry));
+	jump_table_curr = jump_table;
 	struct entry* input = NULL;
 	output = stdout;
 	char* output_file = "";
@@ -330,9 +319,9 @@ int main(int argc, char **argv)
 		{
 			head = calloc(1, sizeof(struct entry));
 			/* Include _start or any other entry from your .hex2 */
-			head->next = jump_table;
-			jump_table = head;
-			jump_table->name = argv[option_index + 1];
+			jump_table_curr->next = head;
+			jump_table_curr = head;
+			head->name = argv[option_index + 1];
 			/* However only the last one will be exempt from the _name hidden rule */
 			entry = argv[option_index + 1];
 			option_index = option_index + 2;
@@ -354,8 +343,8 @@ int main(int argc, char **argv)
 	/* Get all of the labels */
 	first_pass(input);
 
-	/* Reverse their order */
-	jump_table = reverse_list(jump_table);
+	/* Skip dummy entry */
+	jump_table = jump_table->next;
 
 	/* Create sections */
 	/* Create string names for sections */
