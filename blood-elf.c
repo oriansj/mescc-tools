@@ -367,5 +367,10 @@ int main(int argc, char **argv)
 	output_symbol_table(jump_table);
 	file_print("\n:ELF_end\n", output);
 
+	/* Close output file */
+	if (output != stdout) {
+		fclose(output);
+	}
+
 	return EXIT_SUCCESS;
 }
