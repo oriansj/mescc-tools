@@ -30,7 +30,7 @@ echo "Starting kaem tests"
 ../bin/kaem -f "test/test11/kaem.test" >| "test/results/test11-output"
 ../bin/kaem -f "test/test12/kaem.test" >| "test/results/test12-output"
 ../bin/kaem -f "test/test13/kaem.test" >| "test/results/test13-output"
-../bin/kaem -f "test/test14/kaem.test" >| "test/results/test14-output" 2>&1
+LC_MESSAGES=en_US.UTF-8 ../bin/kaem -f "test/test14/kaem.test" >| "test/results/test14-output" 2>&1
 ../bin/kaem -f "test/test15/kaem.test" >| "test/results/test15-output"
 . ../sha256.sh
 sha256_check test/test.answers
