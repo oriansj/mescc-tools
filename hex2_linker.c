@@ -48,6 +48,8 @@
 // CONSTANT BINARY 2
 #define BINARY 2
 
+// CONSTANT HASH_TABLE_SIZE 49157
+#define HASH_TABLE_SIZE 49157
 
 /* Imported functions */
 char* numerate_number(int a);
@@ -73,7 +75,7 @@ struct entry
 
 /* Globals */
 FILE* output;
-struct entry* jump_table;
+struct entry** jump_tables;
 int BigEndian;
 int Base_Address;
 int Architecture;
@@ -147,10 +149,21 @@ void Copy_String(char* a, char* b)
 	}
 }
 
+int GetHash(char* s)
+{
+	int i = 5381;
+	while(0 != s[0])
+	{
+		i = i * 31 + s[0];
+		s = s + 1;
+	}
+	return (i & 0xFFFFFF) % HASH_TABLE_SIZE;
+}
+
 unsigned GetTarget(char* c)
 {
 	struct entry* i;
-	for(i = jump_table; NULL != i; i = i->next)
+	for(i = jump_tables[GetHash(c)]; NULL != i; i = i->next)
 	{
 		if(match(c, i->name))
 		{
@@ -170,15 +183,16 @@ int storeLabel(FILE* source_file, int ip)
 	/* Ensure we have target address */
 	entry->target = ip;
 
-	/* Prepend to list */
-	entry->next = jump_table;
-	jump_table = entry;
-
 	/* Store string */
 	int c = consume_token(source_file);
 	entry->name = calloc(length(scratch) + 1, sizeof(char));
 	Copy_String(scratch, entry->name);
 	Clear_Scratch(scratch);
+
+	/* Prepend to list */
+	int h = GetHash(entry->name);
+	entry->next = jump_tables[h];
+	jump_tables[h] = entry;
 
 	return c;
 }
@@ -573,7 +587,11 @@ int main(int argc, char **argv)
 {
 	ALIGNED = FALSE;
 	BigEndian = TRUE;
-	jump_table = NULL;
+	int h;
+	jump_tables = calloc(HASH_TABLE_SIZE, sizeof(void*));
+	for(h = 0; h < HASH_TABLE_SIZE; h = h + 1) {
+		jump_tables[h] = NULL;
+	}
 	Architecture = KNIGHT;
 	Base_Address = 0;
 	struct input_files* input = NULL;
