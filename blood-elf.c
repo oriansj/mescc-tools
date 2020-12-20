@@ -379,9 +379,8 @@ int main(int argc, char **argv)
 	file_print("\n:ELF_end\n", output);
 
 	/* Close output file */
-	if (output != stdout) {
-		fclose(output);
-	}
+	fflush(output);
+	fclose(output);
 
 	return EXIT_SUCCESS;
 }

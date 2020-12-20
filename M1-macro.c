@@ -872,10 +872,8 @@ int main(int argc, char **argv)
 	preserve_other(blob_list);
 	print_hex(token_list);
 
-	if (destination_file != stdout)
-	{
-		fclose(destination_file);
-	}
+	fflush(destination_file);
+	fclose(destination_file);
 
 	return EXIT_SUCCESS;
 }

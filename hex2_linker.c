@@ -48,8 +48,6 @@
 // CONSTANT BINARY 2
 #define BINARY 2
 
-// CONSTANT HASH_TABLE_SIZE 49157
-#define HASH_TABLE_SIZE 49157
 
 /* Imported functions */
 char* numerate_number(int a);
@@ -157,7 +155,7 @@ int GetHash(char* s)
 		i = i * 31 + s[0];
 		s = s + 1;
 	}
-	return (i & 0xFFFFFF) % HASH_TABLE_SIZE;
+	return (i & 0xFFFF);
 }
 
 unsigned GetTarget(char* c)
@@ -587,11 +585,8 @@ int main(int argc, char **argv)
 {
 	ALIGNED = FALSE;
 	BigEndian = TRUE;
-	int h;
-	jump_tables = calloc(HASH_TABLE_SIZE, sizeof(void*));
-	for(h = 0; h < HASH_TABLE_SIZE; h = h + 1) {
-		jump_tables[h] = NULL;
-	}
+	jump_tables = calloc(65537, sizeof(struct entry*));
+
 	Architecture = KNIGHT;
 	Base_Address = 0;
 	struct input_files* input = NULL;
@@ -734,16 +729,16 @@ int main(int argc, char **argv)
 	ip = Base_Address;
 	second_pass(input);
 
-	/* Close output file */
-	if (output != stdout) {
-		fclose(output);
-	}
+	/* flush all writes */
+	fflush(output);
 
 	/* Set file as executable */
 	if(exec_enable && (output != stdout))
 	{
-		/* 488 = 750 in octal */
-		if(0 != chmod(output_file, 488))
+		/* Close output file */
+		fclose(output);
+
+		if(0 != chmod(output_file, 0750))
 		{
 			file_print("Unable to change permissions\n", stderr);
 			exit(EXIT_FAILURE);
