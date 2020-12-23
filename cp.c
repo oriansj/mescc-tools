@@ -35,13 +35,25 @@ char* copy_string(char* target, char* source);
 char* prepend_string(char* add, char* base);
 void require(int bool, char* error);
 
+/* Globals */
+int verbose;
+
 int copy_file(char* source, char* dest)
 {
+	if(verbose)
+	{ /* Output message */
+		/* Of the form 'source' -> 'dest' */
+		file_print(prepend_string(prepend_string(prepend_string(prepend_string(
+				"'", source), "' -> '"), dest),	"'\n"), stdout);
+	}
+
 	/* Open source and dest as FILE*s */
 	FILE* fsource = fopen(source, "r");
-	require(fsource != NULL, "Error opening source file\n");
+	require(fsource != NULL, prepend_string(
+			prepend_string("Error opening source file ", source), "\n"));
 	FILE* fdest = fopen(dest, "w");
-	require(fdest >= 0, "Error opening destination file\n");
+	require(fdest >= 0, prepend_string(
+			prepend_string("Error opening destination file", dest), "\n"));
 
 	/*
 	 * The following loop reads a character from the source and writes it to the
@@ -65,6 +77,9 @@ int main(int argc, char** argv)
 	char* source = NULL;
 	char* dest = NULL;
 
+	/* Set defaults */
+	verbose = FALSE;
+
 	int i = 1;
 	/* Loop arguments */
 	while(i <= argc)
@@ -82,6 +97,11 @@ int main(int argc, char** argv)
 		{ /* Output version */
 			file_print("cp version 1.1.0\n", stdout);
 			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[i], "-v") || match(argv[i], "--verbose"))
+		{
+			verbose = TRUE;
+			i = i + 1;
 		}
 		else if(argv[i][0] != '-')
 		{ /* It is not an option */
