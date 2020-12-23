@@ -28,9 +28,11 @@
 // CONSTANT MAX_STRING 4096
 #define MAX_STRING 4096
 
+/* Prototypes */
 int match(char* a, char* b);
 void file_print(char* s, FILE* f);
 char* copy_string(char* target, char* source);
+char* prepend_string(char* add, char* base);
 void require(int bool, char* error);
 
 int copy_file(char* source, char* dest)
@@ -70,6 +72,11 @@ int main(int argc, char** argv)
 		if(NULL == argv[i])
 		{ /* Ignore and continue */
 			i = i + 1;
+		}
+		else if(match(argv[i], "-h") || match(argv[i], "--help"))
+		{
+			file_print(prepend_string(prepend_string("Usage: ", argv[0]), " [-h | --help] [-V | --version]\n"), stdout);
+			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
 		{ /* Output version */
