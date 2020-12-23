@@ -52,6 +52,13 @@ kaem: functions/file_print.c functions/string.c functions/require.c functions/ma
 catm: catm.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
 
+cp: cp.c functions/match.c functions/require.c functions/file_print.c functions/string.c | bin
+	$(CC) $(CFLAGS) cp.c \
+	functions/match.c \
+	functions/require.c \
+	functions/file_print.c \
+	functions/string.c -o bin/cp
+
 # Clean up after ourselves
 .PHONY: clean
 clean:
@@ -95,7 +102,8 @@ test: test0-binary \
 	test9-binary \
 	test10-binary \
 	test11-binary \
-	test12-binary | results
+	test12-binary \
+	test13 | results
 	./test.sh
 
 test0-binary: results hex2 get_machine
@@ -136,6 +144,9 @@ test11-binary: results hex2 M1 blood-elf get_machine
 
 test12-binary: results hex2 M1 blood-elf get_machine
 	test/test12/hello.sh
+
+test13: results cp
+	test/test13/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers
