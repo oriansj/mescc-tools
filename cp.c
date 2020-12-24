@@ -38,6 +38,7 @@ char* prepend_string(char* add, char* base);
 void require(int bool, char* error);
 char* postpend_char(char* s, char a);
 int string_length(char* a);
+void require(int bool, char* error);
 
 /* Globals */
 int verbose;
@@ -276,6 +277,7 @@ int main(int argc, char** argv)
 			}
 			else
 			{ /* We are setting a source */
+				require(sources_index < MAX_ARRAY, "Too many files\n");
 				sources[sources_index] = calloc(MAX_STRING, sizeof(char));
 				require(sources[sources_index] != NULL, "Memory initialization of sources[source_index] failed\n");
 				copy_string(sources[sources_index], argv[i]);
