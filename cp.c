@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 		{
 			file_print("Usage: ", stdout);
 			file_print(argv[0], stdout);
-			file_print(" [-h | --help] [-V | --version]\n", stdout);
+			file_print(" [-h | --help] [-V | --version] [-v | --verbose] source1 source2 sourcen destination\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
