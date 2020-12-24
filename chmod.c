@@ -41,12 +41,27 @@ int match(char* a, char* b);
 /* Globals */
 int verbose;
 
+/* UTILITY FUNCTIONS */
+
+/* Function to find the length of a char**; an array of strings */
+int array_length(char** array)
+{
+	int length = 0;
+	while(array[length] != NULL)
+	{
+		length = length + 1;
+	}
+	return length;
+}
+
 /* PROCESSING FUNCTIONS */
 
 int main(int argc, char** argv)
 {
 	/* Initialize variables */
-	char* file = NULL;
+	char** files = calloc(MAX_ARRAY, sizeof(char*));
+	require(files != NULL, "Memory initialization of files failed\n");
+	int files_index = 0;
 	char* mode = NULL;
 
 	/* Set defaults */
@@ -82,12 +97,15 @@ int main(int argc, char** argv)
 			if(mode == NULL)
 			{ /* Mode always comes first */
 				mode = calloc(MAX_STRING, sizeof(char));
+				require(mode != NULL, "Memory initialization of mode failed\n");
 				copy_string(mode, argv[i]);
 			}
 			else
-			{ /* It's the file, as the mode is already done */
-				file = calloc(MAX_STRING, sizeof(char));
-				copy_string(file, argv[i]);
+			{ /* It's a file, as the mode is already done */
+				files[files_index] = calloc(MAX_STRING, sizeof(char));
+				require(files[files_index] != NULL, "Memory initialization of files[files_index] failed\n");
+				copy_string(files[files_index], argv[i]);
+				files_index = files_index + 1;
 			}
 			i = i + 1;
 		}
@@ -100,11 +118,7 @@ int main(int argc, char** argv)
 
 	/* Ensure the two values have values */
 	require(mode != NULL, "Provide a mode\n");
-	require(file != NULL, "Provide a file\n");
-
-	/* Make sure the file can be opened */
-	FILE* test = fopen(file, "r");
-	require(test != NULL, "File cannot be read\n");
+	require(files[0] != NULL, "Provide a file\n");
 
 	/* Convert the mode str into octal */
 	if(mode[0] != '0')
@@ -113,19 +127,31 @@ int main(int argc, char** argv)
 	}
 	int omode = numerate_string(mode);
 
-	/* Verbose message */
-	if(verbose)
+	/* Loop over files to be operated on */
+	FILE* test;
+	for(i = 0; i < array_length(files); i = i + 1)
 	{
-		file_print("mode of '", stdout);
-		file_print(file, stdout);
-		file_print("' changed to ", stdout);
-		file_print(mode, stdout);
-		file_print("\n", stdout);
+		/* Make sure the file can be opened */
+		test = fopen(files[i], "r");
+		require(test != NULL, "A file cannot be read\n");
+		fclose(test);
+
+		/* Verbose message */
+		if(verbose)
+		{
+			file_print("mode of '", stdout);
+			file_print(files[i], stdout);
+			file_print("' changed to ", stdout);
+			file_print(mode, stdout);
+			file_print("\n", stdout);
+		}
+
+		/* Perform the chmod */
+		chmod(files[i], omode);
+
+		free(files[i]);
 	}
 
-	/* Perform the chmod */
-	chmod(file, omode);
-
 	free(mode);
-	free(file);
+	free(files);
 }
