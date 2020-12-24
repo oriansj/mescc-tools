@@ -104,7 +104,8 @@ test: test0-binary \
 	test11-binary \
 	test12-binary \
 	test13 \
-	test14 | results
+	test14 \
+	test15 | results
 	./test.sh
 
 test0-binary: results hex2 get_machine
@@ -151,6 +152,9 @@ test13: results cp
 
 test14: results cp
 	test/test14/hello.sh
+
+test15: results cp
+	test/test15/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers
