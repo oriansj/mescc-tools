@@ -186,6 +186,31 @@ char** list_to_array(struct Token* s)
 	return array;
 }
 
+/* Function to handle the correct options for escapes */
+int handle_escape(int c)
+{
+	if(c == '\n')
+	{ /* Do nothing - eat up the newline */
+		return -1;
+	}
+	else if('n' == c)
+	{ /* Add a newline to the token */
+		return '\n';
+	}
+	else if('r' == c)
+	{ /* Add a return to the token */
+		return '\r';
+	}
+	else if('\\' == c)
+	{ /* Add a real backslash to the token */
+		return '\\';
+	}
+	else
+	{ /* Just add it to the token (eg, quotes) */
+		return c;
+	}
+}
+
 /*
  * TOKEN COLLECTION FUNCTIONS
  */
@@ -212,6 +237,7 @@ int collect_string(FILE* input, struct Token* n, int index)
 {
 	int string_done = FALSE;
 	int c;
+	int cc;
 	do
 	{
 		/* Bounds check */
@@ -219,13 +245,20 @@ int collect_string(FILE* input, struct Token* n, int index)
 		c = fgetc(input);
 		require(EOF != c, "IMPROPERLY TERMINATED STRING!\nABORTING HARD\n");
 
-		if('"' == c)
+		if('\\' == c)
+		{ /* We are escaping the next character */
+			/* This correctly handles escaped quotes as it just returns the quote */
+			c = fgetc(input);
+			cc = handle_escape(c);
+			n->value[index] = c;
+			index = index + 1;
+		}
+		else if('"' == c)
 		{ /* End of string */
 			string_done = TRUE;
 		}
 		else
 		{
-			require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
 			n->value[index] = c;
 			index = index + 1;
 		}
@@ -237,6 +270,7 @@ int collect_string(FILE* input, struct Token* n, int index)
 int collect_token(FILE* input, struct Token* n, int last_index)
 {
 	int c;
+	int cc;
 	int token_done = FALSE;
 	char* token = calloc(MAX_STRING, sizeof(char));
 	require(token != NULL, "Memory initialization of token in collect_token failed\n");
@@ -279,26 +313,14 @@ int collect_token(FILE* input, struct Token* n, int last_index)
 			if(0 == index) index = last_index;
 		}
 		else if('\\' == c)
-		{ /* Support for escapes; drops the char after */
-			/******************************************************************
-			 * This is a design decision; it is primarily made for newlines.  *
-			 * Unlike the way normal shells do escapes (making the next char  *
-			 * actually do something), this just eats it up. Why? Simply, to  *
-			 * aid formatting (mostly through newlines). Eventually, we will  *
-			 * make it do it the proper way... but for now it's staying like  *
-			 * this. Feel free to send in a patch if you have a solution!     *
-			 * Because of this, I have decided that since the behaviour is    *
-			 * signficant enough, when warnings are enabled, we will give a   *
-			 * warning about this.                                            *
-			 ******************************************************************/
+		{ /* Support for escapes */
 			c = fgetc(input); /* Skips over \, gets the next char */
-			if(WARNINGS && c != '\n')
-			{
-				file_print("WARNING: The character '", stdout);
-				fputc(c, stdout);
-				file_print("' just got eaten up because of an unsupported escape sequence; see kaem.c:collect_token for more information.\n", stdout);
+			cc = handle_escape(c);
+			if(-1 != cc)
+			{ /* We need to put it into the token */
+				n->value[index] = cc;
 			}
-			index = index + 2;
+			index = index + 1;
 		}
 		else if(0 == c)
 		{ /* We have come to the end of the token */
@@ -306,7 +328,6 @@ int collect_token(FILE* input, struct Token* n, int last_index)
 		}
 		else
 		{ /* It's a character to assign */
-			require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
 			n->value[index] = c;
 			index = index + 1;
 		}
