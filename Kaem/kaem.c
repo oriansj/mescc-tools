@@ -414,6 +414,23 @@ int add_envar()
 		n->value[index - offset] = token->value[index];
 		index = index + 1;
 	}
+	/* Get rid of old versions of the same var */
+	while(env != n && match(env->var, n->var))
+	{
+		env = env->next;
+	}
+	struct Token* nn = env;
+	while (nn != n && nn->next != n)
+	{
+		if (match(nn->next->var, n->var))
+		{
+			nn->next = nn->next->next;
+		}
+		else
+		{
+			nn = nn->next;
+		}
+	}
 	return FALSE;
 }
 
