@@ -5,8 +5,6 @@ export PREFIX=/usr
 
 include /usr/share/dpkg/buildflags.mk
 
-export CFLAGS += -fcommon
-
 %:
 	dh $@
 
