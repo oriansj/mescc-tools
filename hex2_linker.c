@@ -73,7 +73,7 @@ struct entry
 
 /* Globals */
 FILE* output;
-struct entry* jump_table;
+struct entry** jump_tables;
 int BigEndian;
 int Base_Address;
 int Architecture;
@@ -147,10 +147,21 @@ void Copy_String(char* a, char* b)
 	}
 }
 
+int GetHash(char* s)
+{
+	int i = 5381;
+	while(0 != s[0])
+	{
+		i = i * 31 + s[0];
+		s = s + 1;
+	}
+	return (i & 0xFFFF);
+}
+
 unsigned GetTarget(char* c)
 {
 	struct entry* i;
-	for(i = jump_table; NULL != i; i = i->next)
+	for(i = jump_tables[GetHash(c)]; NULL != i; i = i->next)
 	{
 		if(match(c, i->name))
 		{
@@ -170,15 +181,16 @@ int storeLabel(FILE* source_file, int ip)
 	/* Ensure we have target address */
 	entry->target = ip;
 
-	/* Prepend to list */
-	entry->next = jump_table;
-	jump_table = entry;
-
 	/* Store string */
 	int c = consume_token(source_file);
 	entry->name = calloc(length(scratch) + 1, sizeof(char));
 	Copy_String(scratch, entry->name);
 	Clear_Scratch(scratch);
+
+	/* Prepend to list */
+	int h = GetHash(entry->name);
+	entry->next = jump_tables[h];
+	jump_tables[h] = entry;
 
 	return c;
 }
@@ -240,9 +252,10 @@ void outputPointer(int displacement, int number_of_bytes)
 	}
 	else
 	{ /* Deal with LittleEndian */
+		unsigned byte;
 		while(number_of_bytes > 0)
 		{
-			unsigned byte = value % 256;
+			byte = value % 256;
 			value = value / 256;
 			fputc(byte, output);
 			number_of_bytes = number_of_bytes - 1;
@@ -286,6 +299,11 @@ int Architectural_displacement(int target, int base)
 		 * Eg 1byte immediate => -8 + 1 = -7
 		 */
 		return ((target - base) - 8 + (3 & base));
+	}
+	else if(ALIGNED && (AARM64 == Architecture))
+	{
+			ALIGNED = FALSE;
+			return (target - (~3 & base)) >> 2;
 	}
 	else if (AARM64 == Architecture)
 	{
@@ -567,7 +585,8 @@ int main(int argc, char **argv)
 {
 	ALIGNED = FALSE;
 	BigEndian = TRUE;
-	jump_table = NULL;
+	jump_tables = calloc(65537, sizeof(struct entry*));
+
 	Architecture = KNIGHT;
 	Base_Address = 0;
 	struct input_files* input = NULL;
@@ -577,6 +596,7 @@ int main(int argc, char **argv)
 	ByteMode = HEX;
 	scratch = calloc(max_string + 1, sizeof(char));
 	char* arch;
+	struct input_files* temp;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -643,7 +663,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
-			struct input_files* temp = calloc(1, sizeof(struct input_files));
+			temp = calloc(1, sizeof(struct input_files));
 			temp->filename = argv[option_index + 1];
 			temp->next = input;
 			input = temp;
@@ -670,7 +690,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("hex2 1.0.0\n", stdout);
+			file_print("hex2 1.1.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
@@ -678,6 +698,21 @@ int main(int argc, char **argv)
 			file_print("Unknown option\n", stderr);
 			exit(EXIT_FAILURE);
 		}
+	}
+
+	/* Catch a common mistake */
+	if((KNIGHT != Architecture) && (0 == Base_Address))
+	{
+		file_print(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
+		file_print("If you are not generating a ROM image this binary will likely not work\n", stderr);
+	}
+
+	/* Catch implicitly false assumptions */
+	if(BigEndian && ((X86 == Architecture) || ( AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture)))
+	{
+		file_print(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
+		file_print("You have specified big endian output on likely a little endian processor\n", stderr);
+		file_print("if this is a mistake please pass --little-endian next time\n", stderr);
 	}
 
 	/* Make sure we have a program tape to run */
@@ -694,11 +729,16 @@ int main(int argc, char **argv)
 	ip = Base_Address;
 	second_pass(input);
 
+	/* flush all writes */
+	fflush(output);
+
 	/* Set file as executable */
 	if(exec_enable && (output != stdout))
 	{
-		/* 488 = 750 in octal */
-		if(0 != chmod(output_file, 488))
+		/* Close output file */
+		fclose(output);
+
+		if(0 != chmod(output_file, 0750))
 		{
 			file_print("Unable to change permissions\n", stderr);
 			exit(EXIT_FAILURE);

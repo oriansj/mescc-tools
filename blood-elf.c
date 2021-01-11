@@ -277,6 +277,8 @@ int main(int argc, char **argv)
 	entry = "";
 	BITSIZE = 32;
 	count = 1;
+	struct entry* temp;
+	struct entry* head;
 
 	int option_index = 1;
 	while(option_index <= argc)
@@ -299,7 +301,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
-			struct entry* temp = calloc(1, sizeof(struct entry));
+			temp = calloc(1, sizeof(struct entry));
 			temp->name = argv[option_index + 1];
 			temp->next = input;
 			input = temp;
@@ -321,12 +323,12 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("blood-elf 1.0.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			file_print("blood-elf 1.1.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "--entry"))
 		{
-			struct entry* head = calloc(1, sizeof(struct entry));
+			head = calloc(1, sizeof(struct entry));
 			/* Include _start or any other entry from your .hex2 */
 			head->next = jump_table;
 			jump_table = head;
@@ -375,6 +377,10 @@ int main(int argc, char **argv)
 	output_string_table(jump_table);
 	output_symbol_table(jump_table);
 	file_print("\n:ELF_end\n", output);
+
+	/* Close output file */
+	fflush(output);
+	fclose(output);
 
 	return EXIT_SUCCESS;
 }

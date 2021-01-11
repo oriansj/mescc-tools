@@ -16,13 +16,33 @@
 
 * Current
 ** Added
+netBSD support for tests
+FreeBSD support for test
+FreeBSD support for generated binaries
+Implemented Hash table to speed up M1
+Add aligned addressing for AArch64
+Produce meaningful warning message when users are not generating ROM images
+Produce warning for potentially wrong endianess
+Use hash table for hex2 jump table
 
 ** Changed
+Inherrit CFLAGS in kaem makefile
+Changed M1 to leverage O(1) macro application
+Pulled all variable initialization outside of loops to fix M2-Planet compatibility
+Broke kaem tests into individual commands
+Close files that were fopen'ed
 
 ** Fixed
 Fixed makefiles so guix is able to build
+Fixed kaem 32bit regression.
+Spelling mistakes
+GCC 10 Compatibility issue
+Behavior of kaem --strict in regards to blank lines
+Missing makefile dependencies on get_machine
+catm stopped reading past the end of argv
 
 ** Removed
+Remove kaem.run in Kaem/
 
 * 1.0 - 2020-05-01
 ** Added

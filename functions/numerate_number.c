@@ -22,6 +22,7 @@
 #define FALSE 0
 //CONSTANT FALSE 0
 int in_set(int c, char* s);
+//CONSTANT NULL 0
 
 char* numerate_number(int a)
 {

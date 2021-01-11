@@ -27,7 +27,7 @@
 00000001                                ## e_ident[EI_DATA] Indicating little endianness
 00000001                                ## e_ident[EI_VERSION] Indicating original elf
 
-00000000                                ## e_ident[EI_OSABI] Set at 0 because none cares
+00000011                                ## e_ident[EI_OSABI] Set at 3 because FreeBSD is strict
 00000000                                ## e_ident[EI_ABIVERSION] See above
 
 00000000 00000000 00000000 00000000 00000000 00000000 00000000 ## e_ident[EI_PAD]
@@ -52,8 +52,8 @@
 
 ## Program Header
 :ELF_program_headers
-00000001 00000000 00000000 00000000     ## p_type
-00000110 00000000 00000000 00000000     ## Flags
+00000001 00000000 00000000 00000000     ## ph_type
+00000111 00000000 00000000 00000000     ## ph_lags: PF-X|PF-W|PF-R = 7
 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 ## p_offset
 
 &ELF_base 00000000 00000000 00000000 00000000 ## p_vaddr

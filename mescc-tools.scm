@@ -31,6 +31,7 @@
 (use-modules (ice-9 match)
              (gnu packages)
              (gnu packages gcc)
+             (gnu packages base)
              (guix build-system gnu)
              (guix download)
              (guix licenses)
@@ -39,12 +40,13 @@
 (define-public mescc-tools
     (package
       (name "mescc-tools")
-      (version "1.0.0")
+      (version "1.0.1")
+      (inputs `(("which", which) ("coreutils", coreutils)))
       (source (origin
                 (method url-fetch)
                 (uri (string-append "http://git.savannah.nongnu.org/cgit/mescc-tools.git/snapshot/mescc-tools-Release_" version ".tar.gz"))
                 (sha256
-                 (base32 "125fh1sln9y7fsyxa6nw9gfn09p191iqhdp0327zngpd8jwhyxmc"))))
+                 (base32 "1wqj70h4rrxl1d1aqpxhy47964r5dilvll6gvqv75y9qk6pwx5is"))))
       (build-system gnu-build-system)
       (arguments
        `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
