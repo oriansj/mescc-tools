@@ -358,63 +358,57 @@ int is_envar(char* token)
 }
 
 /* Add an envar */
-int add_envar()
+void add_envar()
 {
+	/* Pointers to strings we want */
+	char* name = calloc(string_length(token->value) + 4, sizeof(char));
+	char* value = token->value;
+	char* newvalue;
+	int i = 0;
+
+	/* Isolate the name */
+	while('=' != value[i])
+	{
+		name[i] = value[i];
+		i = i + 1;
+	}
+
+
+	/* Isolate the value */
+	newvalue = name + i + 2;
+	value = value + i + 1;
+	i = 0;
+	require(0 != value[i], "add_envar recieved improper variable\n");
+	while(0 != value[i])
+	{
+		newvalue[i] = value[i];
+		i = i + 1;
+	}
+
 	/* If we are in init-mode and this is the first var env == NULL, rectify */
 	if(env == NULL)
 	{
 		env = calloc(1, sizeof(struct Token));
 		require(env != NULL, "Memory initialization of env failed\n");
+		env->var = name; /* Add our first variable */
 	}
 
-	struct Token* n;
-	n = env;
-	/* Traverse to end of linked-list */
-	while(n->next != NULL)
+	struct Token* n = env;
+
+	/* Find match if possible */
+	while(!match(name, n->var))
 	{
-		if(n->next->value == NULL || n->next->var == NULL) break;
+		if(NULL == n->next)
+		{
+			n->next = calloc(1, sizeof(struct Token));
+			require(n->next != NULL, "Memory initialization of next env node in add_envar failed\n");
+			n->next->var = name;
+		} /* Loop will match and exit */
 		n = n->next;
 	}
-	/* Initialize new node */
-	/* See first comment, this situation means no new node */
-	if(n->value != NULL || n->var != NULL || n->next != NULL)
-	{
-		n->next = calloc(1, sizeof(struct Token));
-		require(n->next != NULL, "Memory initialization of next env node in add_envar failed\n");
-		n = n->next;
-	}
 
-	/*
-	 * If you are confused about n->* and token->value here:
-	 * token->value: is the token with the raw data. Part of token linked list.
-	 * n->*: is where it goes. Part of env linked list.
-	 */
-	/* Get n->var */
-	int index = 0;
-	n->var = calloc(MAX_STRING, sizeof(char));
-	require(n->var != NULL, "Memory initialization of n->var in add_envar failed\n");
-	int token_length = string_length(token->value);
-	/* Copy into n->var up to = */
-	while(token->value[index] != '=')
-	{
-		if(index >= token_length) return TRUE;
-		n->var[index] = token->value[index];
-		index = index + 1;
-	}
-
-	/* Get n->value */
-	index = index + 1; /* Skip over = */
-	int offset = index;
-	n->value = calloc(MAX_STRING, sizeof(char));
-	require(n->value != NULL, "Memory initialization of n->value in add_envar failed\n");
-	/* Copy into n->value up to end of token */
-	while(token->value[index] != 0)
-	{
-		if(index >= token_length) return TRUE;
-		n->value[index - offset] = token->value[index];
-		index = index + 1;
-	}
-	return FALSE;
+	/* Since we found the variable we need only to set it to its new value */
+	n->value = newvalue;
 }
 
 /* cd builtin */
@@ -560,8 +554,7 @@ int execute()
 	/* Actually do the execution */
 	if(is_envar(token->value) == TRUE)
 	{
-		rc = add_envar();
-		if(STRICT) require(rc == FALSE, "Adding of an envar failed!\n");
+		add_envar();
 		return 0;
 	}
 	else if(match(token->value, "cd"))
