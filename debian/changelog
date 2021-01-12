@@ -1,3 +1,11 @@
+mescc-tools (1.1.0-1) unstable; urgency=medium
+
+  * debian/patches: Remove all patches, applied upstream.
+  * debian/control: Update Standards-Version to 4.5.1.
+  * debian/rules: Drop passing -fcommon in CFLAGS, fixed upstream.
+
+ -- Vagrant Cascadian <vagrant@debian.org>  Mon, 11 Jan 2021 16:01:39 -0800
+
 mescc-tools (1.0.1-6) unstable; urgency=medium
 
   * debian/patches: Add all patches from upstream, fixes FTBFS on i386.
