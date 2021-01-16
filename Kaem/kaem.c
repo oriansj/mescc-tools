@@ -233,7 +233,7 @@ void collect_comment(FILE* input)
 }
 
 /* Function for collecting strings and removing the "" pair that goes with them */
-int collect_string(FILE* input, struct Token* n, int index)
+int collect_string(FILE* input, char* n, int index)
 {
 	int string_done = FALSE;
 	int c;
@@ -250,7 +250,7 @@ int collect_string(FILE* input, struct Token* n, int index)
 			/* This correctly handles escaped quotes as it just returns the quote */
 			c = fgetc(input);
 			cc = handle_escape(c);
-			n->value[index] = c;
+			n[index] = c;
 			index = index + 1;
 		}
 		else if('"' == c)
@@ -259,7 +259,7 @@ int collect_string(FILE* input, struct Token* n, int index)
 		}
 		else
 		{
-			n->value[index] = c;
+			n[index] = c;
 			index = index + 1;
 		}
 	} while(string_done == FALSE);
@@ -267,7 +267,7 @@ int collect_string(FILE* input, struct Token* n, int index)
 }
 
 /* Function to parse and assign token->value */
-int collect_token(FILE* input, struct Token* n, int last_index)
+int collect_token(FILE* input, char* n, int last_index)
 {
 	int c;
 	int cc;
@@ -318,7 +318,7 @@ int collect_token(FILE* input, struct Token* n, int last_index)
 			cc = handle_escape(c);
 			if(-1 != cc)
 			{ /* We need to put it into the token */
-				n->value[index] = cc;
+				n[index] = cc;
 			}
 			index = index + 1;
 		}
@@ -328,7 +328,7 @@ int collect_token(FILE* input, struct Token* n, int last_index)
 		}
 		else
 		{ /* It's a character to assign */
-			n->value[index] = c;
+			n[index] = c;
 			index = index + 1;
 		}
 	} while (token_done == FALSE);
@@ -511,7 +511,6 @@ void echo()
 		/* M2-Planet doesn't let us do this in the while */
 		if(token->value == NULL) break;
 		file_print(token->value, stdout);
-		file_print(" ", stdout);
 		token = token->next;
 	}
 	file_print("\n", stdout);
@@ -530,10 +529,8 @@ void unset()
 		/* Look for the variable; we operate on ->next because we need to remove ->next */
 		while(e->next != NULL)
 		{
-			if(match(e->next->var, t->value))
-			{
-				break;
-			}
+			if(NULL == t->value) break;
+			if(match(e->next->var, t->value)) break;
 			e = e->next;
 		}
 		t = t->next;
@@ -646,50 +643,54 @@ int collect_command(FILE* script, char** argv)
 {
 	command_done = FALSE;
 	/* Initialize token */
-	token = calloc(1, sizeof(struct Token));
-	require(token != NULL, "Memory initialization of token in collect_command failed\n");
 	struct Token* n;
-	n = token;
+	n = calloc(1, sizeof(struct Token));
+	require(n != NULL, "Memory initialization of token in collect_command failed\n");
+	char* s = calloc(MAX_STRING, sizeof(char));
+	require(s != NULL, "Memory initialization of token in collect_command failed\n");
+	token = n;
 	int index = 0;
+
 	/* Get the tokens */
 	while(command_done == FALSE)
 	{
-		n->value = calloc(MAX_STRING, sizeof(char));
-		index = collect_token(script, n, index);
+		index = collect_token(script, s, index);
 		/* Don't allocate another node if the current one yielded nothing, OR
 		 * if we are done.
 		 */
-		if((n->value != NULL && match(n->value, "") == FALSE) && command_done == FALSE)
-		{
-			n->next = calloc(MAX_STRING, sizeof(char));
-			require(token != NULL, "Memory initialization of next token node in collect_command failed\n");
-			n = n->next;
-		}
+
+		if(match(s, "")) continue;
+
+		/* add to token */
+		n->value = s;
+		s = calloc(MAX_STRING, sizeof(char));
+		require(s != NULL, "Memory initialization of next token node in collect_command failed\n");
+
+		/* Deal with variables */
+		handle_variables(argv, n);
+
+		/* Prepare for next loop */
+		n->next = calloc(1, sizeof(struct Token));
+		require(n->next != NULL, "Memory initialization of next token node in collect_command failed\n");
+		n = n->next;
 	}
 	/* -1 means the script is done */
 	if(EOF == index) return index;
 
-	n = token;
-	while(n != NULL)
-	{ /* Substitute variables into each token */
-		if(n->value == NULL) break;
-		handle_variables(argv, n);
-		/* Advance to next node */
-		n = n->next;
-	}
-
 	/* Output the command if verbose is set */
 	/* Also if there is nothing in the command skip over */
-	if(VERBOSE && match(token->value, "") == FALSE)
+	if(VERBOSE && !match(token->value, ""))
 	{
 		n = token;
-		file_print(" +> ", stdout);
+		file_print(" +>", stdout);
 		while(n != NULL)
 		{ /* Print out each token token */
-			/* M2-Planet doesn't let us do this in the while */
-			if(n->value == NULL) break;
-			file_print(n->value, stdout);
 			file_print(" ", stdout);
+			/* M2-Planet doesn't let us do this in the while */
+			if(n->value != NULL)
+			{
+				if(!match(n->value, "")) file_print(n->value, stdout);
+			}
 			n = n->next;
 		}
 		fputc('\n', stdout);
