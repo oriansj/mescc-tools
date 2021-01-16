@@ -3,6 +3,9 @@ export DH_VERBOSE = 1
 
 export PREFIX=/usr
 
+# https://github.com/oriansj/mescc-tools/issues/16
+export LC_ALL=C.UTF-8
+
 include /usr/share/dpkg/buildflags.mk
 
 %:
