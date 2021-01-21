@@ -1,3 +1,10 @@
+mescc-tools (1.1.0-2) unstable; urgency=medium
+
+  * debian/rules: Set LC_ALL to C.UTF-8 to avoid test suite failure when
+    LC_ALL is set to C.
+
+ -- Vagrant Cascadian <vagrant@debian.org>  Wed, 20 Jan 2021 16:25:38 -0800
+
 mescc-tools (1.1.0-1) unstable; urgency=medium
 
   * debian/patches: Remove all patches, applied upstream.
