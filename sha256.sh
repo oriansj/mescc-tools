@@ -24,10 +24,16 @@ set -ex
 # accordingly.
 sha256_check()
 {
+	# Address locale behaviors
+	export LC_ALL=C
+	export LANG=C
+	export LANGUAGE=C
+
+	# Sort out what tool they have that can do SHA256SUM calculations and then use it
 	if [ -e "$(which sha256sum)" ]; then
-		LANG=C sha256sum -c "$1"
+		sha256sum -c "$1"
 	elif [ "$(./bin/get_machine --OS)" = "FreeBSD" ]; then
-		LANG=C awk '
+		awk '
 		BEGIN { status = 0 }
 		{
 			rc=system(">/dev/null sha256 -q -c "$1" "$2);
@@ -40,9 +46,9 @@ sha256_check()
 		END { exit status}
 		' "$1"
 	elif [ -e "$(which sum)" ]; then
-		LANG=C sum -a SHA256 -n -c "$1"
+		sum -a SHA256 -n -c "$1"
 	elif [ -e "$(which sha256)" ]; then
-		LANG=C sha256 -r -c "$1"
+		sha256 -r -c "$1"
 	else
 		echo "Unsupported sha256 tool, please send a patch to support it"
 		exit 77
