@@ -5,6 +5,7 @@ export PREFIX=/usr
 
 # https://github.com/oriansj/mescc-tools/issues/16
 export LC_ALL=C.UTF-8
+export LANGUAGE=C
 
 include /usr/share/dpkg/buildflags.mk
 
