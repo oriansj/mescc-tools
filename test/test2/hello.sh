@@ -16,12 +16,12 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 set -ex
-./bin/M1 -f test/test2/hex.M1 --LittleEndian --architecture x86 -o test/test2/hold
-./bin/hex2 -f elf_headers/elf32.hex2 -f test/test2/hold --LittleEndian --architecture x86 --BaseAddress 0x8048000 -o test/results/test2-binary --exec_enable
+./bin/M1 -f test/test2/hex.M1 --little-endian --architecture x86 -o test/test2/hold
+./bin/hex2 -f elf_headers/elf32.hex2 -f test/test2/hold --little-endian --architecture x86 --base-address 0x8048000 -o test/results/test2-binary
 
 . ./sha256.sh
 
-if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --OS)" = "Linux" ]
 then
 	./test/results/test2-binary < test/test2/hex0.hex0 > test/test2/proof
 	r=$?

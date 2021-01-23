@@ -16,6 +16,6 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 set -ex
-./bin/M1 -f test/test5/exec_enable_amd64.M1 --LittleEndian --architecture amd64 -o test/test5/hold
-./bin/hex2 -f elf_headers/elf64.hex2 -f test/test5/hold --LittleEndian --architecture amd64 --BaseAddress 0x00600000 -o test/results/test5-binary --exec_enable
+./bin/M1 -f test/test5/exec_enable_amd64.M1 --little-endian --architecture amd64 -o test/test5/hold
+./bin/hex2 -f elf_headers/elf64.hex2 -f test/test5/hold --little-endian --architecture amd64 --base-address 0x00600000 -o test/results/test5-binary
 exit 0

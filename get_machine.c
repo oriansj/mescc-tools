@@ -58,7 +58,8 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--OS"))
 		{
-			file_print(unameData->sysname, stdout);
+			if(override) file_print(override_string, stdout);
+			else file_print(unameData->sysname, stdout);
 			fputc('\n', stdout);
 			exit(EXIT_SUCCESS);
 		}

@@ -19,7 +19,7 @@ VPATH = bin:test/results
 PACKAGE = mescc-tools
 
 all: M1 hex2 get_machine blood-elf kaem catm
-
+.NOTPARALLEL:
 CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -fno-common
 

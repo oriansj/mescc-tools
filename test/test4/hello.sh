@@ -16,9 +16,10 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 set -x
-./bin/M1 -f test/test4/MES_defs.M1 -f test/test4/mini-libc-mes.M1 -f test/test4/hello.M1 --LittleEndian --architecture x86 -o test/test4/hold
-./bin/hex2 -f elf_headers/elf32.hex2 -f test/test4/hold --LittleEndian --architecture x86 --BaseAddress 0x8048000 -o test/results/test4-binary --exec_enable
-if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ]
+./bin/M1 -f test/test4/MES_defs.M1 -f test/test4/mini-libc-mes.M1 -f test/test4/hello.M1 --little-endian --architecture x86 -o test/test4/hold
+./bin/hex2 -f elf_headers/elf32.hex2 -f test/test4/hold --little-endian --architecture x86 --base-address 0x8048000 -o test/results/test4-binary
+
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --OS)" = "Linux" ]
 then
 	out=$(./test/results/test4-binary 2>&1)
 	r=$?

@@ -17,12 +17,12 @@
 
 set -ex
 ./bin/blood-elf -f test/test11/hello.M1 -o test/test11/footer.M1 || exit 1
-./bin/M1 --LittleEndian --architecture armv7l -f test/test11/hello.M1 -f test/test11/footer.M1 -o test/test11/hello.hex2 || exit 2
-./bin/hex2 --LittleEndian --architecture armv7l --BaseAddress 0x10000 -f elf_headers/elf32-ARM-debug.hex2 -f test/test11/hello.hex2 -o test/results/test11-binary --exec_enable || exit 3
+./bin/M1 --little-endian --architecture armv7l -f test/test11/hello.M1 -f test/test11/footer.M1 -o test/test11/hello.hex2 || exit 2
+./bin/hex2 --little-endian --architecture armv7l --base-address 0x10000 -f elf_headers/elf32-ARM-debug.hex2 -f test/test11/hello.hex2 -o test/results/test11-binary || exit 3
 
 . ./sha256.sh
 
-if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "armv7l" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "armv7l" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --OS)" = "Linux" ]
 then
 	./test/results/test11-binary > test/test11/proof
 	r=$?
