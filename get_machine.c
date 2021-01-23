@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 			override_string = argv[option_index + 1];
 			option_index = option_index + 2;
 		}
-		else if(match(argv[option_index], "--OS"))
+		else if(match(argv[option_index], "--os") || match(argv[option_index], "--OS"))
 		{
 			if(override) file_print(override_string, stdout);
 			else file_print(unameData->sysname, stdout);

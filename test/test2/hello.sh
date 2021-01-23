@@ -21,7 +21,7 @@ set -ex
 
 . ./sha256.sh
 
-if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --OS)" = "Linux" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --os)" = "Linux" ]
 then
 	./test/results/test2-binary < test/test2/hex0.hex0 > test/test2/proof
 	r=$?

@@ -32,7 +32,7 @@ sha256_check()
 	# Sort out what tool they have that can do SHA256SUM calculations and then use it
 	if [ -e "$(which sha256sum)" ]; then
 		sha256sum -c "$1"
-	elif [ "$(./bin/get_machine --OS)" = "FreeBSD" ]; then
+	elif [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --os)" = "FreeBSD" ]; then
 		awk '
 		BEGIN { status = 0 }
 		{

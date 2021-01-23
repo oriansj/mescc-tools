@@ -22,7 +22,7 @@ set -ex
 
 . ./sha256.sh
 
-if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "armv7l" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --OS)" = "Linux" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "armv7l" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --os)" = "Linux" ]
 then
 	./test/results/test12-binary > test/test12/proof
 	r=$?

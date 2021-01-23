@@ -17,7 +17,7 @@
 
 set -x
 ./bin/hex2 -f elf_headers/elf32.hex2  -f test/test0/mini-libc-mes.hex2 -f test/test0/hello.hex2 --little-endian --architecture x86 --base-address 0x8048000 -o test/results/test0-binary
-if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --OS)" = "Linux" ]
+if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "x86" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --os)" = "Linux" ]
 then
 	out=$(./test/results/test0-binary 2>&1)
 	r=$?
