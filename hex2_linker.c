@@ -40,6 +40,8 @@
 #define ARMV7L 40
 // CONSTANT AARM64 80
 #define AARM64 80
+// CONSTANT PPC64LE 90
+#define PPC64LE 90
 
 // CONSTANT HEX 16
 #define HEX 16
@@ -308,6 +310,10 @@ int Architectural_displacement(int target, int base)
 	else if (AARM64 == Architecture)
 	{
 		return ((target - base) - 8 + (3 & base));
+	}
+	else if(PPC64LE == Architecture)
+	{
+		return (target - base) + 3;
 	}
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
@@ -633,6 +639,7 @@ int main(int argc, char **argv)
 			else if(match("amd64", arch)) Architecture = AMD64;
 			else if(match("armv7l", arch)) Architecture = ARMV7L;
 			else if(match("aarch64", arch)) Architecture = AARM64;
+			else if(match("ppc64le", arch)) Architecture = PPC64LE;
 			else
 			{
 				file_print("Unknown architecture: ", stderr);
