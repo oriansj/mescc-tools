@@ -311,9 +311,16 @@ int Architectural_displacement(int target, int base)
 	{
 		return ((target - base) - 8 + (3 & base));
 	}
+	else if(ALIGNED && (PPC64LE == Architecture))
+	{
+		ALIGNED = FALSE;
+		/* set Link register with branch */
+		return (target - (base & 0xFFFFFFFC )) | 1;
+	}
 	else if(PPC64LE == Architecture)
 	{
-		return (target - base) + 3;
+		/* DO *NOT* set link register with branch */
+		return (target - (base & 0xFFFFFFFC));
 	}
 
 	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
