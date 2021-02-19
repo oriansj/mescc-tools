@@ -14,6 +14,6 @@
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
-rm -f test/test11/hello.hex2
-rm -f test/test11/footer.M1
+rm -f test/test12/hello.hex2
+rm -f test/test12/footer.M1
 exit 0
