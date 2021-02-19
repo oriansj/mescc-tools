@@ -95,7 +95,8 @@ test: test0-binary \
 	test9-binary \
 	test10-binary \
 	test11-binary \
-	test12-binary | results
+	test12-binary \
+	test13-binary | results
 	./test.sh
 
 test0-binary: results hex2 get_machine
@@ -136,6 +137,9 @@ test11-binary: results hex2 M1 blood-elf get_machine
 
 test12-binary: results hex2 M1 blood-elf get_machine
 	test/test12/hello.sh
+
+test13-binary: results hex2 M1 blood-elf get_machine
+	test/test13/hello.sh
 
 # Generate test answers
 .PHONY: Generate-test-answers
