@@ -15,17 +15,16 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-set -ex
+set -x
 ./bin/M1 --little-endian --architecture ppc64le -f test/test13/hello.M1 -o test/test13/hello.hex2 || exit 1
 ./bin/hex2 --little-endian --architecture ppc64le --base-address 0x10000 -f elf_headers/elf64-PPC64LE.hex2 -f test/test13/hello.hex2 -o test/results/test13-binary || exit 2
 
-. ./sha256.sh
 
 if [ "$(./bin/get_machine ${GET_MACHINE_FLAGS})" = "ppc64le" ] && [ "$(./bin/get_machine ${GET_MACHINE_OS_FLAGS} --os)" = "Linux" ]
 then
 	./test/results/test13-binary > test/test13/proof
-	r=$?
-	[ $r = 0 ] || exit 3
+	[ $? = 42 ] || exit 3
+	. ./sha256.sh
 	out=$(sha256_check test/test13/proof.answer)
 	[ "$out" = "test/test13/proof: OK" ] || exit 4
 fi
