@@ -23,34 +23,39 @@ all: M1 hex2 get_machine blood-elf kaem catm
 CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -fno-common
 
-M1: M1-macro.c functions/file_print.c functions/match.c functions/numerate_number.c functions/string.c functions/require.c functions/in_set.c | bin
+M1: M1-macro.c functions/match.c functions/numerate_number.c functions/string.c functions/require.c functions/in_set.c | bin
 	$(CC) $(CFLAGS) M1-macro.c \
-	functions/file_print.c \
 	functions/match.c \
 	functions/numerate_number.c \
 	functions/string.c \
 	functions/require.c \
-	functions/in_set.c -o bin/M1
+	functions/in_set.c \
+	-o bin/M1
 
-hex2: hex2_linker.c functions/match.c functions/file_print.c functions/numerate_number.c functions/require.c functions/in_set.c | bin
+hex2: hex2_linker.c functions/match.c functions/numerate_number.c functions/require.c functions/in_set.c | bin
 	$(CC) $(CFLAGS) hex2_linker.c \
-	functions/file_print.c \
 	functions/match.c \
 	functions/numerate_number.c \
 	functions/require.c \
-	functions/in_set.c -o bin/hex2
+	functions/in_set.c \
+	-o bin/hex2
 
-get_machine: get_machine.c | bin
-	$(CC) $(CFLAGS) functions/file_print.c functions/match.c get_machine.c -o bin/get_machine
+get_machine: get_machine.c functions/match.c | bin
+	$(CC) $(CFLAGS) functions/match.c get_machine.c -o bin/get_machine
 
-blood-elf: blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/numerate_number.c | bin
-	$(CC) $(CFLAGS) blood-elf.c functions/file_print.c functions/match.c functions/require.c functions/in_set.c functions/numerate_number.c -o bin/blood-elf
+blood-elf: blood-elf.c functions/match.c functions/require.c functions/numerate_number.c | bin
+	$(CC) $(CFLAGS) blood-elf.c \
+	functions/match.c \
+	functions/require.c \
+	functions/in_set.c \
+	functions/numerate_number.c \
+	-o bin/blood-elf
 
-kaem: functions/file_print.c functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c Kaem/kaem.c | bin
+kaem: functions/string.c functions/require.c functions/match.c functions/in_set.c functions/numerate_number.c Kaem/kaem.c Kaem/variable.c Kaem/kaem_globals.c | bin
 	cd Kaem && make kaem
 
-catm: catm.c functions/file_print.c | bin
-	$(CC) $(CFLAGS) catm.c functions/file_print.c -o bin/catm
+catm: catm.c | bin
+	$(CC) $(CFLAGS) catm.c -o bin/catm
 
 # Clean up after ourselves
 .PHONY: clean

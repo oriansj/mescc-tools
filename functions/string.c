@@ -20,7 +20,6 @@
 #define MAX_STRING 4096
 //CONSTANT MAX_STRING 4096
 // void* calloc(int count, int size);
-void file_print(char* s, FILE* f);
 
 char* copy_string(char* target, char* source)
 {

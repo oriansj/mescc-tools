@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/utsname.h>
-void file_print(char* s, FILE* f);
 int match(char* a, char* b);
 
 #define TRUE 1
@@ -58,42 +57,42 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--os") || match(argv[option_index], "--OS"))
 		{
-			if(override) file_print(override_string, stdout);
-			else file_print(unameData->sysname, stdout);
+			if(override) fputs(override_string, stdout);
+			else fputs(unameData->sysname, stdout);
 			fputc('\n', stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("get_machine 1.1.0\n", stdout);
+			fputs("get_machine 1.1.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
 		{
-			file_print("If you want exact architecture use --exact\n", stderr);
-			file_print("If you want to know the Operating system use --OS\n", stderr);
-			file_print("If you wish to override the output to anything you want use --override\n", stderr);
+			fputs("If you want exact architecture use --exact\n", stderr);
+			fputs("If you want to know the Operating system use --OS\n", stderr);
+			fputs("If you wish to override the output to anything you want use --override\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else
 		{
-			file_print("Unknown option\n", stderr);
+			fputs("Unknown option\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	if(override) file_print(override_string, stdout);
+	if(override) fputs(override_string, stdout);
 	else if(!exact)
 	{
 		if(match("i386", unameData->machine) ||
 		   match("i486", unameData->machine) ||
 		   match("i586", unameData->machine) ||
 		   match("i686", unameData->machine) ||
-		   match("i686-pae", unameData->machine)) file_print("x86", stdout);
-		else if(match("x86_64", unameData->machine)) file_print("amd64", stdout);
-		else file_print(unameData->machine, stdout);
+		   match("i686-pae", unameData->machine)) fputs("x86", stdout);
+		else if(match("x86_64", unameData->machine)) fputs("amd64", stdout);
+		else fputs(unameData->machine, stdout);
 	}
-	else file_print(unameData->machine, stdout);
-	file_print("\n", stdout);
+	else fputs(unameData->machine, stdout);
+	fputs("\n", stdout);
 	return EXIT_SUCCESS;
 }

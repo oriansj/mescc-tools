@@ -35,7 +35,6 @@ int BITSIZE;
 
 int in_set(int c, char* s);
 int match(char* a, char* b);
-void file_print(char* s, FILE* f);
 void require(int bool, char* error);
 char* numerate_number(int a);
 
@@ -108,9 +107,9 @@ void first_pass(struct entry* input)
 
 	if(NULL == source_file)
 	{
-		file_print("The file: ", stderr);
-		file_print(input->name, stderr);
-		file_print(" can not be opened!\n", stderr);
+		fputs("The file: ", stderr);
+		fputs(input->name, stderr);
+		fputs(" can not be opened!\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -137,73 +136,73 @@ void first_pass(struct entry* input)
 
 void output_string_table(struct entry* node)
 {
-	file_print("\n# Generated string table\n:ELF_str\n!0\t# NULL string\n", output);
+	fputs("\n# Generated string table\n:ELF_str\n!0\t# NULL string\n", output);
 	struct entry* i;
 	for(i = node; NULL != i; i = i->next)
 	{
-		file_print(":ELF_str_", output);
-		file_print(i->name, output);
-		file_print("\t\"", output);
-		file_print(i->name, output);
-		file_print("\"\n", output);
+		fputs(":ELF_str_", output);
+		fputs(i->name, output);
+		fputs("\t\"", output);
+		fputs(i->name, output);
+		fputs("\"\n", output);
 	}
-	file_print("# END Generated string table\n\n", output);
+	fputs("# END Generated string table\n\n", output);
 }
 
 void output_symbol_table(struct entry* node)
 {
-	file_print("\n# Generated symbol table\n:ELF_sym\n# Required NULL symbol entry\n", output);
+	fputs("\n# Generated symbol table\n:ELF_sym\n# Required NULL symbol entry\n", output);
 	if(64 == BITSIZE)
 	{
-		file_print("%0\t# st_name\n", output);
-		file_print("!0\t# st_info\n", output);
-		file_print("!0\t# st_other\n", output);
-		file_print("@1\t# st_shndx\n", output);
-		file_print("%0 %0\t# st_value\n", output);
-		file_print("%0 %0\t# st_size\n\n", output);
+		fputs("%0\t# st_name\n", output);
+		fputs("!0\t# st_info\n", output);
+		fputs("!0\t# st_other\n", output);
+		fputs("@1\t# st_shndx\n", output);
+		fputs("%0 %0\t# st_value\n", output);
+		fputs("%0 %0\t# st_size\n\n", output);
 	}
 	else
 	{
-		file_print("%0\t# st_name\n", output);
-		file_print("%0\t# st_value\n", output);
-		file_print("%0\t# st_size\n", output);
-		file_print("!0\t# st_info\n", output);
-		file_print("!0\t# st_other\n", output);
-		file_print("@1\t# st_shndx\n\n", output);
+		fputs("%0\t# st_name\n", output);
+		fputs("%0\t# st_value\n", output);
+		fputs("%0\t# st_size\n", output);
+		fputs("!0\t# st_info\n", output);
+		fputs("!0\t# st_other\n", output);
+		fputs("@1\t# st_shndx\n\n", output);
 	}
 
 	struct entry* i;
 	for(i = node; NULL != i; i = i->next)
 	{
-		file_print("%ELF_str_", output);
-		file_print(i->name, output);
-		file_print(">ELF_str\t# st_name\n", output);
+		fputs("%ELF_str_", output);
+		fputs(i->name, output);
+		fputs(">ELF_str\t# st_name\n", output);
 
 		if(64 == BITSIZE)
 		{
-			file_print("!2\t# st_info (FUNC)\n", output);
-			if(('_' == i->name[0]) && !match(entry, i->name)) file_print("!2\t# st_other (hidden)\n", output);
-			else file_print("!0\t# st_other (other)\n", output);
-			file_print("@1\t# st_shndx\n", output);
-			file_print("&", output);
-			file_print(i->name, output);
-			file_print(" %0\t# st_value\n", output);
-			file_print("%0 %0\t# st_size (unknown size)\n\n", output);
+			fputs("!2\t# st_info (FUNC)\n", output);
+			if(('_' == i->name[0]) && !match(entry, i->name)) fputs("!2\t# st_other (hidden)\n", output);
+			else fputs("!0\t# st_other (other)\n", output);
+			fputs("@1\t# st_shndx\n", output);
+			fputs("&", output);
+			fputs(i->name, output);
+			fputs(" %0\t# st_value\n", output);
+			fputs("%0 %0\t# st_size (unknown size)\n\n", output);
 		}
 		else
 		{
-			file_print("&", output);
-			file_print(i->name, output);
-			file_print("\t#st_value\n", output);
-			file_print("%0\t# st_size (unknown size)\n", output);
-			file_print("!2\t# st_info (FUNC)\n", output);
-			if(('_' == i->name[0]) && !match(entry, i->name)) file_print("!2\t# st_other (hidden)\n", output);
-			else file_print("!0\t# st_other (default)\n", output);
-			file_print("@1\t# st_shndx\n\n", output);
+			fputs("&", output);
+			fputs(i->name, output);
+			fputs("\t#st_value\n", output);
+			fputs("%0\t# st_size (unknown size)\n", output);
+			fputs("!2\t# st_info (FUNC)\n", output);
+			if(('_' == i->name[0]) && !match(entry, i->name)) fputs("!2\t# st_other (hidden)\n", output);
+			else fputs("!0\t# st_other (default)\n", output);
+			fputs("@1\t# st_shndx\n\n", output);
 		}
 	}
 
-	file_print("# END Generated symbol table\n", output);
+	fputs("# END Generated symbol table\n", output);
 }
 
 struct entry* reverse_list(struct entry* head)
@@ -222,9 +221,9 @@ struct entry* reverse_list(struct entry* head)
 
 void write_int(char* field, char* label)
 {
-	file_print(field, output);
-	file_print("\t#", output);
-	file_print(label, output);
+	fputs(field, output);
+	fputs("\t#", output);
+	fputs(label, output);
 	fputc('\n', output);
 }
 
@@ -232,10 +231,10 @@ void write_register(char* field, char* label)
 {
 	/* $field section in the section headers are different size for 32 and 64bits */
 	/* The below is broken for BigEndian */
-	file_print(field, output);
-	if(64 == BITSIZE) file_print(" %0\t#", output);
-	else file_print("\t#", output);
-	file_print(label, output);
+	fputs(field, output);
+	if(64 == BITSIZE) fputs(" %0\t#", output);
+	else fputs("\t#", output);
+	fputs(label, output);
 	fputc('\n', output);
 }
 
@@ -243,7 +242,7 @@ void write_section(char* label, char* name, char* type, char* flags, char* addre
 {
 	/* Write label */
 	fputc('\n', output);
-	file_print(label, output);
+	fputs(label, output);
 	fputc('\n', output);
 
 	write_int(name, "sh_name");
@@ -256,13 +255,13 @@ void write_section(char* label, char* name, char* type, char* flags, char* addre
 
 	/* Deal with the ugly case of stubs */
 	fputc('%', output);
-	file_print(info, output);
-	file_print("\t#sh_info\n", output);
+	fputs(info, output);
+	fputs("\t#sh_info\n", output);
 
 	/* Alignment section in the section headers are different size for 32 and 64bits */
 	/* The below is broken for BigEndian */
-	if(64 == BITSIZE) file_print("%1 %0\t#sh_addralign\n", output);
-	else file_print("%1\t#sh_addralign\n", output);
+	if(64 == BITSIZE) fputs("%1 %0\t#sh_addralign\n", output);
+	else fputs("%1\t#sh_addralign\n", output);
 
 	write_register(entry, "sh_entsize");
 }
@@ -289,9 +288,9 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
 		{
-			file_print("Usage: ", stderr);
-			file_print(argv[0], stderr);
-			file_print(" --file FILENAME1 {--file FILENAME2} --output FILENAME\n", stderr);
+			fputs("Usage: ", stderr);
+			fputs(argv[0], stderr);
+			fputs(" --file FILENAME1 {--file FILENAME2} --output FILENAME\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "--64"))
@@ -314,16 +313,16 @@ int main(int argc, char **argv)
 
 			if(NULL == output)
 			{
-				file_print("The file: ", stderr);
-				file_print(input->name, stderr);
-				file_print(" can not be opened!\n", stderr);
+				fputs("The file: ", stderr);
+				fputs(input->name, stderr);
+				fputs(" can not be opened!\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("blood-elf 1.1.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			fputs("blood-elf 1.1.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "--entry"))
@@ -340,7 +339,7 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			file_print("Unknown option\n", stderr);
+			fputs("Unknown option\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -359,11 +358,11 @@ int main(int argc, char **argv)
 
 	/* Create sections */
 	/* Create string names for sections */
-	file_print("# Generated sections\n:ELF_shstr\n!0\t# NULL\n", output);
-	file_print(":ELF_shstr__text\n\".text\"\n", output);
-	file_print(":ELF_shstr__shstr\n\".shstrtab\"\n", output);
-	file_print(":ELF_shstr__sym\n\".symtab\"\n", output);
-	file_print(":ELF_shstr__str\n\".strtab\"\n", output);
+	fputs("# Generated sections\n:ELF_shstr\n!0\t# NULL\n", output);
+	fputs(":ELF_shstr__text\n\".text\"\n", output);
+	fputs(":ELF_shstr__shstr\n\".shstrtab\"\n", output);
+	fputs(":ELF_shstr__sym\n\".symtab\"\n", output);
+	fputs(":ELF_shstr__str\n\".strtab\"\n", output);
 
 	/* Create NULL section header as is required by the Spec. So dumb and waste of bytes*/
 	write_section(":ELF_section_headers", "%0", "%0", "%0", "%0", "%0", "%0", "%0", "0", "%0");
@@ -376,7 +375,7 @@ int main(int argc, char **argv)
 	/* Create dwarf stubs needed for objdump -d to get function names */
 	output_string_table(jump_table);
 	output_symbol_table(jump_table);
-	file_print("\n:ELF_end\n", output);
+	fputs("\n:ELF_end\n", output);
 
 	/* Close output file */
 	fflush(output);

@@ -56,7 +56,6 @@ char* numerate_number(int a);
 int in_set(int c, char* s);
 int match(char* a, char* b);
 int numerate_string(char *a);
-void file_print(char* s, FILE* f);
 void require(int bool, char* error);
 
 struct input_files
@@ -89,10 +88,10 @@ int ALIGNED;
 
 void line_error()
 {
-	file_print(filename, stderr);
-	file_print(":", stderr);
-	file_print(numerate_number(linenumber), stderr);
-	file_print(" :", stderr);
+	fputs(filename, stderr);
+	fputs(":", stderr);
+	fputs(numerate_number(linenumber), stderr);
+	fputs(" :", stderr);
 }
 
 int consume_token(FILE* source_file)
@@ -170,9 +169,9 @@ unsigned GetTarget(char* c)
 			return i->target;
 		}
 	}
-	file_print("Target label ", stderr);
-	file_print(c, stderr);
-	file_print(" is not valid\n", stderr);
+	fputs("Target label ", stderr);
+	fputs(c, stderr);
+	fputs(" is not valid\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -204,9 +203,9 @@ void range_check(int displacement, int number_of_bytes)
 	{
 		if((8388607 < displacement) || (displacement < -8388608))
 		{
-			file_print("A displacement of ", stderr);
-			file_print(numerate_number(displacement), stderr);
-			file_print(" does not fit in 3 bytes\n", stderr);
+			fputs("A displacement of ", stderr);
+			fputs(numerate_number(displacement), stderr);
+			fputs(" does not fit in 3 bytes\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		return;
@@ -215,9 +214,9 @@ void range_check(int displacement, int number_of_bytes)
 	{
 		if((32767 < displacement) || (displacement < -32768))
 		{
-			file_print("A displacement of ", stderr);
-			file_print(numerate_number(displacement), stderr);
-			file_print(" does not fit in 2 bytes\n", stderr);
+			fputs("A displacement of ", stderr);
+			fputs(numerate_number(displacement), stderr);
+			fputs(" does not fit in 2 bytes\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		return;
@@ -226,15 +225,15 @@ void range_check(int displacement, int number_of_bytes)
 	{
 		if((127 < displacement) || (displacement < -128))
 		{
-			file_print("A displacement of ", stderr);
-			file_print(numerate_number(displacement), stderr);
-			file_print(" does not fit in 1 byte\n", stderr);
+			fputs("A displacement of ", stderr);
+			fputs(numerate_number(displacement), stderr);
+			fputs(" does not fit in 1 byte\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		return;
 	}
 
-	file_print("Invalid number of bytes given\n", stderr);
+	fputs("Invalid number of bytes given\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -277,9 +276,9 @@ int Architectural_displacement(int target, int base)
 		if (target & 3)
 		{
 			line_error();
-			file_print("error: Unaligned branch target: ", stderr);
-			file_print(scratch, stderr);
-			file_print(", aborting\n", stderr);
+			fputs("error: Unaligned branch target: ", stderr);
+			fputs(scratch, stderr);
+			fputs(", aborting\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		/*
@@ -323,7 +322,7 @@ int Architectural_displacement(int target, int base)
 		return (target - (base & 0xFFFFFFFC));
 	}
 
-	file_print("Unknown Architecture, aborting before harm is done\n", stderr);
+	fputs("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -337,7 +336,7 @@ void Update_Pointer(char ch)
 	else
 	{
 		line_error();
-		file_print("storePointer given unknown\n", stderr);
+		fputs("storePointer given unknown\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -380,9 +379,9 @@ void storePointer(char ch, FILE* source_file)
 	else
 	{
 		line_error();
-		file_print("error: storePointer reached impossible case: ch=", stderr);
+		fputs("error: storePointer reached impossible case: ch=", stderr);
 		fputc(ch, stderr);
-		file_print("\n", stderr);
+		fputs("\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -520,9 +519,9 @@ void first_pass(struct input_files* input)
 
 	if(NULL == source_file)
 	{
-		file_print("The file: ", stderr);
-		file_print(input->filename, stderr);
-		file_print(" can not be opened!\n", stderr);
+		fputs("The file: ", stderr);
+		fputs(input->filename, stderr);
+		fputs(" can not be opened!\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -571,9 +570,9 @@ void second_pass(struct input_files* input)
 	/* Something that should never happen */
 	if(NULL == source_file)
 	{
-		file_print("The file: ", stderr);
-		file_print(input->filename, stderr);
-		file_print(" can not be opened!\nWTF-pass2\n", stderr);
+		fputs("The file: ", stderr);
+		fputs(input->filename, stderr);
+		fputs(" can not be opened!\nWTF-pass2\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -649,9 +648,9 @@ int main(int argc, char **argv)
 			else if(match("ppc64le", arch)) Architecture = PPC64LE;
 			else
 			{
-				file_print("Unknown architecture: ", stderr);
-				file_print(arch, stderr);
-				file_print(" know values are: knight-native, knight-posix, x86, amd64 and armv7l", stderr);
+				fputs("Unknown architecture: ", stderr);
+				fputs(arch, stderr);
+				fputs(" know values are: knight-native, knight-posix, x86, amd64 and armv7l", stderr);
 			}
 			option_index = option_index + 2;
 		}
@@ -667,12 +666,12 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
 		{
-			file_print("Usage: ", stderr);
-			file_print(argv[0], stderr);
-			file_print(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian)", stderr);
-			file_print(" [--base-address 0x12345] [--architecture name]\nArchitecture:", stderr);
-			file_print(" knight-native, knight-posix, x86, amd64, armv7l and aarch64\n", stderr);
-			file_print("To leverage octal or binary input: --octal, --binary\n", stderr);
+			fputs("Usage: ", stderr);
+			fputs(argv[0], stderr);
+			fputs(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian)", stderr);
+			fputs(" [--base-address 0x12345] [--architecture name]\nArchitecture:", stderr);
+			fputs(" knight-native, knight-posix, x86, amd64, armv7l and aarch64\n", stderr);
+			fputs("To leverage octal or binary input: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
@@ -690,9 +689,9 @@ int main(int argc, char **argv)
 
 			if(NULL == output)
 			{
-				file_print("The file: ", stderr);
-				file_print(argv[option_index + 1], stderr);
-				file_print(" can not be opened!\n", stderr);
+				fputs("The file: ", stderr);
+				fputs(argv[option_index + 1], stderr);
+				fputs(" can not be opened!\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 			option_index = option_index + 2;
@@ -704,12 +703,12 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			file_print("hex2 1.1.0\n", stdout);
+			fputs("hex2 1.1.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
 		{
-			file_print("Unknown option\n", stderr);
+			fputs("Unknown option\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -717,16 +716,16 @@ int main(int argc, char **argv)
 	/* Catch a common mistake */
 	if((KNIGHT != Architecture) && (0 == Base_Address))
 	{
-		file_print(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
-		file_print("If you are not generating a ROM image this binary will likely not work\n", stderr);
+		fputs(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
+		fputs("If you are not generating a ROM image this binary will likely not work\n", stderr);
 	}
 
 	/* Catch implicitly false assumptions */
 	if(BigEndian && ((X86 == Architecture) || ( AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture)))
 	{
-		file_print(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
-		file_print("You have specified big endian output on likely a little endian processor\n", stderr);
-		file_print("if this is a mistake please pass --little-endian next time\n", stderr);
+		fputs(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
+		fputs("You have specified big endian output on likely a little endian processor\n", stderr);
+		fputs("if this is a mistake please pass --little-endian next time\n", stderr);
 	}
 
 	/* Make sure we have a program tape to run */
@@ -754,7 +753,7 @@ int main(int argc, char **argv)
 
 		if(0 != chmod(output_file, 0750))
 		{
-			file_print("Unable to change permissions\n", stderr);
+			fputs("Unable to change permissions\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}

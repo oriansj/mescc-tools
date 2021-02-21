@@ -26,7 +26,6 @@
 #define TRUE 1
 #define FALSE 0
 
-void file_print(char* s, FILE* f);
 int match(char* a, char* b);
 
 struct entry

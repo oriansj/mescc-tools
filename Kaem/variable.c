@@ -55,7 +55,7 @@ int variable_substitute_ifset(char* input, struct Token* n, int index)
 	 * index is where we are up to in input. offset is for n->value.
 	 */
 
-	/* 
+	/*
 	 * Check if we should even be performing this function.
 	 * We perform this function when we come across ${var:-text} syntax.
 	 */
@@ -75,8 +75,8 @@ int variable_substitute_ifset(char* input, struct Token* n, int index)
 	/* Don't perform it if we shouldn't */
 	if(perform == FALSE) return index_old;
 	index = index_old;
-	
-	/* 
+
+	/*
 	 * Get offset.
 	 * offset is the difference between the index of the variable we write to
 	 * in the following blocks and input.
@@ -122,7 +122,7 @@ int variable_substitute(char* input, struct Token* n, int index)
 	/* NOTE: index is the pos of input */
 	index = index + 1; /* We don't want the { */
 
-	/* 
+	/*
 	 * Check for "special" types
 	 * If we do find a special type we delegate the substitution to it
 	 * and return here; as we are done... there's nothing more do do in
@@ -135,7 +135,7 @@ int variable_substitute(char* input, struct Token* n, int index)
 	/* Reset index */
 	index = index_old;
 
-	/* 
+	/*
 	 * If we reach here it is a normal substitution
 	 * Let's do it!
 	 */
@@ -154,7 +154,7 @@ int variable_substitute(char* input, struct Token* n, int index)
 		if(EOF == c || '\n' == c || index > string_length(input))
 		{ /* We never should hit EOF, EOL or run past the end of the line 
 			 while collecting a variable */
-			file_print("IMPROPERLY TERMINATED VARIABLE!\nABORTING HARD\n", stderr);
+			fputs("IMPROPERLY TERMINATED VARIABLE!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		else if('\\' == c)
@@ -233,7 +233,7 @@ void handle_variables(char** argv, struct Token* n)
 	require(n->value != NULL, "Memory initialization of n->value in collect_variable failed\n");
 
 	/* Copy everything up to the $ */
-	/* 
+	/*
 	 * TODO: Not need allocation of input before this check if there is no
 	 * variable in it.
 	 */
@@ -266,7 +266,7 @@ substitute:
 	}
 	else
 	{ /* We don't know that */
-		file_print("IMPROPERLY USED VARIABLE!\nOnly ${foo} and $@ format are accepted at this time.\nABORTING HARD\n", stderr);
+		fputs("IMPROPERLY USED VARIABLE!\nOnly ${foo} and $@ format are accepted at this time.\nABORTING HARD\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 

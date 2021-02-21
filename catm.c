@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-void file_print(char* s, FILE* f);
 // CONSTANT BUFFER_SIZE 4096
 #define BUFFER_SIZE 4096
 
@@ -28,16 +27,16 @@ int main(int argc, char** argv)
 {
 	if(2 > argc)
 	{
-		file_print("catm requires 2 or more arguments\n", stderr);
+		fputs("catm requires 2 or more arguments\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	int output = open(argv[1], 577 , 384);
 	if(-1 == output)
 	{
-		file_print("The file: ", stderr);
-		file_print(argv[1], stderr);
-		file_print(" is not a valid output file name\n", stderr);
+		fputs("The file: ", stderr);
+		fputs(argv[1], stderr);
+		fputs(" is not a valid output file name\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 
@@ -50,9 +49,9 @@ int main(int argc, char** argv)
 		input = open(argv[i], 0, 0);
 		if(-1 == input)
 		{
-			file_print("The file: ", stderr);
-			file_print(argv[i], stderr);
-			file_print(" is not a valid input file name\n", stderr);
+			fputs("The file: ", stderr);
+			fputs(argv[i], stderr);
+			fputs(" is not a valid input file name\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 keep:

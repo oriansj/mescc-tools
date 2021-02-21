@@ -429,8 +429,8 @@ int pwd()
 	require(path != NULL, "Memory initialization of path in pwd failed\n");
 	getcwd(path, MAX_STRING);
 	require(!match("", path), "getcwd() failed\n");
-	file_print(path, stdout);
-	file_print("\n", stdout);
+	fputs(path, stdout);
+	fputs("\n", stdout);
 	return FALSE;
 }
 
@@ -458,7 +458,7 @@ int set()
 		{ /* set -a is on by default and cannot be disabled at this time */
 			if(WARNINGS)
 			{
-				file_print("set -a is on by default and cannot be disabled\n", stdout);
+				fputs("set -a is on by default and cannot be disabled\n", stdout);
 			}
 			continue;
 		}
@@ -475,15 +475,15 @@ int set()
 			 * We don't do just -x because we support multiple options in one command,
 			 * eg set -ex.
 			 */
-			file_print(" +> set -", stdout);
-			file_print(options, stdout);
-			file_print("\n", stdout);
+			fputs(" +> set -", stdout);
+			fputs(options, stdout);
+			fputs("\n", stdout);
 			fflush(stdout);
 		}
 		else
 		{ /* Invalid */
 			fputc(options[i], stderr);
-			file_print(" is an invalid set option!\n", stderr);
+			fputs(" is an invalid set option!\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -497,12 +497,12 @@ void echo()
 {
 	if(token->next == NULL)
 	{ /* No arguments */
-		file_print("\n", stdout);
+		fputs("\n", stdout);
 		return;
 	}
 	if(token->next->value == NULL)
 	{ /* No arguments */
-		file_print("\n", stdout);
+		fputs("\n", stdout);
 		return;
 	}
 	token = token->next; /* Skip the actual echo */
@@ -510,10 +510,10 @@ void echo()
 	{ /* Output each argument to echo to stdout */
 		/* M2-Planet doesn't let us do this in the while */
 		if(token->value == NULL) break;
-		file_print(token->value, stdout);
+		fputs(token->value, stdout);
 		token = token->next;
 	}
-	file_print("\n", stdout);
+	fputs("\n", stdout);
 }
 
 /* unset builtin */
@@ -594,9 +594,9 @@ int execute()
 	{
 		if(STRICT == TRUE)
 		{
-			file_print("WHILE EXECUTING ", stderr);
-			file_print(token->value, stderr);
-			file_print(" NOT FOUND!\nABORTING HARD\n", stderr);
+			fputs("WHILE EXECUTING ", stderr);
+			fputs(token->value, stderr);
+			fputs(" NOT FOUND!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		/* If we are not strict simply return */
@@ -607,9 +607,9 @@ int execute()
 	/* Ensure fork succeeded */
 	if (f == -1)
 	{
-		file_print("WHILE EXECUTING ", stderr);
-		file_print(token->value, stderr);
-		file_print("fork() FAILED\nABORTING HARD\n", stderr);
+		fputs("WHILE EXECUTING ", stderr);
+		fputs(token->value, stderr);
+		fputs("fork() FAILED\nABORTING HARD\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 	else if (f == 0)
@@ -682,14 +682,14 @@ int collect_command(FILE* script, char** argv)
 	if(VERBOSE && !match(token->value, ""))
 	{
 		n = token;
-		file_print(" +>", stdout);
+		fputs(" +>", stdout);
 		while(n != NULL)
 		{ /* Print out each token token */
-			file_print(" ", stdout);
+			fputs(" ", stdout);
 			/* M2-Planet doesn't let us do this in the while */
 			if(n->value != NULL)
 			{
-				if(!match(n->value, "")) file_print(n->value, stdout);
+				if(!match(n->value, "")) fputs(n->value, stdout);
 			}
 			n = n->next;
 		}
@@ -724,9 +724,9 @@ void run_script(FILE* script, char** argv)
 		status = execute();
 		if(STRICT == TRUE && (0 != status))
 		{ /* Clearly the script hit an issue that should never have happened */
-			file_print("Subprocess error ", stderr);
-			file_print(numerate_number(status), stderr);
-			file_print("\nABORTING HARD\n", stderr);
+			fputs("Subprocess error ", stderr);
+			fputs(numerate_number(status), stderr);
+			fputs("\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -814,9 +814,9 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "-h") || match(argv[i], "--help"))
 		{ /* Help information */
-			file_print("Usage: ", stdout);
-			file_print(argv[0], stdout);
-			file_print(" [-h | --help] [-V | --version] [--file filename | -f filename] [-i | --init-mode] [-v | --verbose] [--strict] [--warn] [--fuzz]\n", stdout);
+			fputs("Usage: ", stdout);
+			fputs(argv[0], stdout);
+			fputs(" [-h | --help] [-V | --version] [--file filename | -f filename] [-i | --init-mode] [-v | --verbose] [--strict] [--warn] [--fuzz]\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
@@ -834,7 +834,7 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
 		{ /* Output version */
-			file_print("kaem version 1.1.0\n", stdout);
+			fputs("kaem version 1.1.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-v") || match(argv[i], "--verbose"))
@@ -863,7 +863,7 @@ int main(int argc, char** argv, char** envp)
 		}
 		else
 		{ /* We don't know this argument */
-			file_print("UNKNOWN ARGUMENT\n", stdout);
+			fputs("UNKNOWN ARGUMENT\n", stdout);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -898,9 +898,9 @@ int main(int argc, char** argv, char** envp)
 	script = fopen(filename, "r");
 	if(NULL == script)
 	{
-		file_print("The file: ", stderr);
-		file_print(filename, stderr);
-		file_print(" can not be opened!\n", stderr);
+		fputs("The file: ", stderr);
+		fputs(filename, stderr);
+		fputs(" can not be opened!\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 

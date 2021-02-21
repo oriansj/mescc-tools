@@ -33,7 +33,6 @@
 
 /* Imported */
 int match(char* a, char* b);
-void file_print(char* s, FILE* f);
 void require(int bool, char* error);
 char* copy_string(char* target, char* source);
 char* prepend_string(char* add, char* base);
