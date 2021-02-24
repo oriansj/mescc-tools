@@ -23,20 +23,13 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <sys/stat.h>
-
+#include "M2libc/bootstrappable.h"
 
 #define max_string 4096
-//CONSTANT max_string 4096
 #define TRUE 1
-//CONSTANT TRUE 1
 #define FALSE 0
-//CONSTANT FALSE 0
 int BITSIZE;
 
-int in_set(int c, char* s);
-int match(char* a, char* b);
-void require(int bool, char* error);
-char* numerate_number(int a);
 
 struct entry
 {
@@ -369,8 +362,8 @@ int main(int argc, char **argv)
 	write_section(":ELF_section_header_text", "%ELF_shstr__text>ELF_shstr", "%1", "%6", "&ELF_text", "%ELF_text>ELF_base", "%ELF_data>ELF_text", "%0", "0", "%0");
 	write_section(":ELF_section_header_shstr", "%ELF_shstr__shstr>ELF_shstr", "%3", "%0", "&ELF_shstr", "%ELF_shstr>ELF_base", "%ELF_section_headers>ELF_shstr", "%0", "0", "%0");
 	write_section(":ELF_section_header_str", "%ELF_shstr__str>ELF_shstr", "%3", "%0", "&ELF_str", "%ELF_str>ELF_base", "%ELF_sym>ELF_str", "%0", "0", "%0");
-	if(64 == BITSIZE) write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", "%2", "%0", "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", "%3", numerate_number(count), "%24");
-	else write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", "%2", "%0", "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", "%3", numerate_number(count), "%16");
+	if(64 == BITSIZE) write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", "%2", "%0", "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", "%3", int2str(count, 10, TRUE), "%24");
+	else write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", "%2", "%0", "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", "%3", int2str(count, 10, TRUE), "%16");
 
 	/* Create dwarf stubs needed for objdump -d to get function names */
 	output_string_table(jump_table);

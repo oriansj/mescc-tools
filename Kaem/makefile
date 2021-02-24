@@ -27,11 +27,7 @@ kaem: kaem.c kaem_globals.c variable.c | bin
 	$(CC) $(CFLAGS) kaem.c \
 	kaem_globals.c \
 	variable.c  \
-	../functions/match.c \
-	../functions/in_set.c \
-	../functions/string.c \
-	../functions/require.c \
-	../functions/numerate_number.c \
+	../M2libc/bootstrappable.c \
 	-o ../bin/kaem
 
 # Always run the tests

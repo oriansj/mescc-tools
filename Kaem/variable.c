@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include "kaem.h"
 
 /* Prototypes from other files */
@@ -36,7 +37,10 @@ int run_substitution(char* var_name, struct Token* n)
 	/* If there is nothing to substitute, don't substitute anything! */
 	if(value != NULL)
 	{
-		n->value = prepend_string(n->value, value);
+		char* s = calloc(MAX_STRING, sizeof(char));
+		s = strcat(s, n->value);
+		s = strcat(s, value);
+		n->value = s;
 		return TRUE;
 	}
 	return FALSE;
@@ -61,7 +65,7 @@ int variable_substitute_ifset(char* input, struct Token* n, int index)
 	 */
 	int index_old = index;
 	int perform = FALSE;
-	int input_length = string_length(input);
+	int input_length = strlen(input);
 	while(index < input_length)
 	{ /* Loop over each character */
 		if(input[index] == ':' && input[index + 1] == '-')
@@ -110,7 +114,10 @@ int variable_substitute_ifset(char* input, struct Token* n, int index)
 	/* Do the substitution */
 	if(run_substitution(var_name, n) == FALSE)
 	{ /* The variable was not found. Substitute the alternative text. */
-		n->value = prepend_string(n->value, text);
+		char* s = calloc(MAX_STRING, sizeof(char));
+		s = strcat(s, n->value);
+		s = strcat(s, text);
+		n->value = s;
 	}
 
 	return index;
@@ -151,7 +158,7 @@ int variable_substitute(char* input, struct Token* n, int index)
 	{
 		c = input[index];
 		require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
-		if(EOF == c || '\n' == c || index > string_length(input))
+		if(EOF == c || '\n' == c || index > strlen(input))
 		{ /* We never should hit EOF, EOL or run past the end of the line 
 			 while collecting a variable */
 			fputs("IMPROPERLY TERMINATED VARIABLE!\nABORTING HARD\n", stderr);
@@ -196,8 +203,8 @@ void variable_all(char** argv, struct Token* n)
 		/* Ends up with (n->value) (argv[i]) */
 		/* If we don't do this we get jumbled results in M2-Planet */
 		hold = argv[i];
-		copy_string(argv_element + index, argv[i]);
-		index = string_length(argv_element);
+		strcpy(argv_element + index, argv[i]);
+		index = strlen(argv_element);
 		if(match(hold, "--"))
 		{ /* -- signifies everything after this */
 			/* Reset n->value */
@@ -205,8 +212,8 @@ void variable_all(char** argv, struct Token* n)
 			{
 				n->value[j] = 0;
 			}
-			copy_string(argv_element, argv[i]);
-			index = string_length(argv_element);
+			strcpy(argv_element, argv[i]);
+			index = strlen(argv_element);
 		}
 
 		/* Add space on the end */
@@ -227,7 +234,7 @@ void handle_variables(char** argv, struct Token* n)
 	/* Create input */
 	char* input = calloc(MAX_STRING, sizeof(char));
 	require(input != NULL, "Memory initialization of input in collect_variable failed\n");
-	copy_string(input, n->value);
+	strcpy(input, n->value);
 	/* Reset n->value */
 	n->value = calloc(MAX_STRING, sizeof(char));
 	require(n->value != NULL, "Memory initialization of n->value in collect_variable failed\n");
@@ -270,7 +277,7 @@ substitute:
 		exit(EXIT_FAILURE);
 	}
 
-	offset = string_length(n->value) - index;
+	offset = strlen(n->value) - index;
 	/* Copy everything from the end of the variable to the end of the token */
 	while(input[index] != 0)
 	{

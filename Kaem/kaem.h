@@ -17,27 +17,17 @@
  */
 
 #include <stdio.h>
+#include "../M2libc/bootstrappable.h"
 
 /*
  * DEFINES
  */
 
 #define FALSE 0
-//CONSTANT FALSE 0
 #define TRUE 1
-//CONSTANT TRUE 1
 #define MAX_STRING 4096
-//CONSTANT MAX_STRING 4096
 #define MAX_ARRAY 256
-//CONSTANT MAX_ARRAY 256
 
-/* Imported */
-int match(char* a, char* b);
-void require(int bool, char* error);
-char* copy_string(char* target, char* source);
-char* prepend_string(char* add, char* base);
-int string_length(char* a);
-char* numerate_number(int a);
 
 /*
  * Here is the token struct. It is used for both the token linked-list and

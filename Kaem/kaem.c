@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <string.h>
 #include "kaem.h"
 
 /* Prototypes from other files */
@@ -83,7 +84,7 @@ char* find_executable(char* name)
 	char* trial = calloc(MAX_STRING, sizeof(char));
 	char* MPATH = calloc(MAX_STRING, sizeof(char)); /* Modified PATH */
 	require(MPATH != NULL, "Memory initialization of MPATH in find_executable failed\n");
-	copy_string(MPATH, PATH);
+	strcpy(MPATH, PATH);
 	FILE* t;
 	char* next = find_char(MPATH, ':');
 	int index;
@@ -94,7 +95,7 @@ char* find_executable(char* name)
 	while(NULL != next)
 	{
 		/* Reset trial */
-		trial_length = string_length(trial);
+		trial_length = strlen(trial);
 		for(index = 0; index < trial_length; index = index + 1)
 		{
 			trial[index] = 0;
@@ -103,15 +104,15 @@ char* find_executable(char* name)
 		next[0] = 0;
 
 		/* prepend_string(MPATH, prepend_string("/", name)) */
-		mpath_length = string_length(MPATH);
+		mpath_length = strlen(MPATH);
 		for(index = 0; index < mpath_length; index = index + 1)
 		{
 			require(MAX_STRING > index, "Element of PATH is too long\n");
 			trial[index] = MPATH[index];
 		}
 		trial[index] = '/';
-		offset = string_length(trial);
-		name_length = string_length(name);
+		offset = strlen(trial);
+		name_length = strlen(name);
 		for(index = 0; index < name_length; index = index + 1)
 		{
 			require(MAX_STRING > index, "Element of PATH is too long\n");
@@ -119,7 +120,7 @@ char* find_executable(char* name)
 		}
 
 		/* Try the trial */
-		require(string_length(trial) < MAX_STRING, "COMMAND TOO LONG!\nABORTING HARD\n");
+		require(strlen(trial) < MAX_STRING, "COMMAND TOO LONG!\nABORTING HARD\n");
 		t = fopen(trial, "r");
 		if(NULL != t)
 		{
@@ -136,6 +137,7 @@ char* find_executable(char* name)
 /* Function to convert a Token linked-list into an array of strings */
 char** list_to_array(struct Token* s)
 {
+	char* hold;
 	struct Token* n;
 	n = s;
 	char** array = calloc(MAX_ARRAY, sizeof(char*));
@@ -161,7 +163,7 @@ char** list_to_array(struct Token* s)
 		else
 		{ /* It is a var */
 			/* prepend_string(n->var, prepend_string("=", n->value)) */
-			var_length = string_length(n->var);
+			var_length = strlen(n->var);
 			for(i = 0; i < var_length; i = i + 1)
 			{
 				element[i] = n->var[i];
@@ -169,13 +171,15 @@ char** list_to_array(struct Token* s)
 			element[i] = '=';
 			i = i + 1;
 			offset = i;
-			value_length = string_length(n->value);
+			value_length = strlen(n->value);
 			for(i = 0; i < value_length; i = i + 1)
 			{
 				element[i + offset] = n->value[i];
 			}
 		}
-		copy_string(array[index], element);
+
+		/* Insert elements if not empty */
+		if(!match("", element)) strcpy(array[index], element);
 
 		n = n->next;
 		index = index + 1;
@@ -345,7 +349,7 @@ int collect_token(FILE* input, char* n, int last_index)
 int is_envar(char* token)
 {
 	int i = 0;
-	int token_length = string_length(token);
+	int token_length = strlen(token);
 	while(i < token_length)
 	{
 		if(token[i] == '=')
@@ -361,7 +365,7 @@ int is_envar(char* token)
 void add_envar()
 {
 	/* Pointers to strings we want */
-	char* name = calloc(string_length(token->value) + 4, sizeof(char));
+	char* name = calloc(strlen(token->value) + 4, sizeof(char));
 	char* value = token->value;
 	char* newvalue;
 	int i = 0;
@@ -445,13 +449,13 @@ int set()
 	char* options = calloc(MAX_STRING, sizeof(char));
 	require(options != NULL, "Memory initialization of options in set failed\n");
 
-	int last_position = string_length(token->value) - 1;
+	int last_position = strlen(token->value) - 1;
 	for(i = 0; i < last_position; i = i + 1)
 	{
 		options[i] = token->value[i + 1];
 	}
 	/* Parse the options */
-	int options_length = string_length(options);
+	int options_length = strlen(options);
 	for(i = 0; i < options_length; i = i + 1)
 	{
 		if(options[i] == 'a')
@@ -725,7 +729,7 @@ void run_script(FILE* script, char** argv)
 		if(STRICT == TRUE && (0 != status))
 		{ /* Clearly the script hit an issue that should never have happened */
 			fputs("Subprocess error ", stderr);
-			fputs(numerate_number(status), stderr);
+			fputs(int2str(status, 10, TRUE), stderr);
 			fputs("\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
@@ -760,7 +764,7 @@ void populate_env(char** envp)
 		 */
 		envp_line = calloc(MAX_STRING, sizeof(char));
 		require(envp_line != NULL, "Memory initialization of envp_line in population of env failed\n");
-		copy_string(envp_line, envp[i]);
+		strcpy(envp_line, envp[i]);
 		while(envp_line[j] != '=')
 		{ /* Copy over everything up to = to var */
 			n->var[j] = envp_line[j];
@@ -887,11 +891,14 @@ int main(int argc, char** argv, char** envp)
 	{ /* We didn't find either of PATH or USERNAME -- use a generic PATH */
 		PATH = calloc(MAX_STRING, sizeof(char));
 		require(PATH != NULL, "Memory initialization of PATH failed\n");
-		copy_string(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
+		strcpy(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	}
 	else if(NULL == PATH)
 	{ /* We did find a username but not a PATH -- use a generic PATH but with /home/USERNAME */
-		PATH = prepend_string("/home/", prepend_string(USERNAME,"/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"));
+		PATH = calloc(MAX_STRING, sizeof(char));
+		PATH = strcat(PATH, "/home/");
+		PATH = strcat(PATH, USERNAME);
+		PATH = strcat(PATH, "/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games");
 	}
 
 	/* Open the script */

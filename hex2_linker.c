@@ -22,41 +22,23 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include "M2libc/bootstrappable.h"
 
 #define max_string 4096
-//CONSTANT max_string 4096
 #define TRUE 1
-//CONSTANT TRUE 1
 #define FALSE 0
-//CONSTANT FALSE 0
 
-// CONSTANT KNIGHT 0
 #define KNIGHT 0
-// CONSTANT X86 1
 #define X86 1
-// CONSTANT AMD64 2
 #define AMD64 2
-// CONSTANT ARMV7L 40
 #define ARMV7L 40
-// CONSTANT AARM64 80
 #define AARM64 80
-// CONSTANT PPC64LE 90
 #define PPC64LE 90
 
-// CONSTANT HEX 16
 #define HEX 16
-// CONSTANT OCTAL 8
 #define OCTAL 8
-// CONSTANT BINARY 2
 #define BINARY 2
 
-
-/* Imported functions */
-char* numerate_number(int a);
-int in_set(int c, char* s);
-int match(char* a, char* b);
-int numerate_string(char *a);
-void require(int bool, char* error);
 
 struct input_files
 {
@@ -90,7 +72,7 @@ void line_error()
 {
 	fputs(filename, stderr);
 	fputs(":", stderr);
-	fputs(numerate_number(linenumber), stderr);
+	fputs(int2str(linenumber, 10, FALSE), stderr);
 	fputs(" :", stderr);
 }
 
@@ -204,7 +186,7 @@ void range_check(int displacement, int number_of_bytes)
 		if((8388607 < displacement) || (displacement < -8388608))
 		{
 			fputs("A displacement of ", stderr);
-			fputs(numerate_number(displacement), stderr);
+			fputs(int2str(displacement, 10, TRUE), stderr);
 			fputs(" does not fit in 3 bytes\n", stderr);
 			exit(EXIT_FAILURE);
 		}
@@ -215,7 +197,7 @@ void range_check(int displacement, int number_of_bytes)
 		if((32767 < displacement) || (displacement < -32768))
 		{
 			fputs("A displacement of ", stderr);
-			fputs(numerate_number(displacement), stderr);
+			fputs(int2str(displacement, 10, TRUE), stderr);
 			fputs(" does not fit in 2 bytes\n", stderr);
 			exit(EXIT_FAILURE);
 		}
@@ -226,7 +208,7 @@ void range_check(int displacement, int number_of_bytes)
 		if((127 < displacement) || (displacement < -128))
 		{
 			fputs("A displacement of ", stderr);
-			fputs(numerate_number(displacement), stderr);
+			fputs(int2str(displacement, 10, TRUE), stderr);
 			fputs(" does not fit in 1 byte\n", stderr);
 			exit(EXIT_FAILURE);
 		}
@@ -661,7 +643,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-B") || match(argv[option_index], "--BaseAddress") || match(argv[option_index], "--base-address"))
 		{
-			Base_Address = numerate_string(argv[option_index + 1]);
+			Base_Address = strtoint(argv[option_index + 1]);
 			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))

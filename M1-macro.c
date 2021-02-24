@@ -17,54 +17,30 @@
  * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <getopt.h>
+#include "M2libc/bootstrappable.h"
 
-//CONSTANT max_string 4096
+/* Internal processing Constants */
 #define max_string 4096
-//CONSTANT PROCESSED 1
 #define PROCESSED 1
-//CONSTANT STR 2
 #define STR 2
-//CONSTANT NEWLINE 3
 #define NEWLINE 3
 
-//CONSTANT TRUE 1
-#define TRUE 1
-//CONSTANT FALSE 0
-#define FALSE 0
-
-// CONSTANT KNIGHT 0
+/* Unique code for each architecture */
 #define KNIGHT 0
-// CONSTANT X86 1
 #define X86 1
-// CONSTANT AMD64 2
 #define AMD64 2
-// CONSTANT ARMV7L 40
 #define ARMV7L 40
-// CONSTANT AARM64 80
 #define AARM64 80
-// CONSTANT PPC64LE 90
 #define PPC64LE 90
 
-// CONSTANT HEX 16
+/* How do you want that output? */
 #define HEX 16
-// CONSTANT OCTAL 8
 #define OCTAL 8
-// CONSTANT BINARY 2
 #define BINARY 2
 
-
-/* Imported functions */
-char* numerate_number(int a);
-int hex2char(int c);
-int in_set(int c, char* s);
-int match(char* a, char* b);
-int numerate_string(char *a);
-int string_length(char* a);
-void require(int bool, char* error);
 
 struct blob
 {
@@ -103,7 +79,7 @@ void line_error(char* filename, int linenumber)
 {
 	fputs(filename, stderr);
 	fputs(":", stderr);
-	fputs(numerate_number(linenumber), stderr);
+	fputs(int2str(linenumber,10, FALSE), stderr);
 	fputs(" :", stderr);
 }
 
@@ -373,7 +349,7 @@ void line_macro(struct Token* p)
 void hexify_string(struct blob* p)
 {
 	char* table = "0123456789ABCDEF";
-	int i = string_length(p->Text);
+	int i = strlen(p->Text);
 	int size;
 
 	if(HEX == ByteMode) size = (((i << 1) + i) + 12);
@@ -495,7 +471,7 @@ void preserve_other(struct blob* p)
 			}
 			else if('<' == c)
 			{
-				i->Expression = pad_nulls(numerate_string(i->Text + 1), i->Text);
+				i->Expression = pad_nulls(strtoint(i->Text + 1), i->Text);
 			}
 		}
 	}
@@ -506,9 +482,9 @@ void bound_values(int displacement, int number_of_bytes, int low, int high)
 	if((high < displacement) || (displacement < low))
 	{
 		fputs("A displacement of ", stderr);
-		fputs(numerate_number(displacement), stderr);
+		fputs(int2str(displacement, 10, TRUE), stderr);
 		fputs(" does not fit in ", stderr);
-		fputs(numerate_number(number_of_bytes), stderr);
+		fputs(int2str(number_of_bytes, 10, TRUE), stderr);
 		fputs(" bytes\n", stderr);
 		exit(EXIT_FAILURE);
 	}
@@ -589,6 +565,13 @@ void LittleEndian(char* start)
 	if(BigBitEndian) reverseBitOrder(c);
 }
 
+int hex2char(int c)
+{
+	if((c >= 0) && (c <= 9)) return (c + 48);
+	else if((c >= 10) && (c <= 15)) return (c + 55);
+	else return -1;
+}
+
 int stringify(char* s, int digits, int divisor, int value, int shift)
 {
 	int i = value;
@@ -632,7 +615,7 @@ char* express_number(int value, char c)
 		fputs("Given symbol ", stderr);
 		fputc(c, stderr);
 		fputs(" to express immediate value ", stderr);
-		fputs(numerate_number(value), stderr);
+		fputs(int2str(value, 10, TRUE), stderr);
 		fputc('\n', stderr);
 		exit(EXIT_FAILURE);
 	}
@@ -682,7 +665,7 @@ void eval_immediates(struct blob* p)
 			{
 				if(in_set(i->Text[0], "%~@!"))
 				{
-					value = numerate_string(i->Text + 1);
+					value = strtoint(i->Text + 1);
 
 					if(('0' == i->Text[1]) || (0 != value))
 					{
@@ -692,7 +675,7 @@ void eval_immediates(struct blob* p)
 			}
 			else if(KNIGHT == Architecture)
 			{
-				value = numerate_string(i->Text);
+				value = strtoint(i->Text);
 				if(('0' == i->Text[0]) || (0 != value))
 				{
 					i->Expression = express_number(value, '@');
