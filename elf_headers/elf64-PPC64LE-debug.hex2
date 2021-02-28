@@ -37,7 +37,7 @@
 
 &__e_entry 00 00 00 00 ## e_entry PowerPC64le does the wrong thing and loads the actual e_entry value from this Address
 %ELF_program_headers>ELF_base 00 00 00 00 ## e_phoff Address of program header table
-00 00 00 00 00 00 00 00 ## e_shoff Address of section header table
+%ELF_section_headers>ELF_base 00 00 00 00 ## e_shoff Address of section header table
 
 00 00 00 00        ## e_flags
 40 00              ## e_ehsize Indicating our 64 Byte header
@@ -45,10 +45,10 @@
 38 00              ## e_phentsize size of a program header table
 01 00              ## e_phnum number of entries in program table
 
-00 00              ## e_shentsize size of a section header table
-00 00              ## e_shnum number of entries in section table
+40 00              ## e_shentsize size of a section header table
+05 00              ## e_shnum number of entries in section table
 
-00 00              ## e_shstrndx index of the section names
+02 00              ## e_shstrndx index of the section names
 
 ## Program Header
 :ELF_program_headers
