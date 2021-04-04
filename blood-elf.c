@@ -372,7 +372,6 @@ int main(int argc, char **argv)
 	fputs("\n:ELF_end\n", output);
 
 	/* Close output file */
-	fflush(output);
 	fclose(output);
 
 	return EXIT_SUCCESS;
