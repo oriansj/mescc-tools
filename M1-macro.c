@@ -208,7 +208,13 @@ struct Token* store_atom(struct Token* head, char c, char* filename)
 		SCRATCH[i] = ch;
 		ch = fgetc(source_file);
 		i = i + 1;
-		require(i < max_string, "storing atom of size larger than max_string\n");
+		if(i >= max_string)
+		{
+			fputs("storing atom of size larger than max_string\n", stderr);
+			line_error(filename, linenumber);
+			fputc('\n', stderr);
+			exit(EXIT_FAILURE);
+		}
 		if(EOF == ch) break;
 	} while (!in_set(ch, "\t\n "));
 
