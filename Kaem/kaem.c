@@ -683,7 +683,7 @@ int collect_command(FILE* script, char** argv)
 
 	/* Output the command if verbose is set */
 	/* Also if there is nothing in the command skip over */
-	if(VERBOSE && !match(token->value, ""))
+	if(VERBOSE && !match(token->value, "") && !match(token->value, NULL))
 	{
 		n = token;
 		fputs(" +>", stdout);
