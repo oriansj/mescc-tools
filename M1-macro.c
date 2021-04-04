@@ -23,22 +23,35 @@
 #include "M2libc/bootstrappable.h"
 
 /* Internal processing Constants */
+// CONSTANT max_string 4096
 #define max_string 4096
+// CONSTANT PROCESSED 1
 #define PROCESSED 1
+// CONSTANT STR 2
 #define STR 2
+// CONSTANT NEWLINE 3
 #define NEWLINE 3
 
 /* Unique code for each architecture */
+// CONSTANT KNIGHT 0
 #define KNIGHT 0
+// CONSTANT X86 1
 #define X86 1
+// CONSTANT AMD64 2
 #define AMD64 2
+// CONSTANT ARMV7L 40
 #define ARMV7L 40
+// CONSTANT AARM64 80
 #define AARM64 80
+// CONSTANT PPC64LE 90
 #define PPC64LE 90
 
 /* How do you want that output? */
+// CONSTANT HEX 16
 #define HEX 16
+// CONSTANT OCTAL 8
 #define OCTAL 8
+// CONSTANT BINARY 2
 #define BINARY 2
 
 
