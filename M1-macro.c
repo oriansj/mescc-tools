@@ -45,6 +45,8 @@
 #define AARM64 80
 // CONSTANT PPC64LE 90
 #define PPC64LE 90
+#define RISCV32 243
+#define RISCV64 ((1<<16) | 243) /* set bit 16 to distinguish it while keeping the same ELF machine */
 
 /* How do you want that output? */
 // CONSTANT HEX 16
@@ -680,7 +682,7 @@ void eval_immediates(struct blob* p)
 		else if('<' == i->Text[0]) continue;
 		else if(NULL == i->Expression)
 		{
-			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (PPC64LE == Architecture))
+			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (PPC64LE == Architecture) || (RISCV32 == Architecture) || (RISCV64 == Architecture))
 			{
 				if(in_set(i->Text[0], "%~@!"))
 				{
@@ -791,6 +793,8 @@ int main(int argc, char **argv)
 			else if(match("armv7l", arch)) Architecture = ARMV7L;
 			else if(match("aarch64", arch)) Architecture = AARM64;
 			else if(match("ppc64le", arch)) Architecture = PPC64LE;
+			else if(match("riscv32", arch)) Architecture = RISCV32;
+			else if(match("riscv64", arch)) Architecture = RISCV64;
 			else
 			{
 				fputs("Unknown architecture: ", stderr);
@@ -810,7 +814,7 @@ int main(int argc, char **argv)
 			fputs("Usage: ", stderr);
 			fputs(argv[0], stderr);
 			fputs(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian) ", stderr);
-			fputs("[--architecture name]\nArchitectures: knight-native, knight-posix, x86, amd64 and armv7\n", stderr);
+			fputs("[--architecture name]\nArchitectures: knight-native, knight-posix, x86, amd64, armv7, riscv32 and riscv64\n", stderr);
 			fputs("To leverage octal or binary output: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
