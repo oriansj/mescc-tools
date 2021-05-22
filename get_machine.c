@@ -62,6 +62,17 @@ int main(int argc, char **argv)
 			fputc('\n', stdout);
 			exit(EXIT_SUCCESS);
 		}
+		else if(match(argv[option_index], "--blood"))
+		{
+			if(override) fputs(override_string, stdout);
+			else if(match("aarch64", unameData->machine)
+			     || match("amd64", unameData->machine)
+			     || match("ppc64le", unameData->machine)
+			     || match("riscv64", unameData->machine)
+			     || match("x86_64", unameData->machine)) fputs("--64", stdout);
+			fputc('\n', stdout);
+			exit(EXIT_SUCCESS);
+		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
 			fputs("get_machine 1.1.0\n", stdout);

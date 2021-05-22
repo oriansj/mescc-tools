@@ -29,13 +29,13 @@
 #define FALSE 0
 
 #define KNIGHT 0
-#define X86 1
-#define AMD64 2
-#define ARMV7L 40
-#define AARM64 80
-#define PPC64LE 90
-#define RISCV32 243
-#define RISCV64 ((1<<16) | 243) /* set bit 16 to distinguish it while keeping the same ELF machine */
+#define X86 0x03
+#define AMD64 0x3E
+#define ARMV7L 0x28
+#define AARM64 0xB7
+#define PPC64LE 0x15
+#define RISCV32 0xF3
+#define RISCV64 0x100F3 /* Because RISC-V unlike all other architectures does get a seperate e_machine when changing from 32 to 64bit */
 
 #define HEX 16
 #define OCTAL 8

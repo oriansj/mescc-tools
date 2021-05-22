@@ -35,18 +35,21 @@
 /* Unique code for each architecture */
 // CONSTANT KNIGHT 0
 #define KNIGHT 0
-// CONSTANT X86 1
-#define X86 1
-// CONSTANT AMD64 2
-#define AMD64 2
+// CONSTANT X86 3
+#define X86 0x03
+// CONSTANT AMD64 62
+#define AMD64 0x3E
 // CONSTANT ARMV7L 40
-#define ARMV7L 40
-// CONSTANT AARM64 80
-#define AARM64 80
-// CONSTANT PPC64LE 90
-#define PPC64LE 90
-#define RISCV32 243
-#define RISCV64 ((1<<16) | 243) /* set bit 16 to distinguish it while keeping the same ELF machine */
+#define ARMV7L 0x28
+// CONSTANT AARM64 183
+#define AARM64 0xB7
+// CONSTANT PPC64LE 21
+#define PPC64LE 0x15
+// CONSTANT RISCV32 243
+#define RISCV32 0xF3
+// CONSTANT RISCV64 65779
+#define RISCV64 0x100F3 /* Because RISC-V unlike all other architectures does get a seperate e_machine when changing from 32 to 64bit */
+
 
 /* How do you want that output? */
 // CONSTANT HEX 16

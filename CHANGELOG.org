@@ -24,6 +24,13 @@ Add aligned addressing for AArch64
 Produce meaningful warning message when users are not generating ROM images
 Produce warning for potentially wrong endianess
 Use hash table for hex2 jump table
+Add proper escaping support to kaem
+Adding baseline support for ppc64le in hex2
+Add ppc64le support to M1
+Add minimal PPC64LE test for M1+hex2
+Add RISC-V support to hex2_linker
+Add RISC-V support to M1
+Add --blood flag to get_machine to simplify the process of getting blood-elf flags during bootstrap
 
 ** Changed
 Inherrit CFLAGS in kaem makefile
@@ -31,6 +38,9 @@ Changed M1 to leverage O(1) macro application
 Pulled all variable initialization outside of loops to fix M2-Planet compatibility
 Broke kaem tests into individual commands
 Close files that were fopen'ed
+Harmonize get_machine flags to support --os and depreciate --OS
+Replace file_print with more C standard compliant fputs
+Harmonized on ELF header numbers for architecture numbering
 
 ** Fixed
 Fixed makefiles so guix is able to build
@@ -40,9 +50,16 @@ GCC 10 Compatibility issue
 Behavior of kaem --strict in regards to blank lines
 Missing makefile dependencies on get_machine
 catm stopped reading past the end of argv
+Added missing test and made add_envar update
+Fix kaem overwriting environment variables
+Make kaem test14 not locale specific
+Fixed build failure caused by export LANGUAGE=nl_BE:nl
+Disable attempting to run Linux binaries on non-Linux hosts
+Make overly long atoms have a useful error message
 
 ** Removed
 Remove kaem.run in Kaem/
+Finish eliminating all functions outside of M2libc
 
 * 1.0 - 2020-05-01
 ** Added
