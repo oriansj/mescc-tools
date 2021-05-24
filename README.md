@@ -21,7 +21,7 @@ https://savannah.nongnu.org/projects/mescc-tools
 pull requests can be made at https://github.com/oriansj/mescc-tools
 and https://gitlab.com/janneke/mescc-tools
 or patches/diffs can be sent via email to Jeremiah (at) pdp10 [dot] guru
-or join us on freenode's #bootstrappable
+or join us on libera.chat's #bootstrappable
 
 These are a collection of tools written for use in bootstrapping
 
