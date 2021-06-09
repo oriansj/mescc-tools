@@ -673,6 +673,13 @@ int collect_command(FILE* script, char** argv)
 		/* Deal with variables */
 		handle_variables(argv, n);
 
+		/* If the variable expands into nothing*/
+		if(match(n->value, " "))
+		{
+			n->value = NULL;
+			continue;
+		}
+
 		/* Prepare for next loop */
 		n->next = calloc(1, sizeof(struct Token));
 		require(n->next != NULL, "Memory initialization of next token node in collect_command failed\n");

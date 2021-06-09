@@ -31,6 +31,7 @@ Add minimal PPC64LE test for M1+hex2
 Add RISC-V support to hex2_linker
 Add RISC-V support to M1
 Add --blood flag to get_machine to simplify the process of getting blood-elf flags during bootstrap
+Added variable expansion collapse support
 
 ** Changed
 Inherrit CFLAGS in kaem makefile
