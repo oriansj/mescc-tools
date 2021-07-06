@@ -377,7 +377,6 @@ void add_envar()
 		i = i + 1;
 	}
 
-
 	/* Isolate the value */
 	newvalue = name + i + 2;
 	value = value + i + 1;
@@ -395,6 +394,15 @@ void add_envar()
 		env = calloc(1, sizeof(struct Token));
 		require(env != NULL, "Memory initialization of env failed\n");
 		env->var = name; /* Add our first variable */
+	}
+
+	/*
+	 * If the name of the envar is PATH, then we need to set our (internal)
+	 * global PATH value.
+	 */
+	if(match(name, "PATH"))
+	{
+		strcpy(PATH, newvalue);
 	}
 
 	struct Token* n = env;
