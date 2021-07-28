@@ -28,8 +28,10 @@ M1: M1-macro.c M2libc/bootstrappable.c | bin
 	M2libc/bootstrappable.c \
 	-o bin/M1
 
-hex2: hex2_linker.c M2libc/bootstrappable.c | bin
-	$(CC) $(CFLAGS) hex2_linker.c \
+hex2: hex2.c hex2_linker.c M2libc/bootstrappable.c | bin
+	$(CC) $(CFLAGS) hex2.c \
+	hex2_linker.c \
+	hex2_word.c \
 	M2libc/bootstrappable.c \
 	-o bin/hex2
 
