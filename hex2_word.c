@@ -42,10 +42,20 @@ void UpdateShiftRegister(char ch, int value)
 		/* we just take the 4 bytes after the . and shove in the shift register */
 		shiftregister = shiftregister ^ value;
 	}
+	else if ('!' == ch)
+	{
+		/* Corresponds to RISC-V I format */
+		/* Will need architecture specific logic if more architectures go this route */
+		/* Possibly incorrect */
+		/* no range check because it needs to work with labels for lui/addi + AUPIC combos */
+		tempword = (value & 0xfff) << 20;
+		/* Update shift register */
+		shiftregister = shiftregister ^ tempword;
+	}
 	else if ('@' == ch)
 	{
 		/* Corresponds to RISC-V SB format */
-		/* With need architecture specific logic if more architectures go this route */
+		/* Will need architecture specific logic if more architectures go this route */
 		/* Possibly incorrect */
 		if ((value < -0x1000 || value > 0xfff) || (value & 1)) outOfRange("SB", value);
 
@@ -60,7 +70,7 @@ void UpdateShiftRegister(char ch, int value)
 	else if ('$' == ch)
 	{
 		/* Corresponds with RISC-V UJ format */
-		/* With need architecture specific logic if more architectures go this route */
+		/* Will need architecture specific logic if more architectures go this route */
 		/* Possibly incorrect */
 		if ((value < -0x100000 || value > 0xfffff) || (value & 1)) outOfRange("UJ", value);
 
@@ -73,7 +83,7 @@ void UpdateShiftRegister(char ch, int value)
 	else if ('~' == ch)
 	{
 		/* Corresponds with RISC-V U format */
-		/* With need architecture specific logic if more architectures go this route */
+		/* Will need architecture specific logic if more architectures go this route */
 		/* Possibly incorrect */
 		if ((value & 0xfff) < 0x800) tempword = value & 0xfffff000;
 		else tempword = (value & 0xfffff000) + 0x1000;
@@ -257,7 +267,7 @@ void WordFirstPass(struct input_files* input)
 				DoByte(c, source_file, FALSE, TRUE);
 			}
 		}
-		else if(in_set(c, "@$~"))
+		else if(in_set(c, "!@$~"))
 		{
 			/* Don't update IP */
 			c = Throwaway_token(source_file);
@@ -326,7 +336,7 @@ void WordSecondPass(struct input_files* input)
 			UpdateShiftRegister('.', tempword);
 		}
 		else if(in_set(c, "%&")) WordStorePointer(c, source_file);  /* Deal with % and & */
-		else if(in_set(c, "@$~"))
+		else if(in_set(c, "!@$~"))
 		{
 			UpdateShiftRegister(c, Architectural_displacement(GetTarget(scratch), ip)); /* Play with shift register */
 		}
