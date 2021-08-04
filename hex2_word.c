@@ -338,6 +338,7 @@ void WordSecondPass(struct input_files* input)
 		else if(in_set(c, "%&")) WordStorePointer(c, source_file);  /* Deal with % and & */
 		else if(in_set(c, "!@$~"))
 		{
+			Clear_Scratch(scratch);
 			consume_token(source_file);
 			UpdateShiftRegister(c, Architectural_displacement(GetTarget(scratch), ip)); /* Play with shift register */
 		}
