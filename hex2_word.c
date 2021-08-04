@@ -47,17 +47,17 @@ void UpdateShiftRegister(char ch, int value)
 		/* Corresponds to RISC-V I format */
 		/* Will need architecture specific logic if more architectures go this route */
 		/* Possibly incorrect */
-		/* no range check because it needs to work with labels for lui/addi + AUPIC combos */
+		/* no range check because it needs to work with labels for lui/addi + AUIPC combos */
 		tempword = (value & 0xfff) << 20;
 		/* Update shift register */
 		shiftregister = shiftregister ^ tempword;
 	}
 	else if ('@' == ch)
 	{
-		/* Corresponds to RISC-V SB format */
+		/* Corresponds to RISC-V B format (formerly known as SB) */
 		/* Will need architecture specific logic if more architectures go this route */
 		/* Possibly incorrect */
-		if ((value < -0x1000 || value > 0xfff) || (value & 1)) outOfRange("SB", value);
+		if ((value < -0x1000 || value > 0xfff) || (value & 1)) outOfRange("B", value);
 
 		/* Prepare the immediate's word */
 		tempword = ((value & 0x1e) << 7)
@@ -69,10 +69,10 @@ void UpdateShiftRegister(char ch, int value)
 	}
 	else if ('$' == ch)
 	{
-		/* Corresponds with RISC-V UJ format */
+		/* Corresponds with RISC-V J format (formerly known as UJ) */
 		/* Will need architecture specific logic if more architectures go this route */
 		/* Possibly incorrect */
-		if ((value < -0x100000 || value > 0xfffff) || (value & 1)) outOfRange("UJ", value);
+		if ((value < -0x100000 || value > 0xfffff) || (value & 1)) outOfRange("J", value);
 
 		tempword = ((value & 0x7fe) << (30 - 10))
 			| ((value & 0x800) << (20 - 11))
@@ -338,6 +338,7 @@ void WordSecondPass(struct input_files* input)
 		else if(in_set(c, "%&")) WordStorePointer(c, source_file);  /* Deal with % and & */
 		else if(in_set(c, "!@$~"))
 		{
+			consume_token(source_file);
 			UpdateShiftRegister(c, Architectural_displacement(GetTarget(scratch), ip)); /* Play with shift register */
 		}
 		else if('<' == c) pad_to_align(TRUE);
