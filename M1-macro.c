@@ -779,12 +779,15 @@ void eval_immediates(struct blob* p)
 			}
 			else if((RISCV32 == Architecture) || (RISCV64 == Architecture))
 			{
-				value = strtoint(i->Text + 1);
+				if(in_set(i->Text[0], "%~@!"))
+				{
+					value = strtoint(i->Text + 1);
 
 					if(('0' == i->Text[1]) || (0 != value))
 					{
 						i->Expression = express_word(value, i->Text[0]);
 					}
+				}
 			}
 			else if(KNIGHT == Architecture)
 			{
