@@ -266,6 +266,7 @@ void WordFirstPass(struct input_files* input)
 			{
 				c = fgetc(source_file);
 				DoByte(c, source_file, FALSE, TRUE);
+				ip = ip - 1;
 			}
 		}
 		else if(in_set(c, "!@$~"))
@@ -333,6 +334,7 @@ void WordSecondPass(struct input_files* input)
 			{
 				c = fgetc(source_file);
 				DoByte(c, source_file, FALSE, TRUE);
+				ip = ip - 1;
 			}
 			UpdateShiftRegister('.', tempword);
 		}
