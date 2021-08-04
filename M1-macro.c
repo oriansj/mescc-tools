@@ -81,7 +81,6 @@ struct Token
 FILE* source_file;
 FILE* destination_file;
 int BigEndian;
-int BigBitEndian;
 int ByteMode;
 int Architecture;
 int linenumber;
@@ -537,6 +536,12 @@ void range_check(int displacement, int number_of_bytes)
 	exit(EXIT_FAILURE);
 }
 
+/***********************************************************
+ * Needed for current implementation of little endian      *
+ * Can be used to support little bit endian instruction    *
+ * sets if we ever find one that might be useful           *
+ * But I seriously doubt it                                *
+ ***********************************************************/
 void reverseBitOrder(char* c)
 {
 	if(NULL == c) return;
@@ -586,7 +591,8 @@ void LittleEndian(char* start)
 		end = end - 1;
 	}
 
-	if(BigBitEndian) reverseBitOrder(c);
+	/* The above makes a reversed bit order */
+	reverseBitOrder(c);
 }
 
 int hex2char(int c)
@@ -670,8 +676,82 @@ char* express_number(int value, char c)
 	stringify(ch, size, ByteMode, value, shift);
 
 	if(!BigEndian) LittleEndian(ch);
-	else if(!BigBitEndian) reverseBitOrder(ch);
 	return ch;
+}
+
+char* express_word(int value, char c)
+{
+	char* s = calloc(43, sizeof(char));
+	s[0] = '.';
+	char* ch = s + 1;
+	require(NULL != ch, "Exhusted available memory\n");
+	int size;
+	int shift;
+	int immediate;
+	if('!' == c)
+	{
+		/* Corresponds to RISC-V I format */
+		immediate = (value & 0xfff) << 20;
+	}
+	else if('@' == c)
+	{
+		/* Corresponds to RISC-V S format */
+		immediate = ((value & 0x1f) << 7) | ((value & 0xfe0) << (31 - 11));
+	}
+	else if('~' == c)
+	{
+		/*Corresponds with RISC-V U format */
+		if ((value & 0xfff) < 0x800)
+		{
+			immediate = value & 0xfffff000;
+		}
+		else
+		{
+			immediate = (value & 0xfffff000) + 0x1000;
+		}
+	}
+	else if('%' == c)
+	{
+		/* provides an option for 32bit immediate constants */
+		immediate = value & 0xFFFFFFFF;
+		/* Drop the leading . */
+		ch = s;
+	}
+	else
+	{
+		fputs("Given symbol ", stderr);
+		fputc(c, stderr);
+		fputs(" to express immediate value ", stderr);
+		fputs(int2str(value, 10, TRUE), stderr);
+		fputc('\n', stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	if(HEX == ByteMode)
+	{
+		size = 4 * 2;
+		shift = 4;
+	}
+	else if(OCTAL == ByteMode)
+	{
+		size = 4 * 3;
+		shift = 3;
+	}
+	else if(BINARY == ByteMode)
+	{
+		size = 4 * 8;
+		shift = 1;
+	}
+	else
+	{
+		fputs("Got invalid ByteMode in express_number\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	stringify(ch, size, ByteMode, immediate, shift);
+
+	if(!BigEndian) LittleEndian(ch);
+	return s;
 }
 
 void eval_immediates(struct blob* p)
@@ -685,7 +765,7 @@ void eval_immediates(struct blob* p)
 		else if('<' == i->Text[0]) continue;
 		else if(NULL == i->Expression)
 		{
-			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (PPC64LE == Architecture) || (RISCV32 == Architecture) || (RISCV64 == Architecture))
+			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (PPC64LE == Architecture))
 			{
 				if(in_set(i->Text[0], "%~@!"))
 				{
@@ -696,6 +776,15 @@ void eval_immediates(struct blob* p)
 						i->Expression = express_number(value, i->Text[0]);
 					}
 				}
+			}
+			else if((RISCV32 == Architecture) || (RISCV64 == Architecture))
+			{
+				value = strtoint(i->Text + 1);
+
+					if(('0' == i->Text[1]) || (0 != value))
+					{
+						i->Expression = express_word(value, i->Text[0]);
+					}
 			}
 			else if(KNIGHT == Architecture)
 			{
@@ -746,7 +835,6 @@ int main(int argc, char **argv)
 	BigEndian = TRUE;
 	Architecture = KNIGHT;
 	destination_file = stdout;
-	BigBitEndian = TRUE;
 	ByteMode = HEX;
 	char* filename;
 	char* arch;
@@ -802,7 +890,7 @@ int main(int argc, char **argv)
 			{
 				fputs("Unknown architecture: ", stderr);
 				fputs(arch, stderr);
-				fputs(" know values are: knight-native, knight-posix, x86, amd64, armv7l, aarch64 and ppc64le", stderr);
+				fputs(" know values are: knight-native, knight-posix, x86, amd64, armv7l, aarch64, ppc64le, riscv32 and riscv64", stderr);
 				exit(EXIT_FAILURE);
 			}
 			option_index = option_index + 2;
