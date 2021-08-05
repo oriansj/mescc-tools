@@ -38,9 +38,23 @@ void UpdateShiftRegister(char ch, int value)
 {
 	if ('.' == ch)
 	{
+		unsigned swap;
 		/* Assume the user knows what they are doing */
+		if(!BigEndian)
+		{
+			/* Swap from big-endian to little endian order */
+			swap = (((value >> 24) & 0xFF) |
+			        ((value << 8) & 0xFF0000) |
+			        ((value >> 8) & 0xFF00) |
+			        ((value << 24) & 0xFF000000));
+		}
+		else
+		{
+			/* Big endian needs no change */
+			swap = value;
+		}
 		/* we just take the 4 bytes after the . and shove in the shift register */
-		shiftregister = shiftregister ^ value;
+		shiftregister = shiftregister ^ swap;
 	}
 	else if ('!' == ch)
 	{
