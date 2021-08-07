@@ -117,9 +117,7 @@ void UpdateShiftRegister(char ch, int value)
 void WordStorePointer(char ch, FILE* source_file)
 {
 	/* Get string of pointer */
-	consume_token(source_file);
 	ip = ip + 4;
-
 	int base_sep_p = consume_token(source_file);
 
 	/* Lookup token */
