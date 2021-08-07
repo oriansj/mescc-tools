@@ -118,6 +118,7 @@ void WordStorePointer(char ch, FILE* source_file)
 {
 	/* Get string of pointer */
 	ip = ip + 4;
+	Clear_Scratch(scratch);
 	int base_sep_p = consume_token(source_file);
 
 	/* Lookup token */
