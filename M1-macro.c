@@ -147,9 +147,9 @@ void NewBlob(int size)
 {
 	blob_count = blob_count + 1;
 	struct blob* a = calloc(1, sizeof(struct blob));
-	require(NULL != a, "Exhusted available memory\n");
+	require(NULL != a, "Exhausted available memory\n");
 	a->Text = calloc(size + 1, sizeof(char));
-	require(NULL != a->Text, "Exhusted available memory\n");
+	require(NULL != a->Text, "Exhausted available memory\n");
 
 	int i = 0;
 	while(i <= size)
@@ -167,7 +167,7 @@ struct Token* newToken(char* filename, int linenumber)
 	struct Token* p;
 
 	p = calloc (1, sizeof (struct Token));
-	require(NULL != p, "Exhusted available memory\n");
+	require(NULL != p, "Exhausted available memory\n");
 
 	p->filename = filename;
 	p->linenumber = linenumber;
@@ -382,7 +382,7 @@ void hexify_string(struct blob* p)
 
 	require(1 != size, "hexify_string lacked a valid bytemode\n");
 	char* d = calloc(size, sizeof(char));
-	require(NULL != d, "Exhusted available memory\n");
+	require(NULL != d, "Exhausted available memory\n");
 	p->Expression = d;
 	char* S = p->Text;
 
@@ -466,7 +466,7 @@ char* pad_nulls(int size, char* nil)
 	else if (BINARY == ByteMode) size = size * 8;
 
 	char* s = calloc(size + 1, sizeof(char));
-	require(NULL != s, "Exhusted available memory\n");
+	require(NULL != s, "Exhausted available memory\n");
 
 	int i = 0;
 	while(i < size)
@@ -616,7 +616,7 @@ int stringify(char* s, int digits, int divisor, int value, int shift)
 char* express_number(int value, char c)
 {
 	char* ch = calloc(42, sizeof(char));
-	require(NULL != ch, "Exhusted available memory\n");
+	require(NULL != ch, "Exhausted available memory\n");
 	int size;
 	int number_of_bytes;
 	int shift;
@@ -684,7 +684,7 @@ char* express_word(int value, char c)
 	char* s = calloc(43, sizeof(char));
 	s[0] = '.';
 	char* ch = s + 1;
-	require(NULL != ch, "Exhusted available memory\n");
+	require(NULL != ch, "Exhausted available memory\n");
 	int size;
 	int shift;
 	int immediate;
@@ -700,7 +700,7 @@ char* express_word(int value, char c)
 	}
 	else if('~' == c)
 	{
-		/*Corresponds with RISC-V U format */
+		/* Corresponds with RISC-V U format */
 		if ((value & 0xfff) < 0x800)
 		{
 			immediate = value & 0xfffff000;

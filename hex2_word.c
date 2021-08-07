@@ -62,7 +62,7 @@ void UpdateShiftRegister(char ch, int value)
 		/* Will need architecture specific logic if more architectures go this route */
 		/* no range check because it needs to work with labels for lui/addi + AUIPC combos */
 		/* !label is used in the second instruction of AUIPC combo but we want an offset from */
-		/* the first instruction.  */
+		/* the first instruction */
 		value = value + 4;
 		tempword = (value & 0xfff) << 20;
 		/* Update shift register */
@@ -86,7 +86,6 @@ void UpdateShiftRegister(char ch, int value)
 	{
 		/* Corresponds with RISC-V J format (formerly known as UJ) */
 		/* Will need architecture specific logic if more architectures go this route */
-		/* Possibly incorrect */
 		if ((value < -0x100000 || value > 0xfffff) || (value & 1)) outOfRange("J", value);
 
 		tempword = ((value & 0x7fe) << (30 - 10))
@@ -99,7 +98,6 @@ void UpdateShiftRegister(char ch, int value)
 	{
 		/* Corresponds with RISC-V U format */
 		/* Will need architecture specific logic if more architectures go this route */
-		/* Possibly incorrect */
 		if ((value & 0xfff) < 0x800) tempword = value & 0xfffff000;
 		else tempword = (value & 0xfffff000) + 0x1000;
 		shiftregister = shiftregister ^ tempword;
