@@ -17,20 +17,7 @@
  * along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "hex2.h"
-/* Globals */
-FILE* output;
-struct entry** jump_tables;
-int BigEndian;
-int Base_Address;
-int Architecture;
-int ByteMode;
-int exec_enable;
-int ip;
-char* scratch;
-char* filename;
-int linenumber;
-int ALIGNED;
+#include "hex2_globals.h"
 
 /* The essential functions */
 void first_pass(struct input_files* input);

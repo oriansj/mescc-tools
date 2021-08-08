@@ -19,6 +19,21 @@
 
 #include "hex2_globals.h"
 
+/* Globals */
+FILE* output;
+struct entry** jump_tables;
+int BigEndian;
+int Base_Address;
+int Architecture;
+int ByteMode;
+int exec_enable;
+int ip;
+char* scratch;
+char* filename;
+int linenumber;
+int ALIGNED;
+
+/* For processing bytes */
 int hold;
 int toggle;
 
