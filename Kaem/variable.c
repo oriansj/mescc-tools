@@ -212,8 +212,6 @@ void variable_all(char** argv, struct Token* n)
 			{
 				n->value[j] = 0;
 			}
-			strcpy(argv_element, argv[i]);
-			index = strlen(argv_element);
 		}
 
 		/* Add space on the end */
