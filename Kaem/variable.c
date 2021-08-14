@@ -192,29 +192,26 @@ void variable_all(char** argv, struct Token* n)
 	/* index refernences the index of n->value, unlike other functions */
 	int index = 0;
 	int argv_length = array_length(argv);
-	int i;
-	int j;
+	int i = 0;
 	char* argv_element = calloc(MAX_STRING, sizeof(char));
-	char* hold;
+	char* hold = argv[i];
 	n->value = argv_element;
 	/* Assuming the form kaem -f script or kaem -f script -- 123 we want matching results to bash, so skip the kaem, -f and script */
-	for(i = 3; i < argv_length; i = i + 1)
+	while(!match("--", hold))
+	{
+		i = i + 1;
+		hold = argv[i];
+		if(argv_length == i) break;
+	}
+
+	/* put i = i + 1 in the for initialization to skip past the -- */
+	for(; i < argv_length; i = i + 1)
 	{
 		/* Ends up with (n->value) (argv[i]) */
 		/* If we don't do this we get jumbled results in M2-Planet */
 		hold = argv[i];
-		strcpy(argv_element + index, argv[i]);
-		index = strlen(argv_element);
-		if(match(hold, "--"))
-		{ /* -- signifies everything after this */
-			/* Reset n->value */
-			for(j = index; j >= 0; j = j - 1)
-			{
-				n->value[j] = 0;
-			}
-			strcpy(argv_element, argv[i]);
-			index = strlen(argv_element);
-		}
+		strcpy(argv_element + index, hold);
+		index = index + strlen(hold);
 
 		/* Add space on the end */
 		n->value[index] = ' ';
