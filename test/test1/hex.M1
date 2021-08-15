@@ -42,10 +42,7 @@ DEFINE SUB_RAX_Immediate8 4883E8
 DEFINE CALLI32 E8
 DEFINE NULL 00000000
 
-# Where the ELF Header is going to hit
-# Simply jump to _start
-JMP32 %_start
-
+# Where the ELF Header is going to hit is :_start
 
 :hex
 	# Purge Comment Lines (#)
@@ -196,4 +193,3 @@ JMP32 %_start
 	NULL
 
 :ELF_end
-

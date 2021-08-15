@@ -24,7 +24,7 @@ DEFINE LOADI32_RDI 48C7C7
 DEFINE LOADI32_RDX 48C7C2
 DEFINE SYSCALL 0F05
 
-:start
+:_start
 	# first check that we got the correct number of inputs
 	POP_RAX                     # Get the number of arguments
 	POP_RDI                     # Get the program name

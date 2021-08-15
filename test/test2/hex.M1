@@ -41,9 +41,7 @@ DEFINE STORE8_al_Absolute32 A2
 DEFINE SUB_eax_Immediate8 83E8
 DEFINE TEST_eax_eax 85C0
 
-# Where the ELF Header is going to hit
-# Simply jump to _start
-JMP32 %_start
+# Where the ELF Header is going to hit :_start first
 
 :read_byte
 	# Attempt to read 1 byte from STDIN

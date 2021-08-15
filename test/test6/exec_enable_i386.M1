@@ -24,7 +24,7 @@ DEFINE LOADI32_EBX BB
 DEFINE LOADI32_EDX BA
 DEFINE INT_80 CD80
 
-:start
+:_start
 	# first check that we got the correct number of inputs
 	POP_eax                     # Get the number of arguments
 	POP_ebx                     # Get the program name

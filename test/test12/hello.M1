@@ -32,6 +32,7 @@ DEFINE R7 7
 DEFINE R14 E
 DEFINE PC F
 
+:_start
 :main
 ^~print BL_ALWAYS
 !string1 R1 '0' ADDI_PC_ALWAYS
