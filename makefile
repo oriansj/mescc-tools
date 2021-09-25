@@ -23,8 +23,9 @@ all: M1 hex2 get_machine blood-elf kaem catm
 CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -fno-common
 
-M1: M1-macro.c M2libc/bootstrappable.c | bin
+M1: M1-macro.c stringify.c M2libc/bootstrappable.c | bin
 	$(CC) $(CFLAGS) M1-macro.c \
+	stringify.c \
 	M2libc/bootstrappable.c \
 	-o bin/M1
 
@@ -40,8 +41,9 @@ get_machine: get_machine.c M2libc/bootstrappable.c | bin
 	M2libc/bootstrappable.c \
 	-o bin/get_machine
 
-blood-elf: blood-elf.c M2libc/bootstrappable.c | bin
+blood-elf: blood-elf.c stringify.c M2libc/bootstrappable.c | bin
 	$(CC) $(CFLAGS) blood-elf.c \
+	stringify.c \
 	M2libc/bootstrappable.c \
 	-o bin/blood-elf
 

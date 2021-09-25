@@ -16,7 +16,7 @@
 ## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
 set -ex
-./bin/blood-elf -f test/test11/hello.M1 -o test/test11/footer.M1 || exit 1
+./bin/blood-elf -f test/test11/hello.M1 --little-endian -o test/test11/footer.M1 || exit 1
 ./bin/M1 --little-endian --architecture armv7l -f test/test11/hello.M1 -f test/test11/footer.M1 -o test/test11/hello.hex2 || exit 2
 ./bin/hex2 --little-endian --architecture armv7l --base-address 0x10000 -f elf_headers/elf32-ARM-debug.hex2 -f test/test11/hello.hex2 -o test/results/test11-binary || exit 3
 

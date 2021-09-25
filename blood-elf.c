@@ -27,10 +27,32 @@
 
 // CONSTANT max_string 4096
 #define max_string 4096
-#define TRUE 1
-#define FALSE 0
 int BITSIZE;
+int BigEndian;
+// CONSTANT HEX 16
+#define HEX 16
+// CONSTANT OCTAL 8
+#define OCTAL 8
+// CONSTANT BINARY 2
+#define BINARY 2
 
+
+/* Strings needed for constants */
+char* zero_8;
+char* zero_16;
+char* zero_32;
+char* one_16;
+char* one_32;
+char* two_8;
+char* two_32;
+char* three_32;
+char* six_32;
+char* sixteen_32;
+char* twentyfour_32;
+
+/* Imported from stringify.c */
+int stringify(char* s, int digits, int divisor, int value, int shift);
+void LittleEndian(char* start, int ByteMode);
 
 struct entry
 {
@@ -130,7 +152,9 @@ void first_pass(struct entry* input)
 
 void output_string_table(struct entry* node)
 {
-	fputs("\n# Generated string table\n:ELF_str\n!0\t# NULL string\n", output);
+	fputs("\n# Generated string table\n:ELF_str\n", output);
+	fputs(zero_8, output);
+	fputs("\t# NULL string\n", output);
 	struct entry* i;
 	for(i = node; NULL != i; i = i->next)
 	{
@@ -148,21 +172,47 @@ void output_symbol_table(struct entry* node)
 	fputs("\n# Generated symbol table\n:ELF_sym\n# Required NULL symbol entry\n", output);
 	if(64 == BITSIZE)
 	{
-		fputs("%0\t# st_name\n", output);
-		fputs("!0\t# st_info\n", output);
-		fputs("!0\t# st_other\n", output);
-		fputs("@1\t# st_shndx\n", output);
-		fputs("%0 %0\t# st_value\n", output);
-		fputs("%0 %0\t# st_size\n\n", output);
+		fputs(zero_32, output);
+		fputs("\t# st_name\n", output);
+
+		fputs(zero_8, output);
+		fputs("\t# st_info\n", output);
+
+		fputs(zero_8, output);
+		fputs("\t# st_other\n", output);
+
+		fputs(one_16, output);
+		fputs("\t# st_shndx\n", output);
+
+		fputs(zero_32, output);
+		fputc(' ', output);
+		fputs(zero_32, output);
+		fputs("\t# st_value\n", output);
+
+		fputs(zero_32, output);
+		fputc(' ', output);
+		fputs(zero_32, output);
+		fputs("\t# st_size\n\n", output);
 	}
 	else
 	{
-		fputs("%0\t# st_name\n", output);
-		fputs("%0\t# st_value\n", output);
-		fputs("%0\t# st_size\n", output);
-		fputs("!0\t# st_info\n", output);
-		fputs("!0\t# st_other\n", output);
-		fputs("@1\t# st_shndx\n\n", output);
+		fputs(zero_32, output);
+		fputs("\t# st_name\n", output);
+
+		fputs(zero_32, output);
+		fputs("\t# st_value\n", output);
+
+		fputs(zero_32, output);
+		fputs("\t# st_size\n", output);
+
+		fputs(zero_8, output);
+		fputs("\t# st_info\n", output);
+
+		fputs(zero_8, output);
+		fputs("\t# st_other\n", output);
+
+		fputs(one_16, output);
+		fputs("\t# st_shndx\n\n", output);
 	}
 
 	struct entry* i;
@@ -174,25 +224,59 @@ void output_symbol_table(struct entry* node)
 
 		if(64 == BITSIZE)
 		{
-			fputs("!2\t# st_info (FUNC)\n", output);
-			if(('_' == i->name[0]) && !match(entry, i->name)) fputs("!2\t# st_other (hidden)\n", output);
-			else fputs("!0\t# st_other (other)\n", output);
-			fputs("@1\t# st_shndx\n", output);
+			fputs(two_8, output);
+			fputs("\t# st_info (FUNC)\n", output);
+
+			if(('_' == i->name[0]) && !match(entry, i->name))
+			{
+				fputs(two_8, output);
+				fputs("\t# st_other (hidden)\n", output);
+			}
+			else
+			{
+				fputs(zero_8, output);
+				fputs("\t# st_other (other)\n", output);
+			}
+
+			fputs(one_16, output);
+			fputs("\t# st_shndx\n", output);
+
 			fputs("&", output);
 			fputs(i->name, output);
-			fputs(" %0\t# st_value\n", output);
-			fputs("%0 %0\t# st_size (unknown size)\n\n", output);
+			fputc(' ', output);
+			fputs(zero_32, output);
+			fputs("\t# st_value\n", output);
+
+			fputs(zero_32, output);
+			fputc(' ', output);
+			fputs(zero_32, output);
+			fputs("\t# st_size (unknown size)\n\n", output);
 		}
 		else
 		{
 			fputs("&", output);
 			fputs(i->name, output);
 			fputs("\t#st_value\n", output);
-			fputs("%0\t# st_size (unknown size)\n", output);
-			fputs("!2\t# st_info (FUNC)\n", output);
-			if(('_' == i->name[0]) && !match(entry, i->name)) fputs("!2\t# st_other (hidden)\n", output);
-			else fputs("!0\t# st_other (default)\n", output);
-			fputs("@1\t# st_shndx\n\n", output);
+
+			fputs(zero_32, output);
+			fputs("\t# st_size (unknown size)\n", output);
+
+			fputs(two_8, output);
+			fputs("\t# st_info (FUNC)\n", output);
+
+			if(('_' == i->name[0]) && !match(entry, i->name))
+			{
+				fputs(two_8, output);
+				fputs("\t# st_other (hidden)\n", output);
+			}
+			else
+			{
+				fputs(zero_8, output);
+				fputs("\t# st_other (default)\n", output);
+			}
+
+			fputs(one_16, output);
+			fputs("\t# st_shndx\n\n", output);
 		}
 	}
 
@@ -226,8 +310,13 @@ void write_register(char* field, char* label)
 	/* $field section in the section headers are different size for 32 and 64bits */
 	/* The below is broken for BigEndian */
 	fputs(field, output);
-	if(64 == BITSIZE) fputs(" %0\t#", output);
-	else fputs("\t#", output);
+	if(64 == BITSIZE)
+	{
+		fputc(' ', output);
+		fputs(zero_32, output);
+	}
+
+	fputs("\t#", output);
 	fputs(label, output);
 	fputc('\n', output);
 }
@@ -248,16 +337,84 @@ void write_section(char* label, char* name, char* type, char* flags, char* addre
 	write_int(link, "sh_link");
 
 	/* Deal with the ugly case of stubs */
-	fputc('%', output);
 	fputs(info, output);
 	fputs("\t#sh_info\n", output);
 
 	/* Alignment section in the section headers are different size for 32 and 64bits */
 	/* The below is broken for BigEndian */
-	if(64 == BITSIZE) fputs("%1 %0\t#sh_addralign\n", output);
-	else fputs("%1\t#sh_addralign\n", output);
+	if(64 == BITSIZE)
+	{
+		fputs(one_32, output);
+		fputc(' ', output);
+		fputs(zero_32, output);
+		fputs("\t#sh_addralign\n", output);
+	}
+	else
+	{
+		fputs(one_32, output);
+		fputs("\t#sh_addralign\n", output);
+	}
 
 	write_register(entry, "sh_entsize");
+}
+
+char* get_string(int value, int size, int ByteMode, int shift)
+{
+	char* ch = calloc(42, sizeof(char));
+	require(NULL != ch, "Exhausted available memory\n");
+	ch[0] = '\'';
+	stringify(ch+1, size, ByteMode, value, shift);
+	if(!BigEndian) LittleEndian(ch+1, ByteMode);
+	int i = 0;
+	while(0 != ch[i])
+	{
+		i = i + 1;
+	}
+	ch[i] = '\'';
+	return ch;
+}
+
+char* setup_string(int value, int number_of_bytes, int ByteMode)
+{
+	int shift;
+	int size;
+	if(HEX == ByteMode)
+	{
+		size = 2;
+		shift = 4;
+	}
+	else if(OCTAL == ByteMode)
+	{
+		size = 3;
+		shift = 3;
+	}
+	else if(BINARY == ByteMode)
+	{
+		size = 8;
+		shift = 1;
+	}
+	else
+	{
+		fputs("reached impossible mode\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	return get_string(value, number_of_bytes *size, ByteMode, shift);
+}
+
+void setup_strings(int ByteMode)
+{
+	zero_8 = setup_string(0, 1, ByteMode);
+	zero_16 = setup_string(0, 2, ByteMode);
+	zero_32 = setup_string(0, 4, ByteMode);
+	one_16 = setup_string(1, 2, ByteMode);
+	one_32 = setup_string(1, 4, ByteMode);
+	two_8 = setup_string(2, 1, ByteMode);
+	two_32 = setup_string(2, 4, ByteMode);
+	three_32 = setup_string(3, 4, ByteMode);
+	six_32 = setup_string(6, 4, ByteMode);
+	sixteen_32 = setup_string(16, 4, ByteMode);
+	twentyfour_32 = setup_string(24, 4, ByteMode);
 }
 
 /* Standard C main program */
@@ -270,6 +427,9 @@ int main(int argc, char **argv)
 	entry = "";
 	BITSIZE = 32;
 	count = 1;
+	BigEndian = TRUE;
+	int ByteMode = HEX;
+	int set = FALSE;
 	struct entry* temp;
 	struct entry* head;
 
@@ -314,9 +474,36 @@ int main(int argc, char **argv)
 			}
 			option_index = option_index + 2;
 		}
+		else if(match(argv[option_index], "-b") || match(argv[option_index], "--binary"))
+		{
+			ByteMode = BINARY;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-O") || match(argv[option_index], "--octal"))
+		{
+			ByteMode = OCTAL;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "-X") || match(argv[option_index], "--hex"))
+		{
+			ByteMode = HEX;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--big-endian"))
+		{
+			BigEndian = TRUE;
+			set = TRUE;
+			option_index = option_index + 1;
+		}
+		else if(match(argv[option_index], "--little-endian"))
+		{
+			BigEndian = FALSE;
+			set = TRUE;
+			option_index = option_index + 1;
+		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			fputs("blood-elf 1.1.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			fputs("blood-elf 2.0.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "--entry"))
@@ -344,6 +531,16 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	/* Force setting of endianness */
+	if(!set)
+	{
+		fputs("either --little-endian or --big-endian MUST be set\n", stderr);
+		return EXIT_FAILURE;
+	}
+
+	/* Setup the ugly formating because RISC-V sucks */
+	setup_strings(ByteMode);
+
 	/* Get all of the labels */
 	first_pass(input);
 
@@ -352,19 +549,21 @@ int main(int argc, char **argv)
 
 	/* Create sections */
 	/* Create string names for sections */
-	fputs("# Generated sections\n:ELF_shstr\n!0\t# NULL\n", output);
+	fputs("# Generated sections\n:ELF_shstr\n", output);
+	fputs(zero_8, output);
+	fputs("\t# NULL\n", output);
 	fputs(":ELF_shstr__text\n\".text\"\n", output);
 	fputs(":ELF_shstr__shstr\n\".shstrtab\"\n", output);
 	fputs(":ELF_shstr__sym\n\".symtab\"\n", output);
 	fputs(":ELF_shstr__str\n\".strtab\"\n", output);
 
 	/* Create NULL section header as is required by the Spec. So dumb and waste of bytes*/
-	write_section(":ELF_section_headers", "%0", "%0", "%0", "%0", "%0", "%0", "%0", "0", "%0");
-	write_section(":ELF_section_header_text", "%ELF_shstr__text>ELF_shstr", "%1", "%6", "&ELF_text", "%ELF_text>ELF_base", "%ELF_data>ELF_text", "%0", "0", "%0");
-	write_section(":ELF_section_header_shstr", "%ELF_shstr__shstr>ELF_shstr", "%3", "%0", "&ELF_shstr", "%ELF_shstr>ELF_base", "%ELF_section_headers>ELF_shstr", "%0", "0", "%0");
-	write_section(":ELF_section_header_str", "%ELF_shstr__str>ELF_shstr", "%3", "%0", "&ELF_str", "%ELF_str>ELF_base", "%ELF_sym>ELF_str", "%0", "0", "%0");
-	if(64 == BITSIZE) write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", "%2", "%0", "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", "%3", int2str(count, 10, TRUE), "%24");
-	else write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", "%2", "%0", "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", "%3", int2str(count, 10, TRUE), "%16");
+	write_section(":ELF_section_headers", zero_32, zero_32, zero_32, zero_32, zero_32, zero_32, zero_32, zero_32, zero_32);
+	write_section(":ELF_section_header_text", "%ELF_shstr__text>ELF_shstr", one_32, six_32, "&ELF_text", "%ELF_text>ELF_base", "%ELF_data>ELF_text", zero_32, zero_32, zero_32);
+	write_section(":ELF_section_header_shstr", "%ELF_shstr__shstr>ELF_shstr", three_32, zero_32, "&ELF_shstr", "%ELF_shstr>ELF_base", "%ELF_section_headers>ELF_shstr", zero_32, zero_32, zero_32);
+	write_section(":ELF_section_header_str", "%ELF_shstr__str>ELF_shstr", three_32, zero_32, "&ELF_str", "%ELF_str>ELF_base", "%ELF_sym>ELF_str", zero_32, zero_32, zero_32);
+	if(64 == BITSIZE) write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", two_32, zero_32, "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", three_32, setup_string(count, 4, ByteMode), twentyfour_32);
+	else write_section(":ELF_section_header_sym", "%ELF_shstr__sym>ELF_shstr", two_32, zero_32, "&ELF_sym", "%ELF_sym>ELF_base", "%ELF_end>ELF_sym", three_32, setup_string(count, 4, ByteMode), sixteen_32);
 
 	/* Create dwarf stubs needed for objdump -d to get function names */
 	output_string_table(jump_table);

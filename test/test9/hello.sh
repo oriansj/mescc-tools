@@ -105,7 +105,9 @@ set -ex
 	--entry nextchar \
 	--entry opterr \
 	--entry errno \
-	--entry _start -o test/test9/footer.M1
+	--entry _start \
+	--little-endian \
+	-o test/test9/footer.M1
 ./bin/M1 --little-endian --architecture x86 -f test/test9/x86.M1 -f test/test9/M1.M1 -f test/test9/footer.M1 -o test/test9/M1.hex2
 ./bin/hex2 --little-endian --architecture x86 --base-address 0x1000000 -f elf_headers/elf32-debug.hex2 -f test/test9/crt1.hex2 -f test/test9/libc-mes+tcc.hex2 -f test/test9/M1.hex2 -o test/results/test9-binary
 exit 0
