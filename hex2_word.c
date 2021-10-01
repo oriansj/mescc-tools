@@ -46,7 +46,7 @@ void UpdateShiftRegister(char ch, int value)
 			swap = (((value >> 24) & 0xFF) |
 			        ((value << 8) & 0xFF0000) |
 			        ((value >> 8) & 0xFF00) |
-			        ((value << 24) & 0xFF000000));
+			        ((value << 24) & (0xFF << 24)));
 		}
 		else
 		{
