@@ -617,23 +617,23 @@ char* express_word(int value, char c)
 	if('!' == c)
 	{
 		/* Corresponds to RISC-V I format */
-		immediate = (value & 0xfff) << 20;
+		immediate = (value & 0xFFF) << 20;
 	}
 	else if('@' == c)
 	{
 		/* Corresponds to RISC-V S format */
-		immediate = ((value & 0x1f) << 7) | ((value & 0xfe0) << (31 - 11));
+		immediate = ((value & 0x1F) << 7) | ((value & 0xFE0) << (31 - 11));
 	}
 	else if('~' == c)
 	{
 		/* Corresponds with RISC-V U format */
-		if ((value & 0xfff) < 0x800)
+		if ((value & 0xFFF) < 0x800)
 		{
-			immediate = value & 0xfffff000;
+			immediate = value & 0xFFFFF000;
 		}
 		else
 		{
-			immediate = (value & 0xfffff000) + 0x1000;
+			immediate = (value & 0xFFFFF000) + 0x1000;
 		}
 	}
 	else if('%' == c)
