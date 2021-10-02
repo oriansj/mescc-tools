@@ -754,6 +754,9 @@ void run_script(FILE* script, char** argv)
 /* Function to populate env */
 void populate_env(char** envp)
 {
+	/* You can't populate a NULL environment */
+	if(NULL == envp) return;
+
 	/* Initialize env and n */
 	env = calloc(1, sizeof(struct Token));
 	require(env != NULL, "Memory initialization of env failed\n");
