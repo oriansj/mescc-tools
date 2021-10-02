@@ -46,7 +46,7 @@ void UpdateShiftRegister(char ch, int value)
 			swap = (((value >> 24) & 0xFF) |
 			        ((value << 8) & 0xFF0000) |
 			        ((value >> 8) & 0xFF00) |
-			        ((value << 24) & (0xFF << 24)));
+			        ((value & 0xFF) << 24));
 		}
 		else
 		{
@@ -64,7 +64,7 @@ void UpdateShiftRegister(char ch, int value)
 		/* !label is used in the second instruction of AUIPC combo but we want an offset from */
 		/* the first instruction */
 		value = value + 4;
-		tempword = (value & 0xfff) << 20;
+		tempword = (value & 0xFFF) << 20;
 		/* Update shift register */
 		shiftregister = shiftregister ^ tempword;
 	}
@@ -72,11 +72,11 @@ void UpdateShiftRegister(char ch, int value)
 	{
 		/* Corresponds to RISC-V B format (formerly known as SB) */
 		/* Will need architecture specific logic if more architectures go this route */
-		if ((value < -0x1000 || value > 0xfff) || (value & 1)) outOfRange("B", value);
+		if ((value < -0x1000 || value > 0xFFF) || (value & 1)) outOfRange("B", value);
 
 		/* Prepare the immediate's word */
-		tempword = ((value & 0x1e) << 7)
-			| ((value & 0x7e0) << (31 - 11))
+		tempword = ((value & 0x1E) << 7)
+			| ((value & 0x7E0) << (31 - 11))
 			| ((value & 0x800) >> 4)
 			| ((value & 0x1000) << (31 - 12));
 		/* Update shift register */
@@ -86,11 +86,11 @@ void UpdateShiftRegister(char ch, int value)
 	{
 		/* Corresponds with RISC-V J format (formerly known as UJ) */
 		/* Will need architecture specific logic if more architectures go this route */
-		if ((value < -0x100000 || value > 0xfffff) || (value & 1)) outOfRange("J", value);
+		if ((value < -0x100000 || value > 0xFFFFF) || (value & 1)) outOfRange("J", value);
 
-		tempword = ((value & 0x7fe) << (30 - 10))
+		tempword = ((value & 0x7FE) << (30 - 10))
 			| ((value & 0x800) << (20 - 11))
-			| ((value & 0xff000))
+			| ((value & 0xFF000))
 			| ((value & 0x100000) << (31 - 20));
 		shiftregister = shiftregister ^ tempword;
 	}
@@ -98,8 +98,8 @@ void UpdateShiftRegister(char ch, int value)
 	{
 		/* Corresponds with RISC-V U format */
 		/* Will need architecture specific logic if more architectures go this route */
-		if ((value & 0xfff) < 0x800) tempword = value & 0xfffff000;
-		else tempword = (value & 0xfffff000) + 0x1000;
+		if ((value & 0xFFF) < 0x800) tempword = value & (0xFFFFF << 12);
+		else tempword = (value & (0xFFFFF << 12)) + 0x1000;
 		shiftregister = shiftregister ^ tempword;
 	}
 	else
