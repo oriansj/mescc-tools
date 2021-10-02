@@ -54,6 +54,7 @@ void UpdateShiftRegister(char ch, int value)
 			swap = value;
 		}
 		/* we just take the 4 bytes after the . and shove in the shift register */
+		swap = swap & ((0xFFFF << 16) | 0xFFFF);
 		shiftregister = shiftregister ^ swap;
 	}
 	else if ('!' == ch)
@@ -66,6 +67,7 @@ void UpdateShiftRegister(char ch, int value)
 		value = value + 4;
 		tempword = (value & 0xFFF) << 20;
 		/* Update shift register */
+		tempword = tempword & ((0xFFFF << 16) | 0xFFFF);
 		shiftregister = shiftregister ^ tempword;
 	}
 	else if ('@' == ch)
@@ -79,6 +81,7 @@ void UpdateShiftRegister(char ch, int value)
 			| ((value & 0x7E0) << (31 - 11))
 			| ((value & 0x800) >> 4)
 			| ((value & 0x1000) << (31 - 12));
+		tempword = tempword & ((0xFFFF << 16) | 0xFFFF);
 		/* Update shift register */
 		shiftregister = shiftregister ^ tempword;
 	}
@@ -92,6 +95,7 @@ void UpdateShiftRegister(char ch, int value)
 			| ((value & 0x800) << (20 - 11))
 			| ((value & 0xFF000))
 			| ((value & 0x100000) << (31 - 20));
+		tempword = tempword & ((0xFFFF << 16) | 0xFFFF);
 		shiftregister = shiftregister ^ tempword;
 	}
 	else if ('~' == ch)
@@ -100,6 +104,7 @@ void UpdateShiftRegister(char ch, int value)
 		/* Will need architecture specific logic if more architectures go this route */
 		if ((value & 0xFFF) < 0x800) tempword = value & (0xFFFFF << 12);
 		else tempword = (value & (0xFFFFF << 12)) + 0x1000;
+		tempword = tempword & ((0xFFFF << 16) | 0xFFFF);
 		shiftregister = shiftregister ^ tempword;
 	}
 	else
