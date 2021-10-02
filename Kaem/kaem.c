@@ -767,7 +767,12 @@ void populate_env(char** envp)
 	int j;
 	int k;
 	char* envp_line;
-	for(i = 0; i < array_length(envp); i = i + 1)
+
+	/* avoid empty arrays */
+	int max = array_length(envp);
+	if(0 == max) return;
+
+	for(i = 0; i < max; i = i + 1)
 	{
 		n->var = calloc(MAX_STRING, sizeof(char));
 		require(n->var != NULL, "Memory initialization of n->var in population of env failed\n");
