@@ -757,6 +757,10 @@ void populate_env(char** envp)
 	/* You can't populate a NULL environment */
 	if(NULL == envp) return;
 
+	/* avoid empty arrays */
+	int max = array_length(envp);
+	if(0 == max) return;
+
 	/* Initialize env and n */
 	env = calloc(1, sizeof(struct Token));
 	require(env != NULL, "Memory initialization of env failed\n");
@@ -767,10 +771,6 @@ void populate_env(char** envp)
 	int j;
 	int k;
 	char* envp_line;
-
-	/* avoid empty arrays */
-	int max = array_length(envp);
-	if(0 == max) return;
 
 	for(i = 0; i < max; i = i + 1)
 	{
