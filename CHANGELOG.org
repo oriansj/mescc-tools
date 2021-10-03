@@ -16,12 +16,23 @@
 
 * Current
 ** Added
+Hex2 support for RISC-V
+M1 support for RISC-V
+Blood-elf support for RISC-V
 
 ** Changed
+clean up $@ behavior for kaem
+ *MAJOR BREAKING CHANGE* make Blood-elf require --little-endian or --big-endian flag to be used (commit db4a332418e7fe5033b2836c9f355f076df325df)
 
 ** Fixed
+Make changing PATH within a kaem script actually change the PATH
+Multiple typos in hex2 and M1
+Correct e_entry behavior for elf example headers
+Make kaem behave correctly when given a NULL envp
+Make kaem behave correctly when given an empty envp
 
 ** Removed
+Removed High level prototypes for hex1, hex2 and M0
 
 * 1.2 - 2021-06-09
 ** Added
