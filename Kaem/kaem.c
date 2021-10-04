@@ -560,6 +560,9 @@ int execute()
 	/* rc = return code */
 	int rc;
 
+	/* exec without forking */
+	int exec = FALSE;
+
 	/* Actually do the execution */
 	if(is_envar(token->value) == TRUE)
 	{
@@ -594,6 +597,11 @@ int execute()
 		unset();
 		return 0;
 	}
+	else if(match(token->value, "exec"))
+	{
+		token = token->next; /* Skip the actual exec */
+		exec = TRUE;
+	}
 
 	/* If it is not a builtin, run it as an executable */
 	int status; /* i.e. return code */
@@ -615,7 +623,8 @@ int execute()
 		return 0;
 	}
 
-	int f = fork();
+	int f = 0;
+	if (!exec) f = fork();
 	/* Ensure fork succeeded */
 	if (f == -1)
 	{
@@ -641,6 +650,9 @@ int execute()
 			execve(program, array, envp);
 		}
 		/* Prevent infinite loops */
+		if (exec) {
+			_exit(EXIT_FAILURE);
+		}
 		_exit(EXIT_SUCCESS);
 	}
 
