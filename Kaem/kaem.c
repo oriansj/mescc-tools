@@ -554,8 +554,53 @@ void unset()
 	}
 }
 
+int execute(FILE* script, char** argv);
+int _execute(FILE* script, char** argv);
+int collect_command(FILE* script, char** argv);
+
+/* if builtin */
+void if_cmd(FILE* script, char** argv)
+{
+	int index;
+	int status;
+	int old_VERBOSE;
+
+	token = token->next; /* Skip the actual if */
+	/* Do not check for successful exit status */
+	int if_status = _execute(script, argv);
+	old_VERBOSE = VERBOSE;
+	VERBOSE = VERBOSE && !if_status;
+	do {
+		index = collect_command(script, argv);
+		require(index != -1, "Unexpected EOF, improperly terminated if statement.\n");
+		if(0 == index) continue;
+
+		if (0 == if_status) {
+			/* Stuff to exec */
+			status = execute(script, argv);
+		}
+		if (match(token->value, "else")) {
+			if_status = !if_status;
+		}
+	} while (!match(token->value, "fi"));
+	VERBOSE = old_VERBOSE;
+}
+
+/* Execute program and check for error */
+int execute(FILE* script, char** argv) {
+	int status = _execute(script, argv);
+	if(STRICT == TRUE && (0 != status))
+	{ /* Clearly the script hit an issue that should never have happened */
+		fputs("Subprocess error ", stderr);
+		fputs(int2str(status, 10, TRUE), stderr);
+		fputs("\nABORTING HARD\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+	return status;
+}
+
 /* Execute program */
-int execute()
+int _execute(FILE* script, char** argv)
 { /* Run the command */
 
 	/* rc = return code */
@@ -602,6 +647,26 @@ int execute()
 	{
 		token = token->next; /* Skip the actual exec */
 		exec = TRUE;
+	}
+	else if(match(token->value, "if"))
+	{
+		if_cmd(script, argv);
+		return 0;
+	}
+	else if(match(token->value, "then"))
+	{
+		/* ignore */
+		return 0;
+	}
+	else if(match(token->value, "else"))
+	{
+		/* ignore */
+		return 0;
+	}
+	else if(match(token->value, "fi"))
+	{
+		/* ignore */
+		return 0;
 	}
 
 	/* If it is not a builtin, run it as an executable */
@@ -753,14 +818,7 @@ void run_script(FILE* script, char** argv)
 		if(0 == index) continue;
 
 		/* Stuff to exec */
-		status = execute();
-		if(STRICT == TRUE && (0 != status))
-		{ /* Clearly the script hit an issue that should never have happened */
-			fputs("Subprocess error ", stderr);
-			fputs(int2str(status, 10, TRUE), stderr);
-			fputs("\nABORTING HARD\n", stderr);
-			exit(EXIT_FAILURE);
-		}
+		status = execute(script, argv);
 	}
 }
 
