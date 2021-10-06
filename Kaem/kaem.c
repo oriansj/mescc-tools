@@ -523,6 +523,7 @@ void echo()
 		/* M2-Planet doesn't let us do this in the while */
 		if(token->value == NULL) break;
 		fputs(token->value, stdout);
+		fputc(' ', stdout);
 		token = token->next;
 	}
 	fputs("\n", stdout);
