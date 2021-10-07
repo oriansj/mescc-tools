@@ -33,12 +33,21 @@ void handle_variables(char** argv, struct Token* n);
 /* Function to find a character in a string */
 char* find_char(char* string, char a)
 {
-	if(0 == string[0]) return NULL;
+	if(0 == string[0])
+	{
+		return NULL;
+	}
+
 	while(a != string[0])
 	{
 		string = string + 1;
-		if(0 == string[0]) return string;
+
+		if(0 == string[0])
+		{
+			return string;
+		}
 	}
+
 	return string;
 }
 
@@ -46,10 +55,12 @@ char* find_char(char* string, char a)
 int array_length(char** array)
 {
 	int length = 0;
+
 	while(array[length] != NULL)
 	{
 		length = length + 1;
 	}
+
 	return length;
 }
 
@@ -58,16 +69,20 @@ char* env_lookup(char* variable)
 {
 	/* Start at the head */
 	struct Token* n = env;
+
 	/* Loop over the linked-list */
 	while(n != NULL)
 	{
 		if(match(variable, n->var))
-		{ /* We have found the correct node */
+		{
+			/* We have found the correct node */
 			return n->value; /* Done */
 		}
+
 		/* Nope, try the next */
 		n = n->next;
 	}
+
 	/* We didn't find anything! */
 	return NULL;
 }
@@ -75,9 +90,14 @@ char* env_lookup(char* variable)
 /* Find the full path to an executable */
 char* find_executable(char* name)
 {
-	if(match("", name)) return NULL;
+	if(match("", name))
+	{
+		return NULL;
+	}
+
 	if(('.' == name[0]) || ('/' == name[0]))
-	{ /* assume names that start with . or / are relative or absolute */
+	{
+		/* assume names that start with . or / are relative or absolute */
 		return name;
 	}
 
@@ -92,27 +112,31 @@ char* find_executable(char* name)
 	int mpath_length;
 	int name_length;
 	int trial_length;
+
 	while(NULL != next)
 	{
 		/* Reset trial */
 		trial_length = strlen(trial);
+
 		for(index = 0; index < trial_length; index = index + 1)
 		{
 			trial[index] = 0;
 		}
 
 		next[0] = 0;
-
 		/* prepend_string(MPATH, prepend_string("/", name)) */
 		mpath_length = strlen(MPATH);
+
 		for(index = 0; index < mpath_length; index = index + 1)
 		{
 			require(MAX_STRING > index, "Element of PATH is too long\n");
 			trial[index] = MPATH[index];
 		}
+
 		trial[index] = '/';
 		offset = strlen(trial);
 		name_length = strlen(name);
+
 		for(index = 0; index < name_length; index = index + 1)
 		{
 			require(MAX_STRING > index, "Element of PATH is too long\n");
@@ -122,6 +146,7 @@ char* find_executable(char* name)
 		/* Try the trial */
 		require(strlen(trial) < MAX_STRING, "COMMAND TOO LONG!\nABORTING HARD\n");
 		t = fopen(trial, "r");
+
 		if(NULL != t)
 		{
 			fclose(t);
@@ -131,6 +156,7 @@ char* find_executable(char* name)
 		MPATH = next + 1;
 		next = find_char(MPATH, ':');
 	}
+
 	return NULL;
 }
 
@@ -149,29 +175,37 @@ char** list_to_array(struct Token* s)
 	int value_length;
 	int var_length;
 	int offset;
+
 	while(n != NULL)
-	{ /* Loop through each node and assign it to an array index */
+	{
+		/* Loop through each node and assign it to an array index */
 		array[index] = calloc(MAX_STRING, sizeof(char));
 		require(array[index] != NULL, "Memory initialization of array[index] in conversion of list to array failed\n");
 		/* Bounds checking */
 		/* No easy way to tell which it is, output generic message */
 		require(index < MAX_ARRAY, "SCRIPT TOO LONG or TOO MANY ENVARS\nABORTING HARD\n");
+
 		if(n->var == NULL)
-		{ /* It is a line */
+		{
+			/* It is a line */
 			array[index] = n->value;
 		}
 		else
-		{ /* It is a var */
+		{
+			/* It is a var */
 			/* prepend_string(n->var, prepend_string("=", n->value)) */
 			var_length = strlen(n->var);
+
 			for(i = 0; i < var_length; i = i + 1)
 			{
 				element[i] = n->var[i];
 			}
+
 			element[i] = '=';
 			i = i + 1;
 			offset = i;
 			value_length = strlen(n->value);
+
 			for(i = 0; i < value_length; i = i + 1)
 			{
 				element[i + offset] = n->value[i];
@@ -179,14 +213,21 @@ char** list_to_array(struct Token* s)
 		}
 
 		/* Insert elements if not empty */
-		if(!match("", element)) strcpy(array[index], element);
+		if(!match("", element))
+		{
+			strcpy(array[index], element);
+		}
 
 		n = n->next;
 		index = index + 1;
 
 		/* Reset element */
-		for(i = 0; i < MAX_STRING; i = i + 1) element[i] = 0;
+		for(i = 0; i < MAX_STRING; i = i + 1)
+		{
+			element[i] = 0;
+		}
 	}
+
 	return array;
 }
 
@@ -194,23 +235,28 @@ char** list_to_array(struct Token* s)
 int handle_escape(int c)
 {
 	if(c == '\n')
-	{ /* Do nothing - eat up the newline */
+	{
+		/* Do nothing - eat up the newline */
 		return -1;
 	}
 	else if('n' == c)
-	{ /* Add a newline to the token */
+	{
+		/* Add a newline to the token */
 		return '\n';
 	}
 	else if('r' == c)
-	{ /* Add a return to the token */
+	{
+		/* Add a return to the token */
 		return '\r';
 	}
 	else if('\\' == c)
-	{ /* Add a real backslash to the token */
+	{
+		/* Add a real backslash to the token */
 		return '\\';
 	}
 	else
-	{ /* Just add it to the token (eg, quotes) */
+	{
+		/* Just add it to the token (eg, quotes) */
 		return c;
 	}
 }
@@ -223,6 +269,7 @@ int handle_escape(int c)
 void collect_comment(FILE* input)
 {
 	int c;
+
 	/* Eat up the comment, one character at a time */
 	/*
 	 * Sanity check that the comment ends with \n.
@@ -242,6 +289,7 @@ int collect_string(FILE* input, char* n, int index)
 	int string_done = FALSE;
 	int c;
 	int cc;
+
 	do
 	{
 		/* Bounds check */
@@ -250,7 +298,8 @@ int collect_string(FILE* input, char* n, int index)
 		require(EOF != c, "IMPROPERLY TERMINATED STRING!\nABORTING HARD\n");
 
 		if('\\' == c)
-		{ /* We are escaping the next character */
+		{
+			/* We are escaping the next character */
 			/* This correctly handles escaped quotes as it just returns the quote */
 			c = fgetc(input);
 			cc = handle_escape(c);
@@ -258,7 +307,8 @@ int collect_string(FILE* input, char* n, int index)
 			index = index + 1;
 		}
 		else if('"' == c)
-		{ /* End of string */
+		{
+			/* End of string */
 			string_done = TRUE;
 		}
 		else
@@ -267,6 +317,7 @@ int collect_string(FILE* input, char* n, int index)
 			index = index + 1;
 		}
 	} while(string_done == FALSE);
+
 	return index;
 }
 
@@ -279,13 +330,17 @@ int collect_token(FILE* input, char* n, int last_index)
 	char* token = calloc(MAX_STRING, sizeof(char));
 	require(token != NULL, "Memory initialization of token in collect_token failed\n");
 	int index = 0;
+
 	do
-	{ /* Loop over each character in the token */
+	{
+		/* Loop over each character in the token */
 		c = fgetc(input);
 		/* Bounds checking */
 		require(MAX_STRING > index, "LINE IS TOO LONG\nABORTING HARD\n");
+
 		if(EOF == c)
-		{ /* End of file -- this means script complete */
+		{
+			/* End of file -- this means script complete */
 			/* We don't actually exit here. This logically makes more sense;
 			 * let the code follow its natural path of execution and exit
 			 * sucessfuly at the end of main().
@@ -295,47 +350,66 @@ int collect_token(FILE* input, char* n, int last_index)
 			return -1;
 		}
 		else if((' ' == c) || ('\t' == c))
-		{ /* Space and tab are token seperators */
+		{
+			/* Space and tab are token seperators */
 			token_done = TRUE;
 		}
 		else if('\n' == c)
-		{ /* Command terminates at end of a line */
+		{
+			/* Command terminates at end of a line */
 			command_done = TRUE;
 			token_done = TRUE;
-			if(0 == index) index = last_index;
+
+			if(0 == index)
+			{
+				index = last_index;
+			}
 		}
 		else if('"' == c)
-		{ /* Handle strings -- everything between a pair of "" */
+		{
+			/* Handle strings -- everything between a pair of "" */
 			index = collect_string(input, n, index);
 			token_done = TRUE;
 		}
 		else if('#' == c)
-		{ /* Handle line comments */
+		{
+			/* Handle line comments */
 			collect_comment(input);
 			command_done = TRUE;
 			token_done = TRUE;
-			if(0 == index) index = last_index;
+
+			if(0 == index)
+			{
+				index = last_index;
+			}
 		}
 		else if('\\' == c)
-		{ /* Support for escapes */
+		{
+			/* Support for escapes */
 			c = fgetc(input); /* Skips over \, gets the next char */
 			cc = handle_escape(c);
+
 			if(-1 != cc)
-			{ /* We need to put it into the token */
+			{
+				/* We need to put it into the token */
 				n[index] = cc;
 			}
+
 			index = index + 1;
 		}
 		else if(0 == c)
-		{ /* We have come to the end of the token */
+		{
+			/* We have come to the end of the token */
 			token_done = TRUE;
 		}
 		else
-		{ /* It's a character to assign */
+		{
+			/* It's a character to assign */
 			n[index] = c;
 			index = index + 1;
 		}
-	} while (token_done == FALSE);
+	} while(token_done == FALSE);
+
 	return index;
 }
 
@@ -350,14 +424,17 @@ int is_envar(char* token)
 {
 	int i = 0;
 	int token_length = strlen(token);
+
 	while(i < token_length)
 	{
 		if(token[i] == '=')
 		{
 			return TRUE;
 		}
+
 		i = i + 1;
 	}
+
 	return FALSE;
 }
 
@@ -382,6 +459,7 @@ void add_envar()
 	value = value + i + 1;
 	i = 0;
 	require(0 != value[i], "add_envar recieved improper variable\n");
+
 	while(0 != value[i])
 	{
 		newvalue[i] = value[i];
@@ -416,6 +494,7 @@ void add_envar()
 			require(n->next != NULL, "Memory initialization of next env node in add_envar failed\n");
 			n->next->var = name;
 		} /* Loop will match and exit */
+
 		n = n->next;
 	}
 
@@ -426,11 +505,25 @@ void add_envar()
 /* cd builtin */
 int cd()
 {
-	if(NULL == token->next) return TRUE;
+	if(NULL == token->next)
+	{
+		return TRUE;
+	}
+
 	token = token->next;
-	if(NULL == token->value) return TRUE;
+
+	if(NULL == token->value)
+	{
+		return TRUE;
+	}
+
 	int ret = chdir(token->value);
-	if(0 > ret) return TRUE;
+
+	if(0 > ret)
+	{
+		return TRUE;
+	}
+
 	return FALSE;
 }
 
@@ -451,35 +544,51 @@ int set()
 {
 	/* Get the options */
 	int i;
-	if(NULL == token->next) goto cleanup_set;
+
+	if(NULL == token->next)
+	{
+		goto cleanup_set;
+	}
+
 	token = token->next;
-	if(NULL == token->value) goto cleanup_set;
+
+	if(NULL == token->value)
+	{
+		goto cleanup_set;
+	}
+
 	char* options = calloc(MAX_STRING, sizeof(char));
 	require(options != NULL, "Memory initialization of options in set failed\n");
-
 	int last_position = strlen(token->value) - 1;
+
 	for(i = 0; i < last_position; i = i + 1)
 	{
 		options[i] = token->value[i + 1];
 	}
+
 	/* Parse the options */
 	int options_length = strlen(options);
+
 	for(i = 0; i < options_length; i = i + 1)
 	{
 		if(options[i] == 'a')
-		{ /* set -a is on by default and cannot be disabled at this time */
+		{
+			/* set -a is on by default and cannot be disabled at this time */
 			if(WARNINGS)
 			{
 				fputs("set -a is on by default and cannot be disabled\n", stdout);
 			}
+
 			continue;
 		}
 		else if(options[i] == 'e')
-		{ /* Fail on failure */
+		{
+			/* Fail on failure */
 			STRICT = TRUE;
 		}
 		else if(options[i] == 'x')
-		{ /* Show commands as executed */
+		{
+			/* Show commands as executed */
 			/* TODO: this currently behaves like -v. Make it do what it should */
 			VERBOSE = TRUE;
 			/*
@@ -493,12 +602,14 @@ int set()
 			fflush(stdout);
 		}
 		else
-		{ /* Invalid */
+		{
+			/* Invalid */
 			fputc(options[i], stderr);
 			fputs(" is an invalid set option!\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	}
+
 	return FALSE;
 cleanup_set:
 	return TRUE;
@@ -508,24 +619,35 @@ cleanup_set:
 void echo()
 {
 	if(token->next == NULL)
-	{ /* No arguments */
+	{
+		/* No arguments */
 		fputs("\n", stdout);
 		return;
 	}
+
 	if(token->next->value == NULL)
-	{ /* No arguments */
+	{
+		/* No arguments */
 		fputs("\n", stdout);
 		return;
 	}
+
 	token = token->next; /* Skip the actual echo */
+
 	while(token != NULL)
-	{ /* Output each argument to echo to stdout */
+	{
+		/* Output each argument to echo to stdout */
 		/* M2-Planet doesn't let us do this in the while */
-		if(token->value == NULL) break;
+		if(token->value == NULL)
+		{
+			break;
+		}
+
 		fputs(token->value, stdout);
 		fputc(' ', stdout);
 		token = token->next;
 	}
+
 	fputs("\n", stdout);
 }
 
@@ -536,19 +658,35 @@ void unset()
 	/* We support multiple variables on the same line */
 	struct Token* t;
 	t = token->next;
+
 	while(t != NULL)
 	{
 		e = env;
+
 		/* Look for the variable; we operate on ->next because we need to remove ->next */
 		while(e->next != NULL)
 		{
-			if(NULL == t->value) break;
-			if(match(e->next->var, t->value)) break;
+			if(NULL == t->value)
+			{
+				break;
+			}
+
+			if(match(e->next->var, t->value))
+			{
+				break;
+			}
+
 			e = e->next;
 		}
+
 		t = t->next;
+
 		/* If it's NULL nothing was found */
-		if(e->next == NULL) continue;
+		if(e->next == NULL)
+		{
+			continue;
+		}
+
 		/* Otherwise there is something to unset */
 		e->next = e->next->next;
 	}
@@ -564,48 +702,75 @@ void if_cmd(FILE* script, char** argv)
 	int index;
 	int status;
 	int old_VERBOSE;
-
 	token = token->next; /* Skip the actual if */
 	/* Do not check for successful exit status */
 	int if_status = _execute(script, argv);
 	old_VERBOSE = VERBOSE;
 	VERBOSE = VERBOSE && !if_status;
-	do {
+
+	do
+	{
 		index = collect_command(script, argv);
 		require(index != -1, "Unexpected EOF, improperly terminated if statement.\n");
-		if(0 == index) continue;
 
-		if (0 == if_status) {
+		if(0 == index)
+		{
+			continue;
+		}
+
+		if(0 == if_status)
+		{
 			/* Stuff to exec */
 			status = execute(script, argv);
 		}
-		if (match(token->value, "else")) {
-			if_status = !if_status;
-		}
-	} while (!match(token->value, "fi"));
+	} while(!(match(token->value, "fi") || (match(token->value, "else"))));
+
+	if(match(token->value, "else"))
+	{
+		do
+		{
+			index = collect_command(script, argv);
+			require(index != -1, "Unexpected EOF, improperly terminated if statement.\n");
+
+			if(0 == index)
+			{
+				continue;
+			}
+
+			if(0 != if_status)
+			{
+				/* Stuff to exec */
+				status = execute(script, argv);
+			}
+		} while(!match(token->value, "fi"));
+	}
+
 	VERBOSE = old_VERBOSE;
 }
 
 /* Execute program and check for error */
-int execute(FILE* script, char** argv) {
+int execute(FILE* script, char** argv)
+{
 	int status = _execute(script, argv);
+
 	if(STRICT == TRUE && (0 != status))
-	{ /* Clearly the script hit an issue that should never have happened */
+	{
+		/* Clearly the script hit an issue that should never have happened */
 		fputs("Subprocess error ", stderr);
 		fputs(int2str(status, 10, TRUE), stderr);
 		fputs("\nABORTING HARD\n", stderr);
 		exit(EXIT_FAILURE);
 	}
+
 	return status;
 }
 
 /* Execute program */
 int _execute(FILE* script, char** argv)
-{ /* Run the command */
-
+{
+	/* Run the command */
 	/* rc = return code */
 	int rc;
-
 	/* exec without forking */
 	int exec = FALSE;
 
@@ -618,19 +783,34 @@ int _execute(FILE* script, char** argv)
 	else if(match(token->value, "cd"))
 	{
 		rc = cd();
-		if(STRICT) require(rc == FALSE, "cd failed!\n");
+
+		if(STRICT)
+		{
+			require(rc == FALSE, "cd failed!\n");
+		}
+
 		return 0;
 	}
 	else if(match(token->value, "set"))
 	{
 		rc = set();
-		if(STRICT) require(rc == FALSE, "set failed!\n");
+
+		if(STRICT)
+		{
+			require(rc == FALSE, "set failed!\n");
+		}
+
 		return 0;
 	}
 	else if(match(token->value, "pwd"))
 	{
 		rc = pwd();
-		if(STRICT) require(rc == FALSE, "pwd failed!\n");
+
+		if(STRICT)
+		{
+			require(rc == FALSE, "pwd failed!\n");
+		}
+
 		return 0;
 	}
 	else if(match(token->value, "echo"))
@@ -675,6 +855,7 @@ int _execute(FILE* script, char** argv)
 	char** envp;
 	/* Get the full path to the executable */
 	char* program = find_executable(token->value);
+
 	/* Check we can find the executable */
 	if(NULL == program)
 	{
@@ -685,22 +866,29 @@ int _execute(FILE* script, char** argv)
 			fputs(" NOT FOUND!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
+
 		/* If we are not strict simply return */
 		return 0;
 	}
 
 	int f = 0;
-	if (!exec) f = fork();
+
+	if(!exec)
+	{
+		f = fork();
+	}
+
 	/* Ensure fork succeeded */
-	if (f == -1)
+	if(f == -1)
 	{
 		fputs("WHILE EXECUTING ", stderr);
 		fputs(token->value, stderr);
 		fputs("fork() FAILED\nABORTING HARD\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-	else if (f == 0)
-	{ /* Child */
+	else if(f == 0)
+	{
+		/* Child */
 		/**************************************************************
 		 * Fuzzing produces random stuff; we don't want it running    *
 		 * dangerous commands. So we just don't execve.               *
@@ -711,21 +899,24 @@ int _execute(FILE* script, char** argv)
 		envp = list_to_array(env);
 
 		if(FALSE == FUZZING)
-		{ /* We are not fuzzing */
+		{
+			/* We are not fuzzing */
 			/* execve() returns only on error */
 			execve(program, array, envp);
 		}
+
 		/* Prevent infinite loops */
-		if (exec) {
+		if(exec)
+		{
 			_exit(EXIT_FAILURE);
 		}
+
 		_exit(EXIT_SUCCESS);
 	}
 
 	/* Otherwise we are the parent */
 	/* And we should wait for it to complete */
 	waitpid(f, &status, 0);
-
 	return status;
 }
 
@@ -749,13 +940,15 @@ int collect_command(FILE* script, char** argv)
 		 * if we are done.
 		 */
 
-		if(match(s, "")) continue;
+		if(match(s, ""))
+		{
+			continue;
+		}
 
 		/* add to token */
 		n->value = s;
 		s = calloc(MAX_STRING, sizeof(char));
 		require(s != NULL, "Memory initialization of next token node in collect_command failed\n");
-
 		/* Deal with variables */
 		handle_variables(argv, n);
 
@@ -771,8 +964,12 @@ int collect_command(FILE* script, char** argv)
 		require(n->next != NULL, "Memory initialization of next token node in collect_command failed\n");
 		n = n->next;
 	}
+
 	/* -1 means the script is done */
-	if(EOF == index) return index;
+	if(EOF == index)
+	{
+		return index;
+	}
 
 	/* Output the command if verbose is set */
 	/* Also if there is nothing in the command skip over */
@@ -780,19 +977,28 @@ int collect_command(FILE* script, char** argv)
 	{
 		n = token;
 		fputs(" +>", stdout);
+
 		while(n != NULL)
-		{ /* Print out each token token */
+		{
+			/* Print out each token token */
 			fputs(" ", stdout);
+
 			/* M2-Planet doesn't let us do this in the while */
 			if(n->value != NULL)
 			{
-				if(!match(n->value, "")) fputs(n->value, stdout);
+				if(!match(n->value, ""))
+				{
+					fputs(n->value, stdout);
+				}
 			}
+
 			n = n->next;
 		}
+
 		fputc('\n', stdout);
 		fflush(stdout);
 	}
+
 	return index;
 }
 
@@ -801,6 +1007,7 @@ void run_script(FILE* script, char** argv)
 {
 	int index;
 	int status;
+
 	while(TRUE)
 	{
 		/*
@@ -813,9 +1020,17 @@ void run_script(FILE* script, char** argv)
 		 * are hence for each line.
 		 */
 		index = collect_command(script, argv);
+
 		/* -1 means the script is done */
-		if(EOF == index) break;
-		if(0 == index) continue;
+		if(EOF == index)
+		{
+			break;
+		}
+
+		if(0 == index)
+		{
+			continue;
+		}
 
 		/* Stuff to exec */
 		status = execute(script, argv);
@@ -826,18 +1041,24 @@ void run_script(FILE* script, char** argv)
 void populate_env(char** envp)
 {
 	/* You can't populate a NULL environment */
-	if(NULL == envp) return;
+	if(NULL == envp)
+	{
+		return;
+	}
 
 	/* avoid empty arrays */
 	int max = array_length(envp);
-	if(0 == max) return;
+
+	if(0 == max)
+	{
+		return;
+	}
 
 	/* Initialize env and n */
 	env = calloc(1, sizeof(struct Token));
 	require(env != NULL, "Memory initialization of env failed\n");
 	struct Token* n;
 	n = env;
-
 	int i;
 	int j;
 	int k;
@@ -859,33 +1080,53 @@ void populate_env(char** envp)
 		envp_line = calloc(MAX_STRING, sizeof(char));
 		require(envp_line != NULL, "Memory initialization of envp_line in population of env failed\n");
 		strcpy(envp_line, envp[i]);
+
 		while(envp_line[j] != '=')
-		{ /* Copy over everything up to = to var */
+		{
+			/* Copy over everything up to = to var */
 			n->var[j] = envp_line[j];
 			j = j + 1;
 		}
+
 		/* If we get strange input, we need to ignore it */
-		if(n->var == NULL) continue;
+		if(n->var == NULL)
+		{
+			continue;
+		}
+
 		j = j + 1; /* Skip over = */
 		k = 0; /* As envp[i] will continue as j but n->value begins at 0 */
+
 		while(envp_line[j] != 0)
-		{ /* Copy everything else to value */
+		{
+			/* Copy everything else to value */
 			n->value[k] = envp_line[j];
 			j = j + 1;
 			k = k + 1;
 		}
+
 		/* Sometimes, we get lines like VAR=, indicating nothing is in the variable */
-		if(n->value == NULL) n->value = "";
+		if(n->value == NULL)
+		{
+			n->value = "";
+		}
+
 		/* Advance to next part of linked list */
 		n->next = calloc(1, sizeof(struct Token));
 		require(n->next != NULL, "Memory initialization of n->next in population of env failed\n");
 		n = n->next;
 	}
+
 	/* Get rid of node on the end */
 	n = NULL;
 	/* Also destroy the n->next reference */
 	n = env;
-	while(n->next->var != NULL) n = n->next;
+
+	while(n->next->var != NULL)
+	{
+		n = n->next;
+	}
+
 	n->next = NULL;
 }
 
@@ -897,70 +1138,81 @@ int main(int argc, char** argv, char** envp)
 	WARNINGS = FALSE;
 	char* filename = "kaem.run";
 	FILE* script = NULL;
-
 	/* Initalize structs */
 	token = calloc(1, sizeof(struct Token));
 	require(token != NULL, "Memory initialization of token failed\n");
-
 	int i = 1;
+
 	/* Loop over arguments */
 	while(i <= argc)
 	{
 		if(NULL == argv[i])
-		{ /* Ignore the argument */
+		{
+			/* Ignore the argument */
 			i = i + 1;
 		}
 		else if(match(argv[i], "-h") || match(argv[i], "--help"))
-		{ /* Help information */
+		{
+			/* Help information */
 			fputs("Usage: ", stdout);
 			fputs(argv[0], stdout);
 			fputs(" [-h | --help] [-V | --version] [--file filename | -f filename] [-i | --init-mode] [-v | --verbose] [--strict] [--warn] [--fuzz]\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
-		{ /* Set the filename */
+		{
+			/* Set the filename */
 			if(argv[i + 1] != NULL)
 			{
 				filename = argv[i + 1];
 			}
+
 			i = i + 2;
 		}
 		else if(match(argv[i], "-i") || match(argv[i], "--init-mode"))
-		{ /* init mode does not populate env */
+		{
+			/* init mode does not populate env */
 			INIT_MODE = TRUE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
-		{ /* Output version */
+		{
+			/* Output version */
 			fputs("kaem version 1.3.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-v") || match(argv[i], "--verbose"))
-		{ /* Set verbose */
+		{
+			/* Set verbose */
 			VERBOSE = TRUE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "--strict"))
-		{ /* Set strict */
+		{
+			/* Set strict */
 			STRICT = TRUE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "--warn"))
-		{ /* Set warnings */
+		{
+			/* Set warnings */
 			WARNINGS = TRUE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "--fuzz"))
-		{ /* Set fuzzing */
+		{
+			/* Set fuzzing */
 			FUZZING = TRUE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "--"))
-		{ /* Nothing more after this */
+		{
+			/* Nothing more after this */
 			break;
 		}
 		else
-		{ /* We don't know this argument */
+		{
+			/* We don't know this argument */
 			fputs("UNKNOWN ARGUMENT\n", stdout);
 			exit(EXIT_FAILURE);
 		}
@@ -976,19 +1228,20 @@ int main(int argc, char** argv, char** envp)
 	 * We don't need to calloc() because env_lookup() does this for us.
 	 */
 	PATH = env_lookup("PATH");
-
 	/* Populate USERNAME variable */
 	char* USERNAME = env_lookup("LOGNAME");
 
 	/* Handle edge cases */
 	if((NULL == PATH) && (NULL == USERNAME))
-	{ /* We didn't find either of PATH or USERNAME -- use a generic PATH */
+	{
+		/* We didn't find either of PATH or USERNAME -- use a generic PATH */
 		PATH = calloc(MAX_STRING, sizeof(char));
 		require(PATH != NULL, "Memory initialization of PATH failed\n");
 		strcpy(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	}
 	else if(NULL == PATH)
-	{ /* We did find a username but not a PATH -- use a generic PATH but with /home/USERNAME */
+	{
+		/* We did find a username but not a PATH -- use a generic PATH but with /home/USERNAME */
 		PATH = calloc(MAX_STRING, sizeof(char));
 		PATH = strcat(PATH, "/home/");
 		PATH = strcat(PATH, USERNAME);
@@ -997,6 +1250,7 @@ int main(int argc, char** argv, char** envp)
 
 	/* Open the script */
 	script = fopen(filename, "r");
+
 	if(NULL == script)
 	{
 		fputs("The file: ", stderr);
@@ -1007,7 +1261,6 @@ int main(int argc, char** argv, char** envp)
 
 	/* Run the commands */
 	run_script(script, argv);
-
 	/* Cleanup */
 	fclose(script);
 	return EXIT_SUCCESS;
