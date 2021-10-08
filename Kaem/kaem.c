@@ -637,14 +637,17 @@ void echo()
 	while(token != NULL)
 	{
 		/* Output each argument to echo to stdout */
-		/* M2-Planet doesn't let us do this in the while */
 		if(token->value == NULL)
 		{
 			break;
 		}
 
 		fputs(token->value, stdout);
-		fputc(' ', stdout);
+		if(NULL != token->next)
+		{
+			/* M2-Planet doesn't short circuit */
+			if(NULL != token->next->value) fputc(' ', stdout);
+		}
 		token = token->next;
 	}
 
@@ -891,12 +894,7 @@ int _execute(FILE* script, char** argv)
 		}
 
 		/* Prevent infinite loops */
-		if(exec)
-		{
-			_exit(EXIT_FAILURE);
-		}
-
-		_exit(EXIT_SUCCESS);
+		_exit(EXIT_FAILURE);
 	}
 
 	/* Otherwise we are the parent */
