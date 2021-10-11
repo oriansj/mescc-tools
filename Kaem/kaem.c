@@ -351,12 +351,12 @@ int collect_token(FILE* input, char* n, int last_index)
 		}
 		else if((' ' == c) || ('\t' == c))
 		{
-			/* Space and tab are token seperators */
+			/* Space and tab are token separators */
 			token_done = TRUE;
 		}
-		else if('\n' == c)
+		else if(('\n' == c) || (';' == c))
 		{
-			/* Command terminates at end of a line */
+			/* Command terminates at the end of a line or at semicolon */
 			command_done = TRUE;
 			token_done = TRUE;
 
