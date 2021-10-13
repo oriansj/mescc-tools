@@ -900,7 +900,7 @@ int _execute(FILE* script, char** argv)
 	/* Otherwise we are the parent */
 	/* And we should wait for it to complete */
 	waitpid(f, &status, 0);
-	return status;
+	return (status & 0xff00) >> 8;
 }
 
 int collect_command(FILE* script, char** argv)
