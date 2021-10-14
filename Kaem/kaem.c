@@ -415,8 +415,8 @@ int collect_token(FILE* input, char* n, int last_index)
 
 /*
  * EXECUTION FUNCTIONS
- * Note: All of the builtins return FALSE (0) when they exit successfully
- * and TRUE (1) when they fail.
+ * Note: All of the builtins return SUCCESS (0) when they exit successfully
+ * and FAILURE (1) when they fail.
  */
 
 /* Function to check if the token is an envar */
@@ -429,13 +429,13 @@ int is_envar(char* token)
 	{
 		if(token[i] == '=')
 		{
-			return TRUE;
+			return FAILURE;
 		}
 
 		i = i + 1;
 	}
 
-	return FALSE;
+	return SUCCESS;
 }
 
 /* Add an envar */
@@ -507,24 +507,24 @@ int cd()
 {
 	if(NULL == token->next)
 	{
-		return TRUE;
+		return FAILURE;
 	}
 
 	token = token->next;
 
 	if(NULL == token->value)
 	{
-		return TRUE;
+		return FAILURE;
 	}
 
 	int ret = chdir(token->value);
 
 	if(0 > ret)
 	{
-		return TRUE;
+		return FAILURE;
 	}
 
-	return FALSE;
+	return SUCCESS;
 }
 
 /* pwd builtin */
@@ -536,7 +536,7 @@ int pwd()
 	require(!match("", path), "getcwd() failed\n");
 	fputs(path, stdout);
 	fputs("\n", stdout);
-	return FALSE;
+	return SUCCESS;
 }
 
 /* set builtin */
@@ -610,9 +610,9 @@ int set()
 		}
 	}
 
-	return FALSE;
+	return SUCCESS;
 cleanup_set:
-	return TRUE;
+	return FAILURE;
 }
 
 /* echo builtin */
@@ -774,7 +774,7 @@ int _execute(FILE* script, char** argv)
 
 		if(STRICT)
 		{
-			require(rc == FALSE, "cd failed!\n");
+			require(rc == SUCCESS, "cd failed!\n");
 		}
 
 		return 0;
@@ -785,7 +785,7 @@ int _execute(FILE* script, char** argv)
 
 		if(STRICT)
 		{
-			require(rc == FALSE, "set failed!\n");
+			require(rc == SUCCESS, "set failed!\n");
 		}
 
 		return 0;
@@ -796,7 +796,7 @@ int _execute(FILE* script, char** argv)
 
 		if(STRICT)
 		{
-			require(rc == FALSE, "pwd failed!\n");
+			require(rc == SUCCESS, "pwd failed!\n");
 		}
 
 		return 0;

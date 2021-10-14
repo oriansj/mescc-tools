@@ -25,6 +25,10 @@
 
 #define FALSE 0
 #define TRUE 1
+// CONSTANT SUCCESS 0
+#define SUCCESS 0
+// CONSTANT FAILURE 1
+#define FAILURE 1
 #define MAX_STRING 4096
 #define MAX_ARRAY 256
 
