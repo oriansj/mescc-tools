@@ -64,11 +64,11 @@ int array_length(char** array)
 	return length;
 }
 
-/* Search for a variable in the env linked-list */
-char* env_lookup(char* variable)
+/* Search for a variable in the token linked-list */
+char* token_lookup(char* variable, struct Token* token)
 {
 	/* Start at the head */
-	struct Token* n = env;
+	struct Token* n = token;
 
 	/* Loop over the linked-list */
 	while(n != NULL)
@@ -85,6 +85,18 @@ char* env_lookup(char* variable)
 
 	/* We didn't find anything! */
 	return NULL;
+}
+
+/* Search for a variable in the env linked-list */
+char* env_lookup(char* variable)
+{
+	return token_lookup(variable, env);
+}
+
+/* Search for a variable in the alias linked-list */
+char* alias_lookup(char* variable)
+{
+	return token_lookup(variable, alias);
 }
 
 /* Find the full path to an executable */
@@ -327,8 +339,6 @@ int collect_token(FILE* input, char* n, int last_index)
 	int c;
 	int cc;
 	int token_done = FALSE;
-	char* token = calloc(MAX_STRING, sizeof(char));
-	require(token != NULL, "Memory initialization of token in collect_token failed\n");
 	int index = 0;
 
 	do
@@ -407,6 +417,53 @@ int collect_token(FILE* input, char* n, int last_index)
 			/* It's a character to assign */
 			n[index] = c;
 			index = index + 1;
+		}
+	} while(token_done == FALSE);
+
+	return index;
+}
+
+/* Function to parse string and assign token->value */
+int collect_alias_token(char* input, char* n, int index)
+{
+	int c;
+	int cc;
+	int token_done = FALSE;
+	int output_index = 0;
+
+	do
+	{
+		/* Loop over each character in the token */
+		c = input[index];
+		index = index + 1;
+
+		if((' ' == c) || ('\t' == c))
+		{
+			/* Space and tab are token separators */
+			token_done = TRUE;
+		}
+		else if('\\' == c)
+		{
+			/* Support for escapes */
+			c = input[index];
+			index = index + 1;
+			cc = handle_escape(c);
+
+			/* We need to put it into the token */
+			n[output_index] = cc;
+			output_index = output_index = 1;
+		}
+		else if(0 == c)
+		{
+			/* We have come to the end of the token */
+			token_done = TRUE;
+			index = 0;
+		}
+		else
+		{
+			/* It's a character to assign */
+			n[output_index] = c;
+			output_index = output_index = 1;
 		}
 	} while(token_done == FALSE);
 
@@ -492,6 +549,88 @@ void add_envar()
 		{
 			n->next = calloc(1, sizeof(struct Token));
 			require(n->next != NULL, "Memory initialization of next env node in add_envar failed\n");
+			n->next->var = name;
+		} /* Loop will match and exit */
+
+		n = n->next;
+	}
+
+	/* Since we found the variable we need only to set it to its new value */
+	n->value = newvalue;
+}
+
+/* Add an alias */
+void add_alias()
+{
+	token = token->next; /* Skip the actual alias */
+	if(token->next == NULL)
+	{
+		/* No arguments */
+		char** array = list_to_array(alias);
+		int index = 0;
+		while(array[index] != NULL) {
+			fputs(array[index], stdout);
+			fputc('\n', stdout);
+			index = index + 1;
+		}
+		fflush(stdout);
+		return;
+	}
+	if(!is_envar(token->value)) {
+		char** array = list_to_array(token);
+		int index = 0;
+		while(array[index] != NULL) {
+			fputs(array[index], stdout);
+			fputc(' ', stdout);
+			index = index + 1;
+		}
+		fputc('\n', stdout);
+		fflush(stdout);
+		return;
+	}
+
+	/* Pointers to strings we want */
+	char* name = calloc(strlen(token->value) + 4, sizeof(char));
+	char* value = token->value;
+	char* newvalue;
+	int i = 0;
+
+	/* Isolate the name */
+	while('=' != value[i])
+	{
+		name[i] = value[i];
+		i = i + 1;
+	}
+
+	/* Isolate the value */
+	newvalue = name + i + 2;
+	value = value + i + 1;
+	i = 0;
+	require(0 != value[i], "add_alias received improper variable\n");
+
+	while(0 != value[i])
+	{
+		newvalue[i] = value[i];
+		i = i + 1;
+	}
+
+	/* If this is the first alias, rectify */
+	if(alias == NULL)
+	{
+		alias = calloc(1, sizeof(struct Token));
+		require(alias != NULL, "Memory initialization of alias failed\n");
+		alias->var = name; /* Add our first variable */
+	}
+
+	struct Token* n = alias;
+
+	/* Find match if possible */
+	while(!match(name, n->var))
+	{
+		if(NULL == n->next)
+		{
+			n->next = calloc(1, sizeof(struct Token));
+			require(n->next != NULL, "Memory initialization of next alias node in alias failed\n");
 			n->next->var = name;
 		} /* Loop will match and exit */
 
@@ -790,6 +929,11 @@ int _execute(FILE* script, char** argv)
 
 		return 0;
 	}
+	else if(match(token->value, "alias"))
+	{
+		add_alias();
+		return 0;
+	}
 	else if(match(token->value, "pwd"))
 	{
 		rc = pwd();
@@ -914,6 +1058,8 @@ int collect_command(FILE* script, char** argv)
 	require(s != NULL, "Memory initialization of token in collect_command failed\n");
 	token = n;
 	int index = 0;
+	int alias_index;
+	char* alias_string;
 
 	/* Get the tokens */
 	while(command_done == FALSE)
@@ -928,24 +1074,35 @@ int collect_command(FILE* script, char** argv)
 			continue;
 		}
 
-		/* add to token */
-		n->value = s;
-		s = calloc(MAX_STRING, sizeof(char));
-		require(s != NULL, "Memory initialization of next token node in collect_command failed\n");
-		/* Deal with variables */
-		handle_variables(argv, n);
-
-		/* If the variable expands into nothing*/
-		if(match(n->value, " "))
+		alias_string = alias_lookup(s);
+		alias_index = 0;
+		do
 		{
-			n->value = NULL;
-			continue;
-		}
+			if(alias_string != NULL)
+			{
+				alias_index = collect_alias_token(alias_string, s, alias_index);
+			}
 
-		/* Prepare for next loop */
-		n->next = calloc(1, sizeof(struct Token));
-		require(n->next != NULL, "Memory initialization of next token node in collect_command failed\n");
-		n = n->next;
+			/* add to token */
+			n->value = s;
+			s = calloc(MAX_STRING, sizeof(char));
+			require(s != NULL, "Memory initialization of next token node in collect_command failed\n");
+			/* Deal with variables */
+			handle_variables(argv, n);
+
+			/* If the variable expands into nothing */
+			if(match(n->value, " "))
+			{
+				n->value = NULL;
+				continue;
+			}
+
+			/* Prepare for next loop */
+			n->next = calloc(1, sizeof(struct Token));
+			require(n->next != NULL, "Memory initialization of next token node in collect_command failed\n");
+			n = n->next;
+		}
+		while(alias_index != 0);
 	}
 
 	/* -1 means the script is done */

@@ -30,3 +30,5 @@ char* PATH;
 struct Token* token;
 /* Env linked-list; stores the environment variables */
 struct Token* env;
+/* Alias linked-list; stores the aliases */
+struct Token* alias;

@@ -28,3 +28,5 @@ extern char* PATH;
 extern struct Token* token;
 /* Env linked-list; stores the environment variables */
 extern struct Token* env;
+/* Alias linked-list; stores the aliases */
+extern struct Token* alias;
