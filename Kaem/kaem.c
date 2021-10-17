@@ -1,5 +1,6 @@
 /* Copyright (C) 2016-2020 Jeremiah Orians
  * Copyright (C) 2020 fosslinux
+ * Copyright (C) 2021 Andrius Štikonas
  * This file is part of mescc-tools.
  *
  * mescc-tools is free software: you can redistribute it and/or modify
@@ -451,7 +452,7 @@ int collect_alias_token(char* input, char* n, int index)
 
 			/* We need to put it into the token */
 			n[output_index] = cc;
-			output_index = output_index = 1;
+			output_index = output_index + 1;
 		}
 		else if(0 == c)
 		{
@@ -463,7 +464,7 @@ int collect_alias_token(char* input, char* n, int index)
 		{
 			/* It's a character to assign */
 			n[output_index] = c;
-			output_index = output_index = 1;
+			output_index = output_index + 1;
 		}
 	} while(token_done == FALSE);
 
