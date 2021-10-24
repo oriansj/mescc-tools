@@ -1045,6 +1045,11 @@ int _execute(FILE* script, char** argv)
 	/* Otherwise we are the parent */
 	/* And we should wait for it to complete */
 	waitpid(f, &status, 0);
+	if(status & 0x7f != 0)
+	{
+		fputs("Subprocess did not exit.\n", stderr);
+		return status & 0x7f;
+	}
 	return (status & 0xff00) >> 8;
 }
 
