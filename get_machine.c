@@ -52,8 +52,16 @@ int main(int argc, char **argv)
 		else if(match(argv[option_index], "--override"))
 		{
 			override = TRUE;
-			override_string = argv[option_index + 1];
-			option_index = option_index + 2;
+			if((option_index + 1) < argc)
+			{
+				override_string = argv[option_index + 1];
+				option_index = option_index + 2;
+			}
+			else
+			{
+				fputs("--override requires an actual override string\n", stderr);
+				exit(EXIT_FAILURE);
+			}
 		}
 		else if(match(argv[option_index], "--os") || match(argv[option_index], "--OS"))
 		{
@@ -81,7 +89,7 @@ int main(int argc, char **argv)
 		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))
 		{
 			fputs("If you want exact architecture use --exact\n", stderr);
-			fputs("If you want to know the Operating system use --OS\n", stderr);
+			fputs("If you want to know the Operating system use --os\n", stderr);
 			fputs("If you wish to override the output to anything you want use --override\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
