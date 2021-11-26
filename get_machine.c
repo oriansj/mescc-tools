@@ -81,6 +81,41 @@ int main(int argc, char **argv)
 			fputc('\n', stdout);
 			exit(EXIT_SUCCESS);
 		}
+		else if(match(argv[option_index], "--endian"))
+		{
+			if(override) fputs(override_string, stdout);
+			else if(match("aarch64", unameData->machine)
+			     || match("amd64", unameData->machine)
+			     || match("ppc64le", unameData->machine)
+			     || match("riscv64", unameData->machine)
+			     || match("x86_64", unameData->machine)
+			     || match("i386", unameData->machine)
+			     || match("i486", unameData->machine)
+			     || match("i586", unameData->machine)
+			     || match("i686", unameData->machine)
+			     || match("i686-pae", unameData->machine))fputs("--little-endian", stdout);
+			else fputs("--big-endian", stdout);
+			fputc('\n', stdout);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[option_index], "--hex2"))
+		{
+			if(override) fputs(override_string, stdout);
+			else if(match("aarch64", unameData->machine)) fputs("0x400000", stdout);
+			else if(match("armv7l", unameData->machine)) fputs("0x10000", stdout);
+			else if(match("amd64", unameData->machine)
+			     || match("x86_64", unameData->machine)) fputs("0x600000", stdout);
+			else if(match("ppc64le", unameData->machine)) fputs("0x10000", stdout);
+			else if(match("riscv64", unameData->machine)) fputs("0x600000", stdout);
+			else if(match("i386", unameData->machine)
+			     || match("i486", unameData->machine)
+			     || match("i586", unameData->machine)
+			     || match("i686", unameData->machine)
+			     || match("i686-pae", unameData->machine)) fputs("0x08048000", stdout);
+			else fputs("0x0", stdout);
+			fputc('\n', stdout);
+			exit(EXIT_SUCCESS);
+		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
 			fputs("get_machine 1.1.0\n", stdout);
