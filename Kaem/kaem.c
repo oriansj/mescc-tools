@@ -176,7 +176,6 @@ char* find_executable(char* name)
 /* Function to convert a Token linked-list into an array of strings */
 char** list_to_array(struct Token* s)
 {
-	char* hold;
 	struct Token* n;
 	n = s;
 	char** array = calloc(MAX_ARRAY, sizeof(char*));
@@ -301,7 +300,6 @@ int collect_string(FILE* input, char* n, int index)
 {
 	int string_done = FALSE;
 	int c;
-	int cc;
 
 	do
 	{
@@ -315,7 +313,7 @@ int collect_string(FILE* input, char* n, int index)
 			/* We are escaping the next character */
 			/* This correctly handles escaped quotes as it just returns the quote */
 			c = fgetc(input);
-			cc = handle_escape(c);
+			c = handle_escape(c);
 			n[index] = c;
 			index = index + 1;
 		}
@@ -835,7 +833,7 @@ void unset()
 	}
 }
 
-int execute(FILE* script, char** argv);
+void execute(FILE* script, char** argv);
 int _execute(FILE* script, char** argv);
 int collect_command(FILE* script, char** argv);
 
@@ -843,7 +841,6 @@ int collect_command(FILE* script, char** argv);
 void if_cmd(FILE* script, char** argv)
 {
 	int index;
-	int status;
 	int old_VERBOSE;
 	token = token->next; /* Skip the actual if */
 	/* Do not check for successful exit status */
@@ -864,7 +861,7 @@ void if_cmd(FILE* script, char** argv)
 		if(0 == if_status)
 		{
 			/* Stuff to exec */
-			status = execute(script, argv);
+			execute(script, argv);
 		}
 
 		if(match(token->value, "else"))
@@ -876,8 +873,70 @@ void if_cmd(FILE* script, char** argv)
 	VERBOSE = old_VERBOSE;
 }
 
+int what_exit(char* program, int status)
+{
+	/***********************************************************************************
+	 * If the low-order 8 bits of w_status are equal to 0x7F or zero, the child        *
+	 * process has stopped. If the low-order 8 bits of w_status are non-zero and are   *
+	 * not equal to 0x7F, the child process terminated due to a signal otherwise, the  *
+	 * child process terminated due to an exit() call.                                 *
+	 *                                                                                 *
+	 * In the event it was a signal that stopped the process the top 8 bits of         *
+	 * w_status contain the signal that caused the process to stop.                    *
+	 *                                                                                 *
+	 * In the event it was terminated the bottom 7 bits of w_status contain the        *
+	 * terminating error number for the process.                                       *
+	 *                                                                                 *
+	 * If bit 0x80 of w_status is set, a core dump was produced.                       *
+	 ***********************************************************************************/
+
+	int WIFEXITED = !(status & 0x7F);
+	int WEXITSTATUS = (status & 0xFF00) >> 8;
+	int WTERMSIG = status & 0x7F;
+	int WCOREDUMP = status & 0x80;
+	int WIFSIGNALED = !((0x7F == WTERMSIG) || (0 == WTERMSIG));
+	int WIFSTOPPED = ((0x7F == WTERMSIG) && (0 == WCOREDUMP));
+
+	if(WIFEXITED)
+	{
+		if(VERBOSE)
+		{
+			fputc('\n', stderr);
+			fputs(program, stderr);
+			fputs(" normal termination, exit status = ", stderr);
+			fputs(int2str(WEXITSTATUS, 10, TRUE), stderr);
+			fputc('\n', stderr);
+		}
+		return WEXITSTATUS;
+	}
+	else if (WIFSIGNALED)
+	{
+		fputc('\n', stderr);
+		fputs(program, stderr);
+		fputs(" abnormal termination, signal number = ", stderr);
+		fputs(int2str(WTERMSIG, 10, TRUE), stderr);
+		fputc('\n', stderr);
+		if(WCOREDUMP) fputs("core dumped\n", stderr);
+		return WTERMSIG;
+	}
+	else if(WIFSTOPPED)
+	{
+		fputc('\n', stderr);
+		fputs(program, stderr);
+		fputs(" child stopped, signal number = ", stderr);
+		fputs(int2str(WEXITSTATUS, 10, TRUE), stderr);
+		fputc('\n', stderr);
+		return WEXITSTATUS;
+	}
+
+	fputc('\n', stderr);
+	fputs(program, stderr);
+	fputs(" :: something crazy happened with execve\nI'm just gonna get the hell out of here\n", stderr);
+	exit(EXIT_FAILURE);
+}
+
 /* Execute program and check for error */
-int execute(FILE* script, char** argv)
+void execute(FILE* script, char** argv)
 {
 	int status = _execute(script, argv);
 
@@ -889,8 +948,6 @@ int execute(FILE* script, char** argv)
 		fputs("\nABORTING HARD\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-
-	return status;
 }
 
 /* Execute program */
@@ -1045,12 +1102,7 @@ int _execute(FILE* script, char** argv)
 	/* Otherwise we are the parent */
 	/* And we should wait for it to complete */
 	waitpid(f, &status, 0);
-	if(status & 0x7f != 0)
-	{
-		fputs("Subprocess did not exit.\n", stderr);
-		return status & 0x7f;
-	}
-	return (status & 0xff00) >> 8;
+	return what_exit(program, status);
 }
 
 int collect_command(FILE* script, char** argv)
@@ -1152,7 +1204,6 @@ int collect_command(FILE* script, char** argv)
 void run_script(FILE* script, char** argv)
 {
 	int index;
-	int status;
 
 	while(TRUE)
 	{
@@ -1179,7 +1230,7 @@ void run_script(FILE* script, char** argv)
 		}
 
 		/* Stuff to exec */
-		status = execute(script, argv);
+		execute(script, argv);
 	}
 }
 
@@ -1279,7 +1330,7 @@ void populate_env(char** envp)
 int main(int argc, char** argv, char** envp)
 {
 	VERBOSE = FALSE;
-	STRICT = FALSE;
+	STRICT = TRUE;
 	FUZZING = FALSE;
 	WARNINGS = FALSE;
 	char* filename = "kaem.run";
@@ -1302,7 +1353,7 @@ int main(int argc, char** argv, char** envp)
 			/* Help information */
 			fputs("Usage: ", stdout);
 			fputs(argv[0], stdout);
-			fputs(" [-h | --help] [-V | --version] [--file filename | -f filename] [-i | --init-mode] [-v | --verbose] [--strict] [--warn] [--fuzz]\n", stdout);
+			fputs(" [-h | --help] [-V | --version] [--file filename | -f filename] [-i | --init-mode] [-v | --verbose] [--non-strict] [--warn] [--fuzz]\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
@@ -1335,8 +1386,14 @@ int main(int argc, char** argv, char** envp)
 		}
 		else if(match(argv[i], "--strict"))
 		{
-			/* Set strict */
+			/* it is a NOP */
 			STRICT = TRUE;
+			i = i + 1;
+		}
+		else if(match(argv[i], "--non-strict"))
+		{
+			/* Set strict */
+			STRICT = FALSE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "--warn"))
