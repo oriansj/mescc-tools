@@ -20,6 +20,7 @@
 
 int command_done;
 int VERBOSE;
+int VERBOSE_EXIT;
 int STRICT;
 int INIT_MODE;
 int FUZZING;

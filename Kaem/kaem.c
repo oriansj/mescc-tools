@@ -899,13 +899,13 @@ int what_exit(char* program, int status)
 
 	if(WIFEXITED)
 	{
-		if(VERBOSE)
+		if(VERBOSE_EXIT)
 		{
 			fputc('\n', stderr);
 			fputs(program, stderr);
 			fputs(" normal termination, exit status = ", stderr);
 			fputs(int2str(WEXITSTATUS, 10, TRUE), stderr);
-			fputc('\n', stderr);
+			fputs("\n\n\n", stderr);
 		}
 		return WEXITSTATUS;
 	}
@@ -1330,6 +1330,7 @@ void populate_env(char** envp)
 int main(int argc, char** argv, char** envp)
 {
 	VERBOSE = FALSE;
+	VERBOSE_EXIT = FALSE;
 	STRICT = TRUE;
 	FUZZING = FALSE;
 	WARNINGS = FALSE;
@@ -1406,6 +1407,12 @@ int main(int argc, char** argv, char** envp)
 		{
 			/* Set fuzzing */
 			FUZZING = TRUE;
+			i = i + 1;
+		}
+		else if(match(argv[i], "--show-exit-codes"))
+		{
+			/* show exit codes */
+			VERBOSE_EXIT = TRUE;
 			i = i + 1;
 		}
 		else if(match(argv[i], "--"))
