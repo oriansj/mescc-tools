@@ -51,32 +51,14 @@ int main(int argc, char **argv)
 		{
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "--BigEndian"))
-		{
-			fputs("--BigEndian is now depreciated and replaced by --big-endian\nAnd will stop working in the next release\n", stderr);
-			BigEndian = TRUE;
-			option_index = option_index + 1;
-		}
 		else if(match(argv[option_index], "--big-endian"))
 		{
 			BigEndian = TRUE;
 			option_index = option_index + 1;
 		}
-		else if(match(argv[option_index], "--LittleEndian"))
-		{
-			fputs("--LittleEndian is now depreciated and replaced by --little-endian\nAnd will stop working in the next release\n", stderr);
-			BigEndian = FALSE;
-			option_index = option_index + 1;
-		}
 		else if(match(argv[option_index], "--little-endian"))
 		{
 			BigEndian = FALSE;
-			option_index = option_index + 1;
-		}
-		else if(match(argv[option_index], "--exec_enable"))
-		{
-			fputs("--exec_enable is now depreciated as the output is assumed executable unless given the --non-executable flag.\nAnd --exec_enable will stop working in the next release\n", stderr);
-			/* Effectively a NOP */
 			option_index = option_index + 1;
 		}
 		else if(match(argv[option_index], "--non-executable"))
@@ -107,12 +89,6 @@ int main(int argc, char **argv)
 		{
 			ByteMode = BINARY;
 			option_index = option_index + 1;
-		}
-		else if(match(argv[option_index], "--BaseAddress"))
-		{
-			fputs("--BaseAddress is now depreciated and replaced by --base-address\nAnd will stop working in the next release\n", stderr);
-			Base_Address = strtoint(argv[option_index + 1]);
-			option_index = option_index + 2;
 		}
 		else if(match(argv[option_index], "-B") || match(argv[option_index], "--base-address"))
 		{

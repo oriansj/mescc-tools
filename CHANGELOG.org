@@ -16,6 +16,17 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+Hex2 removed support for the flags: --BigEndian, --LittleEndian, --exec_enable and --BaseAddress
+M1 removed support for the flags: --BigEndian and --LittleEndian
+
+* 1.4 - 2022-05-01
+** Added
 Added exec support to kaem
 Added if/else conditionals to kaem
 Add support for aliases in kaem
