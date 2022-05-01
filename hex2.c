@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--BigEndian"))
 		{
-			fputs("--BigEndian is now depreciated and replaced by --big-endian\nAnd will stop working in a future release\n", stderr);
+			fputs("--BigEndian is now depreciated and replaced by --big-endian\nAnd will stop working in the next release\n", stderr);
 			BigEndian = TRUE;
 			option_index = option_index + 1;
 		}
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--LittleEndian"))
 		{
-			fputs("--LittleEndian is now depreciated and replaced by --little-endian\nAnd will stop working in a future release\n", stderr);
+			fputs("--LittleEndian is now depreciated and replaced by --little-endian\nAnd will stop working in the next release\n", stderr);
 			BigEndian = FALSE;
 			option_index = option_index + 1;
 		}
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--exec_enable"))
 		{
-			fputs("--exec_enable is now depreciated as the output is assumed executable unless given the --non-executable flag.\nAnd --exec_enable will stop working in a future release\n", stderr);
+			fputs("--exec_enable is now depreciated as the output is assumed executable unless given the --non-executable flag.\nAnd --exec_enable will stop working in the next release\n", stderr);
 			/* Effectively a NOP */
 			option_index = option_index + 1;
 		}
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--BaseAddress"))
 		{
-			fputs("--BaseAddress is now depreciated and replaced by --base-address\nAnd will stop working in a future release\n", stderr);
+			fputs("--BaseAddress is now depreciated and replaced by --base-address\nAnd will stop working in the next release\n", stderr);
 			Base_Address = strtoint(argv[option_index + 1]);
 			option_index = option_index + 2;
 		}
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			fputs("hex2 1.3.0\n", stdout);
+			fputs("hex2 1.4.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

@@ -796,7 +796,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--BigEndian"))
 		{
-			fputs("--BigEndian is now depreciated and replaced by --big-endian\nAnd will stop working in a future release\n", stderr);
+			fputs("--BigEndian is now depreciated and replaced by --big-endian\nAnd will stop working in the next release\n", stderr);
 			BigEndian = TRUE;
 			option_index = option_index + 1;
 		}
@@ -807,7 +807,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--LittleEndian"))
 		{
-			fputs("--LittleEndian is now depreciated and replaced by --little-endian\nAnd will stop working in a future release\n", stderr);
+			fputs("--LittleEndian is now depreciated and replaced by --little-endian\nAnd will stop working in the next release\n", stderr);
 			BigEndian = FALSE;
 			option_index = option_index + 1;
 		}
@@ -889,7 +889,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			fputs("M1 1.3.0\n", stdout);
+			fputs("M1 1.4.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else

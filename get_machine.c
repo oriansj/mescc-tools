@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			fputs("get_machine 1.1.0\n", stdout);
+			fputs("get_machine 1.4.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "-h") || match(argv[option_index], "--help"))

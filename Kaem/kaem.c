@@ -1376,7 +1376,7 @@ int main(int argc, char** argv, char** envp)
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
 		{
 			/* Output version */
-			fputs("kaem version 1.3.0\n", stdout);
+			fputs("kaem version 1.4.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-v") || match(argv[i], "--verbose"))

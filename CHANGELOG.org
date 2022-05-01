@@ -16,12 +16,25 @@
 
 * Current
 ** Added
+Added exec support to kaem
+Added if/else conditionals to kaem
+Add support for aliases in kaem
+Added --hex2 and --endian flags to get_machine
+Kaem now returns more specific messages based on waitpid's status
+Kaem added --show-exit-codes flag to enable seeing exit codes for subprocesses
 
 ** Changed
+Kaem now places space between echo tokens
+Kaem now also terminates commands with ;
+Kaem now is strict by default and you need to pass --non-strict to revert to old behavior
 
 ** Fixed
+Various typos
+Fix extracting exit status of completed programs in kaem
+Catch get_machine's --override segfault
 
 ** Removed
+Remove unused getopt include from blood-elf
 
 * 1.3 - 2021-10-03
 ** Added
