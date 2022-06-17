@@ -23,6 +23,7 @@ extern int STRICT;
 extern int INIT_MODE;
 extern int FUZZING;
 extern int WARNINGS;
+extern char* KAEM_BINARY;
 extern char* PATH;
 
 /* Token linked-list; stores the tokens of each line */
