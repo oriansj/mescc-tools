@@ -48,7 +48,7 @@ blood-elf: blood-elf.c stringify.c M2libc/bootstrappable.c | bin
 	-o bin/blood-elf
 
 kaem: Kaem/kaem.c Kaem/variable.c Kaem/kaem_globals.c M2libc/bootstrappable.c | bin
-	cd Kaem && make kaem
+	$(MAKE) -C Kaem kaem
 
 catm: catm.c | bin
 	$(CC) $(CFLAGS) catm.c -o bin/catm
@@ -68,7 +68,7 @@ clean:
 	./test/test9/cleanup.sh
 	./test/test10/cleanup.sh
 	./test/test11/cleanup.sh
-	cd Kaem && make clean
+	$(MAKE) -C Kaem clean
 
 # A cleanup option we probably don't need
 .PHONY: clean-hard
