@@ -25,6 +25,7 @@ int STRICT;
 int INIT_MODE;
 int FUZZING;
 int WARNINGS;
+char* KAEM_BINARY;
 char* PATH;
 
 /* Token linked-list; stores the tokens of each line */

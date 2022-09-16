@@ -1291,6 +1291,13 @@ void populate_env(char** envp)
 			continue;
 		}
 
+		/* If we get $SHELL we are supposed to override it */
+		if(match("SHELL", n->var))
+		{
+			n->value = KAEM_BINARY;
+			goto special_shell;
+		}
+
 		j = j + 1; /* Skip over = */
 		k = 0; /* As envp[i] will continue as j but n->value begins at 0 */
 
@@ -1308,6 +1315,7 @@ void populate_env(char** envp)
 			n->value = "";
 		}
 
+special_shell:
 		/* Advance to next part of linked list */
 		n->next = calloc(1, sizeof(struct Token));
 		require(n->next != NULL, "Memory initialization of n->next in population of env failed\n");
@@ -1339,6 +1347,8 @@ int main(int argc, char** argv, char** envp)
 	/* Initalize structs */
 	token = calloc(1, sizeof(struct Token));
 	require(token != NULL, "Memory initialization of token failed\n");
+	if(NULL != argv[0]) KAEM_BINARY = argv[0];
+	else KAEM_BINARY = "./bin/kaem";
 	int i = 1;
 
 	/* Loop over arguments */
@@ -1432,6 +1442,17 @@ int main(int argc, char** argv, char** envp)
 	if(INIT_MODE == FALSE)
 	{
 		populate_env(envp);
+	}
+
+	/* make sure SHELL is set */
+	if(NULL == env_lookup("SHELL"))
+	{
+		struct Token* shell = calloc(1, sizeof(struct Token));
+		require(NULL != shell, "unable to create SHELL environment variable\n");
+		shell->next = env;
+		shell->var = "SHELL";
+		shell->value= KAEM_BINARY;
+		env = shell;
 	}
 
 	/* Populate PATH variable
