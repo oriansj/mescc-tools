@@ -1291,13 +1291,6 @@ void populate_env(char** envp)
 			continue;
 		}
 
-		/* If we get $SHELL we are supposed to override it */
-		if(match("SHELL", n->var))
-		{
-			n->value = KAEM_BINARY;
-			goto special_shell;
-		}
-
 		j = j + 1; /* Skip over = */
 		k = 0; /* As envp[i] will continue as j but n->value begins at 0 */
 
@@ -1315,7 +1308,6 @@ void populate_env(char** envp)
 			n->value = "";
 		}
 
-special_shell:
 		/* Advance to next part of linked list */
 		n->next = calloc(1, sizeof(struct Token));
 		require(n->next != NULL, "Memory initialization of n->next in population of env failed\n");
