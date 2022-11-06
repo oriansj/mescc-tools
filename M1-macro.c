@@ -709,7 +709,7 @@ void eval_immediates(struct blob* p)
 				{
 					value = strtoint(i->Text + 1);
 
-					if(('0' == i->Text[1]) || (0 != value))
+					if(('0' == i->Text[1]) || (0 != value) || (('-' == i->Text[1]) && ('0' == i->Text[2])))
 					{
 						i->Expression = express_word(value, i->Text[0]);
 					}
