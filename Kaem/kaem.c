@@ -1063,6 +1063,11 @@ int _execute(FILE* script, char** argv)
 
 	int f = 0;
 
+#ifdef __uefi__
+	array = list_to_array(token);
+	envp = list_to_array(env);
+	return spawn(program, array, envp);
+#else
 	if(!exec)
 	{
 		f = fork();
@@ -1073,7 +1078,7 @@ int _execute(FILE* script, char** argv)
 	{
 		fputs("WHILE EXECUTING ", stderr);
 		fputs(token->value, stderr);
-		fputs("fork() FAILED\nABORTING HARD\n", stderr);
+		fputs(" fork() FAILED\nABORTING HARD\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 	else if(f == 0)
@@ -1103,6 +1108,7 @@ int _execute(FILE* script, char** argv)
 	/* And we should wait for it to complete */
 	waitpid(f, &status, 0);
 	return what_exit(program, status);
+#endif
 }
 
 int collect_command(FILE* script, char** argv)
