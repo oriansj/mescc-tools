@@ -32,6 +32,7 @@ int main(int argc, char **argv)
 	ALIGNED = FALSE;
 	BigEndian = TRUE;
 	jump_tables = calloc(65537, sizeof(struct entry*));
+	require(NULL != jump_tables, "Failed to allocate our jump_tables\n");
 
 	Architecture = KNIGHT;
 	Base_Address = 0;
@@ -41,6 +42,7 @@ int main(int argc, char **argv)
 	exec_enable = TRUE;
 	ByteMode = HEX;
 	scratch = calloc(max_string + 1, sizeof(char));
+	require(NULL != scratch, "failed to allocate our scratch buffer\n");
 	char* arch;
 	struct input_files* temp;
 
@@ -108,6 +110,7 @@ int main(int argc, char **argv)
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
 			temp = calloc(1, sizeof(struct input_files));
+			require(NULL != temp, "failed to allocate file for processing\n");
 			temp->filename = argv[option_index + 1];
 			temp->next = input;
 			input = temp;

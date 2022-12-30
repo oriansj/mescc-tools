@@ -129,6 +129,7 @@ unsigned GetTarget(char* c)
 int storeLabel(FILE* source_file, int ip)
 {
 	struct entry* entry = calloc(1, sizeof(struct entry));
+	require(NULL != entry, "failed to allocate entry\n");
 
 	/* Ensure we have target address */
 	entry->target = ip;
@@ -136,6 +137,7 @@ int storeLabel(FILE* source_file, int ip)
 	/* Store string */
 	int c = consume_token(source_file);
 	entry->name = calloc(length(scratch) + 1, sizeof(char));
+	require(NULL != entry->name, "failed to allocate entry->name\n");
 	Copy_String(scratch, entry->name);
 	Clear_Scratch(scratch);
 

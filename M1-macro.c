@@ -769,9 +769,11 @@ int main(int argc, char **argv)
 	char* arch;
 	blob_count = 2;
 	hash_table = calloc(65537, sizeof(struct blob*));
+	require(NULL != hash_table, "failed to allocate hash_table\n");
 
 	/* Create newline blob */
 	newline_blob = calloc(1, sizeof(struct blob));
+	require(NULL != newline_blob, "failed to allocate newline_blob\n");
 	newline_blob->Text = "\n";
 	newline_blob->Expression = "\n";
 	newline_blob->type = NEWLINE;
@@ -779,6 +781,7 @@ int main(int argc, char **argv)
 
 	/* Start the blob list with DEFINE and newline */
 	blob_list = calloc(1, sizeof(struct blob));
+	require(NULL != blob_list, "failed to allocate DEFINE blob\n");
 	blob_list->Text = "DEFINE";
 	define_blob = blob_list;
 	blob_list->next = newline_blob;
@@ -786,6 +789,7 @@ int main(int argc, char **argv)
 
 	/* Initialize scratch */
 	SCRATCH = calloc(max_string + 1, sizeof(char));
+	require(NULL != SCRATCH, "failed to allocate SCRATCH buffer");
 
 	int option_index = 1;
 	while(option_index <= argc)
