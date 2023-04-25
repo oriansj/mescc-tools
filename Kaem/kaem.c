@@ -1282,6 +1282,7 @@ void populate_env(char** envp)
 		 */
 		envp_line = calloc(MAX_STRING, sizeof(char));
 		require(envp_line != NULL, "Memory initialization of envp_line in population of env failed\n");
+		require(strlen(envp[i]) < MAX_STRING, "Environment variable exceeds length restriction\n");
 		strcpy(envp_line, envp[i]);
 
 		while(envp_line[j] != '=')
