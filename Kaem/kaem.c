@@ -466,6 +466,9 @@ int collect_alias_token(char* input, char* n, int index)
 		}
 	} while(token_done == FALSE);
 
+        /* Terminate the output with a NULL */
+        n[output_index] = 0;
+
 	return index;
 }
 
