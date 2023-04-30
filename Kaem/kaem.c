@@ -801,20 +801,19 @@ void unset()
 	struct Token* e;
 	/* We support multiple variables on the same line */
 	struct Token* t;
-	t = token->next;
 
-	while(t != NULL)
+	for(t = token->next; t != NULL; t = t->next)
 	{
+		if(NULL == t->value)
+		{
+			continue;
+		}
+
 		e = env;
 
 		/* Look for the variable; we operate on ->next because we need to remove ->next */
 		while(e->next != NULL)
 		{
-			if(NULL == t->value)
-			{
-				break;
-			}
-
 			if(match(e->next->var, t->value))
 			{
 				break;
@@ -823,16 +822,12 @@ void unset()
 			e = e->next;
 		}
 
-		t = t->next;
-
-		/* If it's NULL nothing was found */
-		if(e->next == NULL)
+		if(e->next != NULL)
 		{
-			continue;
+			/* There is something to unset */
+			e->next = e->next->next;
 		}
 
-		/* Otherwise there is something to unset */
-		e->next = e->next->next;
 	}
 }
 
