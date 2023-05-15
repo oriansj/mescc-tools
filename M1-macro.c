@@ -25,8 +25,6 @@
 /* Internal processing Constants */
 // CONSTANT max_string 4096
 #define max_string 4096
-// CONSTANT PROCESSED 1
-#define PROCESSED 1
 // CONSTANT STR 2
 #define STR 2
 // CONSTANT NEWLINE 3
@@ -348,14 +346,6 @@ void line_macro(struct Token* p)
 		{
 			require(NULL != i->next, "Macro name must exist\n");
 			require(NULL != i->next->next, "Macro value must exist\n");
-			if(PROCESSED == i->next->contents->type)
-			{
-				line_error(i->filename, i->linenumber);
-				fputs("Multiple definitions for macro ", stderr);
-				fputs(i->next->contents->Text, stderr);
-				fputs("\n", stderr);
-				exit(EXIT_FAILURE);
-			}
 
 			i->contents = newline_blob;
 
@@ -487,7 +477,7 @@ void preserve_other(struct blob* p)
 	char c;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if((NULL == i->Expression) && !(i->type & PROCESSED))
+		if(NULL == i->Expression)
 		{
 			c = i->Text[0];
 
@@ -686,8 +676,7 @@ void eval_immediates(struct blob* p)
 	int value;
 	for(i = p; NULL != i; i = i->next)
 	{
-		if(PROCESSED == i->type) continue;
-		else if(NEWLINE == i->type) continue;
+		if(NEWLINE == i->type) continue;
 		else if('<' == i->Text[0]) continue;
 		else if(NULL == i->Expression)
 		{
