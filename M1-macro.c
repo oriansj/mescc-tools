@@ -361,7 +361,7 @@ void line_macro(struct Token* p)
 
 			if (STR == i->next->next->contents->type)
 			{
-				i->contents->Expression = i->next->next->contents->Text + 1;
+				i->next->contents->Expression = i->next->next->contents->Text + 1;
 			}
 			else
 			{
