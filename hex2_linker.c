@@ -149,7 +149,7 @@ int storeLabel(FILE* source_file, int ip)
 	return c;
 }
 
-void range_check(int displacement, int number_of_bytes)
+void range_check(int displacement, int number_of_bytes, int absolute)
 {
 	if(4 == number_of_bytes) return;
 	else if (3 == number_of_bytes)
@@ -165,7 +165,15 @@ void range_check(int displacement, int number_of_bytes)
 	}
 	else if (2 == number_of_bytes)
 	{
-		if((32767 < displacement) || (displacement < -32768))
+		if (absolute) {
+			if (displacement > 65535) {
+				fputs("Address ", stderr);
+				fputs(int2str(displacement, 10, TRUE), stderr);
+				fputs(" does not fit in 2 bytes\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+		}
+		else if((32767 < displacement) || (displacement < -32768))
 		{
 			fputs("A displacement of ", stderr);
 			fputs(int2str(displacement, 10, TRUE), stderr);
@@ -190,12 +198,12 @@ void range_check(int displacement, int number_of_bytes)
 	exit(EXIT_FAILURE);
 }
 
-void outputPointer(int displacement, int number_of_bytes)
+void outputPointer(int displacement, int number_of_bytes, int absolute)
 {
 	unsigned value = displacement;
 
 	/* HALT HARD if we are going to do something BAD*/
-	range_check(displacement, number_of_bytes);
+	range_check(displacement, number_of_bytes, absolute);
 
 	if(BigEndian)
 	{ /* Deal with BigEndian */
@@ -324,12 +332,12 @@ void storePointer(char ch, FILE* source_file)
 	}
 
 	/* output calculated difference */
-	if('!' == ch) outputPointer(displacement, 1); /* Deal with ! */
-	else if('$' == ch) outputPointer(target, 2); /* Deal with $ */
-	else if('@' == ch) outputPointer(displacement, 2); /* Deal with @ */
-	else if('~' == ch) outputPointer(displacement, 3); /* Deal with ~ */
-	else if('&' == ch) outputPointer(target, 4); /* Deal with & */
-	else if('%' == ch) outputPointer(displacement, 4);  /* Deal with % */
+	if('!' == ch) outputPointer(displacement, 1, FALSE); /* Deal with ! */
+	else if('$' == ch) outputPointer(target, 2, TRUE); /* Deal with $ */
+	else if('@' == ch) outputPointer(displacement, 2, FALSE); /* Deal with @ */
+	else if('~' == ch) outputPointer(displacement, 3, FALSE); /* Deal with ~ */
+	else if('&' == ch) outputPointer(target, 4, TRUE); /* Deal with & */
+	else if('%' == ch) outputPointer(displacement, 4, FALSE);  /* Deal with % */
 	else
 	{
 		line_error();
