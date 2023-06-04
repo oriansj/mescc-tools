@@ -146,8 +146,8 @@ void WordStorePointer(char ch, FILE* source_file)
 	}
 
 	/* output calculated difference */
-	if('&' == ch) outputPointer(target, 4); /* Deal with & */
-	else if('%' == ch) outputPointer(displacement, 4);  /* Deal with % */
+	if('&' == ch) outputPointer(target, 4, TRUE); /* Deal with & */
+	else if('%' == ch) outputPointer(displacement, 4, FALSE);  /* Deal with % */
 	else
 	{
 		line_error();

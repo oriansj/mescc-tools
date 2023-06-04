@@ -43,7 +43,7 @@ int storeLabel(FILE* source_file, int ip);
 unsigned GetTarget(char* c);
 void Clear_Scratch(char* s);
 void line_error();
-void outputPointer(int displacement, int number_of_bytes);
+void outputPointer(int displacement, int number_of_bytes, int absolute);
 void pad_to_align(int write);
 int hex(int c, FILE* source_file);
 int octal(int c, FILE* source_file);
