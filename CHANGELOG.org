@@ -20,6 +20,7 @@
 ** Changed
 
 ** Fixed
+Hex2 added support signed and unsigned range_check behavior
 
 ** Removed
 Hex2 removed support for the flags: --BigEndian, --LittleEndian, --exec_enable and --BaseAddress

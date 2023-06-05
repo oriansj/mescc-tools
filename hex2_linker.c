@@ -152,41 +152,72 @@ int storeLabel(FILE* source_file, int ip)
 void range_check(int displacement, int number_of_bytes, int absolute)
 {
 	if(4 == number_of_bytes) return;
-	else if (3 == number_of_bytes)
+	else if (absolute && (3 == number_of_bytes))
 	{
-		if((8388607 < displacement) || (displacement < -8388608))
+		/* Deal with unsigned */
+		if((16777215 < displacement) || (displacement < 0))
 		{
-			fputs("A displacement of ", stderr);
+			fputs("An absolute displacement of ", stderr);
 			fputs(int2str(displacement, 10, TRUE), stderr);
 			fputs(" does not fit in 3 bytes\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		return;
 	}
-	else if (2 == number_of_bytes)
+	else if (3 == number_of_bytes)
 	{
-		if (absolute) {
-			if (displacement > 65535) {
-				fputs("Address ", stderr);
-				fputs(int2str(displacement, 10, TRUE), stderr);
-				fputs(" does not fit in 2 bytes\n", stderr);
-				exit(EXIT_FAILURE);
-			}
-		}
-		else if((32767 < displacement) || (displacement < -32768))
+		/* Deal with signed */
+		if((8388607 < displacement) || (displacement < -8388608))
 		{
-			fputs("A displacement of ", stderr);
+			fputs("A relative displacement of ", stderr);
+			fputs(int2str(displacement, 10, TRUE), stderr);
+			fputs(" does not fit in 3 bytes\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
+	else if (absolute && (2 == number_of_bytes))
+	{
+		/* Deal with unsigned */
+		if((65535 < displacement) || (displacement < 0))
+		{
+			fputs("An absolute displacement of ", stderr);
 			fputs(int2str(displacement, 10, TRUE), stderr);
 			fputs(" does not fit in 2 bytes\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		return;
 	}
+	else if (2 == number_of_bytes)
+	{
+		/* Deal with signed */
+		if((32767 < displacement) || (displacement < -32768))
+		{
+			fputs("A relative displacement of ", stderr);
+			fputs(int2str(displacement, 10, TRUE), stderr);
+			fputs(" does not fit in 2 bytes\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
+	else if (absolute && (1 == number_of_bytes))
+	{
+		/* Deal with unsigned */
+		if((255 < displacement) || (displacement < 0))
+		{
+			fputs("An absolute displacement of ", stderr);
+			fputs(int2str(displacement, 10, TRUE), stderr);
+			fputs(" does not fit in 1 byte\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
 	else if (1 == number_of_bytes)
 	{
+		/* Deal with signed */
 		if((127 < displacement) || (displacement < -128))
 		{
-			fputs("A displacement of ", stderr);
+			fputs("A relative displacement of ", stderr);
 			fputs(int2str(displacement, 10, TRUE), stderr);
 			fputs(" does not fit in 1 byte\n", stderr);
 			exit(EXIT_FAILURE);
