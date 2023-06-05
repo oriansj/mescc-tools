@@ -1,0 +1,13 @@
+A=one
+B=two
+C=three
+D=four
+echo ${A}
+echo ${B}
+echo ${C}
+echo ${D}
+unset C
+echo ${A}
+echo ${B}
+echo ${C}
+echo ${D}
