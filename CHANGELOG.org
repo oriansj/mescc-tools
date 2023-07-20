@@ -16,12 +16,20 @@
 
 * Current
 ** Added
+Add UEFI support for spawning new processes.
 
 ** Changed
+Kaem now sets the SHELL variable if it doesn't exist
+Kaem now checks environment variable length before using strcpy.
 
 ** Fixed
+Fixed makefile make call for kaem
+Fixed kaem so it now handles cases when the alias name is longer than the command
+Fixed M1 quoted DEFINES
 Hex2 added support signed and unsigned range_check behavior
+M1 added support for signed and unsigned range_check behavior
 Fix bug where unset removes the first environment variable when a token value is NULL.
+Fixed several kaem segfaults that could occur on UEFI systems
 
 ** Removed
 Hex2 removed support for the flags: --BigEndian, --LittleEndian, --exec_enable and --BaseAddress

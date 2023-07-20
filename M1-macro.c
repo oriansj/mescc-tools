@@ -506,22 +506,37 @@ void bound_values(int displacement, int number_of_bytes, int low, int high)
 	}
 }
 
-void range_check(int displacement, int number_of_bytes)
+void range_check(int displacement, int number_of_bytes, int absolute)
 {
 	if(4 == number_of_bytes) return;
+	else if(absolute && (3 == number_of_bytes))
+	{
+		bound_values(displacement, number_of_bytes, -8388609, 16777217);
+		return;
+	}
 	else if(3 == number_of_bytes)
 	{
-		bound_values(displacement, number_of_bytes, -8388608, 16777216);
+		bound_values(displacement, number_of_bytes, -8388609, 8388608);
+		return;
+	}
+	else if(absolute && (2 == number_of_bytes))
+	{
+		bound_values(displacement, number_of_bytes, -32769, 65536);
 		return;
 	}
 	else if(2 == number_of_bytes)
 	{
-		bound_values(displacement, number_of_bytes, -32768, 65535);
+		bound_values(displacement, number_of_bytes, -32769, 32768);
+		return;
+	}
+	else if(absolute && (1 == number_of_bytes))
+	{
+		bound_values(displacement, number_of_bytes, -1, 256);
 		return;
 	}
 	else if(1 == number_of_bytes)
-	{
-		bound_values(displacement, number_of_bytes, -128, 255);
+	{	/* work around current only signed bytes */
+		bound_values(displacement, number_of_bytes, -129, 256);
 		return;
 	}
 
@@ -536,25 +551,20 @@ char* express_number(int value, char c)
 	int size;
 	int number_of_bytes;
 	int shift;
-	if('!' == c)
-	{
-		number_of_bytes = 1;
-		value = value & 0xFF;
-	}
-	else if('@' == c)
+	int absolute = FALSE;
+	if('!' == c) number_of_bytes = 1;
+	else if('@' == c) number_of_bytes = 2;
+	else if('$' == c)
 	{
 		number_of_bytes = 2;
-		value = value & 0xFFFF;
+		absolute = TRUE;
 	}
-	else if('~' == c)
-	{
-		number_of_bytes = 3;
-		value = value & 0xFFFFFF;
-	}
-	else if('%' == c)
+	else if('~' == c) number_of_bytes = 3;
+	else if('%' == c) number_of_bytes = 4;
+	else if('&' == c)
 	{
 		number_of_bytes = 4;
-		value = value & 0xFFFFFFFF;
+		absolute = TRUE;
 	}
 	else
 	{
@@ -566,7 +576,13 @@ char* express_number(int value, char c)
 		exit(EXIT_FAILURE);
 	}
 
-	range_check(value, number_of_bytes);
+	range_check(value, number_of_bytes, absolute);
+
+	/* don't truncate prior to range check for -1 behavior */
+	if('!' == c) value = value & 0xFF;
+	else if(('@' == c) || ('$' == c)) value = value & 0xFFFF;
+	else if('~' == c) value = value & 0xFFFFFF;
+	else if(('%' == c) || ('&' == c)) value = value & 0xFFFFFFFF;
 
 	if(HEX == ByteMode)
 	{
@@ -682,7 +698,7 @@ void eval_immediates(struct blob* p)
 		{
 			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (PPC64LE == Architecture))
 			{
-				if(in_set(i->Text[0], "%~@!"))
+				if(in_set(i->Text[0], "%~@!&$"))
 				{
 					value = strtoint(i->Text + 1);
 
@@ -709,7 +725,9 @@ void eval_immediates(struct blob* p)
 				value = strtoint(i->Text);
 				if(('0' == i->Text[0]) || (0 != value))
 				{
-					i->Expression = express_number(value, '@');
+					if(value > 65536) continue;
+					else if(value > 32767) i->Expression = express_number(value, '$');
+					else i->Expression = express_number(value, '@');
 				}
 			}
 			else
