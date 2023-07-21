@@ -502,7 +502,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			fputs("blood-elf 2.0.0\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
+			fputs("blood-elf 2.0.1\n(Basically Launches Odd Object Dump ExecutabLe Files\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[option_index], "--entry"))

@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 1.5 - 2023-07-20
+** Added
 Add UEFI support for spawning new processes.
 
 ** Changed
