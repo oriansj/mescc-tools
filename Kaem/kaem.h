@@ -30,7 +30,7 @@
 // CONSTANT FAILURE 1
 #define FAILURE 1
 #define MAX_STRING 4096
-#define MAX_ARRAY 256
+#define MAX_ARRAY 512
 
 
 /*
