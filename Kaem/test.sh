@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 # Copyright (C) 2020 fosslinux
 # This file is part of mescc-tools.
 #
