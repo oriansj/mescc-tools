@@ -68,6 +68,8 @@ clean:
 	./test/test9/cleanup.sh
 	./test/test10/cleanup.sh
 	./test/test11/cleanup.sh
+	./test/test12/cleanup.sh
+	./test/test13/cleanup.sh
 	$(MAKE) -C Kaem clean
 
 # A cleanup option we probably don't need
