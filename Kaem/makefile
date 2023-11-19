@@ -16,19 +16,19 @@
 ## along with mescc-tools. If not, see <http://www.gnu.org/licenses/>.
 
 # Prevent rebuilding
-VPATH = ../bin:test/results
 
 all: kaem
 
 CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb
 
-kaem: kaem.c kaem_globals.c variable.c | bin
+kaem: ../bin/kaem
+../bin/kaem: kaem.c kaem_globals.c variable.c | bin
 	$(CC) $(CFLAGS) kaem.c \
 	kaem_globals.c \
 	variable.c  \
 	../M2libc/bootstrappable.c \
-	-o ../bin/kaem
+	-o $@
 
 # Always run the tests
 .PHONY: test
@@ -41,7 +41,7 @@ Generate-test-answers:
 	sha256sum test/results/* >| test/test.answers
 
 # Clean up after ourselves
-.PHONY: clean
+.PHONY: clean kaem
 clean:
 	rm -rf ../bin/
 	rm -rf test/results/
@@ -56,6 +56,6 @@ DESTDIR:=
 PREFIX:=/usr/local
 bindir:=$(DESTDIR)$(PREFIX)/bin
 .PHONY: install
-install: kaem
+install: ../bin/kaem
 	mkdir -p $(bindir)
 	cp $^ $(bindir)
