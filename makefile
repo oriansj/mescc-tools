@@ -15,7 +15,6 @@
 ## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
 # Prevent rebuilding
-VPATH = bin:test/results
 PACKAGE = mescc-tools
 
 all: M1 hex2 get_machine blood-elf kaem catm
@@ -23,38 +22,50 @@ all: M1 hex2 get_machine blood-elf kaem catm
 CC=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -fno-common
 
-M1: M1-macro.c stringify.c M2libc/bootstrappable.c | bin
+M1: bin/M1
+
+bin/M1: M1-macro.c stringify.c M2libc/bootstrappable.c | bin
 	$(CC) $(CFLAGS) M1-macro.c \
 	stringify.c \
 	M2libc/bootstrappable.c \
-	-o bin/M1
+	-o $@
 
-hex2: hex2.c hex2_linker.c hex2_word.c M2libc/bootstrappable.c | bin
+hex2: bin/hex2
+
+bin/hex2: hex2.c hex2_linker.c hex2_word.c M2libc/bootstrappable.c | bin
 	$(CC) $(CFLAGS) hex2.c \
 	hex2_linker.c \
 	hex2_word.c \
 	M2libc/bootstrappable.c \
-	-o bin/hex2
+	-o $@
 
-get_machine: get_machine.c M2libc/bootstrappable.c | bin
+get_machine: bin/get_machine
+
+bin/get_machine: get_machine.c M2libc/bootstrappable.c | bin
 	$(CC) $(CFLAGS) get_machine.c \
 	M2libc/bootstrappable.c \
-	-o bin/get_machine
+	-o $@
 
-blood-elf: blood-elf.c stringify.c M2libc/bootstrappable.c | bin
+blood-elf: bin/blood-elf
+
+bin/blood-elf: blood-elf.c stringify.c M2libc/bootstrappable.c | bin
 	$(CC) $(CFLAGS) blood-elf.c \
 	stringify.c \
 	M2libc/bootstrappable.c \
-	-o bin/blood-elf
+	-o $@
 
-kaem: Kaem/kaem.c Kaem/variable.c Kaem/kaem_globals.c M2libc/bootstrappable.c | bin
+kaem: bin/kaem
+
+bin/kaem: Kaem/kaem.c Kaem/variable.c Kaem/kaem_globals.c M2libc/bootstrappable.c | bin
 	$(MAKE) -C Kaem kaem
 
-catm: catm.c | bin
-	$(CC) $(CFLAGS) catm.c -o bin/catm
+catm: bin/catm
+
+bin/catm: catm.c | bin
+	$(CC) $(CFLAGS) catm.c -o $@
 
 # Clean up after ourselves
-.PHONY: clean
+.PHONY: clean M1 hex2 get_machine blood-elf kaem catm
 clean:
 	rm -rf bin/ test/results/
 	./test/test1/cleanup.sh
@@ -153,7 +164,7 @@ DESTDIR:=
 PREFIX:=/usr/local
 bindir:=$(DESTDIR)$(PREFIX)/bin
 .PHONY: install
-install: M1 hex2 blood-elf kaem get_machine
+install: bin/M1 bin/hex2 bin/blood-elf bin/kaem bin/get_machine
 	mkdir -p $(bindir)
 	cp $^ $(bindir)
 
