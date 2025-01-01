@@ -17,7 +17,7 @@
 Building and Installing mescc-tools
 
 * Get it
-	git clone https://github.com/oriansj/mescc-tools.git
+	git clone --recursive https://github.com/oriansj/mescc-tools.git
 
 * Prerequisites
 ** Bootstrapping
