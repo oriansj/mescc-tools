@@ -22,7 +22,8 @@ Building and Installing mescc-tools
 * Prerequisites
 ** Bootstrapping
 mescc-tools can be bootstrapped from a simple hex assembler.
-mescc-tools-seed contains the steps for several architectures on posix systems
+bootstrapping-seeds contains the seeds for several architectures and platforms
+mescc-tools-posix contains the steps for several architectures on posix systems
 to do so.
 
 ** Development
