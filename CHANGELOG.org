@@ -18,6 +18,7 @@
 ** Added
 
 ** Changed
+Added support for %&! to M1 for knight architecture and allowed @$ syntax
 
 ** Fixed
 

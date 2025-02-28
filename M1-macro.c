@@ -379,6 +379,7 @@ void hexify_string(struct blob* p)
 	p->Expression = d;
 	char* S = p->Text;
 
+	/* knight just needs a couple extra nulls to make string detection easier */
 	if((KNIGHT == Architecture) && (HEX == ByteMode))
 	{
 		i = (((((i - 1) >> 2) + 1) << 3) + i);
@@ -696,7 +697,12 @@ void eval_immediates(struct blob* p)
 		else if('<' == i->Text[0]) continue;
 		else if(NULL == i->Expression)
 		{
-			if((X86 == Architecture) || (AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (PPC64LE == Architecture))
+			if((X86 == Architecture)     ||
+			   (AMD64 == Architecture)   ||
+			   (ARMV7L == Architecture)  ||
+			   (AARM64 == Architecture)  ||
+			   (PPC64LE == Architecture) ||
+			   (KNIGHT == Architecture))
 			{
 				if(in_set(i->Text[0], "%~@!&$"))
 				{
@@ -705,6 +711,16 @@ void eval_immediates(struct blob* p)
 					if(('0' == i->Text[1]) || (0 != value))
 					{
 						i->Expression = express_number(value, i->Text[0]);
+					}
+				}
+				else if(KNIGHT == Architecture)
+				{
+					value = strtoint(i->Text);
+					if(('0' == i->Text[0]) || (0 != value))
+					{
+						if(value > 65536) continue;
+						else if(value > 32767) i->Expression = express_number(value, '$');
+						else i->Expression = express_number(value, '@');
 					}
 				}
 			}
@@ -718,16 +734,6 @@ void eval_immediates(struct blob* p)
 					{
 						i->Expression = express_word(value, i->Text[0]);
 					}
-				}
-			}
-			else if(KNIGHT == Architecture)
-			{
-				value = strtoint(i->Text);
-				if(('0' == i->Text[0]) || (0 != value))
-				{
-					if(value > 65536) continue;
-					else if(value > 32767) i->Expression = express_number(value, '$');
-					else i->Expression = express_number(value, '@');
 				}
 			}
 			else
@@ -768,8 +774,10 @@ void print_hex(struct Token* p)
 /* Standard C main program */
 int main(int argc, char **argv)
 {
+	/* If they don't specify the target architecture, assume knight */
 	BigEndian = TRUE;
 	Architecture = KNIGHT;
+
 	destination_file = stdout;
 	ByteMode = HEX;
 	char* filename;
