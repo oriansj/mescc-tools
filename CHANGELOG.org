@@ -18,6 +18,15 @@
 ** Added
 
 ** Changed
+
+** Fixed
+
+** Removed
+
+* 1.6 - 2025-03-15
+** Added
+
+** Changed
 Added support for %&! to M1 for knight architecture and allowed @$ syntax
 
 ** Fixed

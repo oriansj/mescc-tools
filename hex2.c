@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			fputs("hex2 1.5.0\n", stdout);
+			fputs("hex2 1.6.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
