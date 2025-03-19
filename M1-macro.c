@@ -643,6 +643,15 @@ char* express_word(int value, char c)
 			immediate = (value & 0xFFFFF000) + 0x1000;
 		}
 	}
+	else if('$' == c)
+	{
+		/* provides an option for 16bit immediate constants */
+		immediate = value & 0xFFFF;
+		/* Drop the leading . */
+		ch = s;
+		/* HUGE ASS WARNING RISC-V has some stupid alignment rules */
+		/* That the inconsiderate use of this feature will break */
+	}
 	else if('%' == c)
 	{
 		/* provides an option for 32bit immediate constants */
