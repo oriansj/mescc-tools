@@ -25,6 +25,7 @@ int STRICT;
 int INIT_MODE;
 int FUZZING;
 int WARNINGS;
+int PARALLEL;
 char* KAEM_BINARY;
 char* PATH;
 
@@ -34,3 +35,5 @@ struct Token* token;
 struct Token* env;
 /* Alias linked-list; stores the aliases */
 struct Token* alias;
+
+struct ExecUnit* pending_exec;
