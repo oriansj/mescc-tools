@@ -618,7 +618,7 @@ char* express_word(int value, char c)
 	s[0] = '.';
 	char* ch = s + 1;
 	require(NULL != ch, "Exhausted available memory\n");
-	int size;
+	int size = 4;
 	int shift;
 	int immediate;
 	if('!' == c)
@@ -651,6 +651,7 @@ char* express_word(int value, char c)
 		ch = s;
 		/* HUGE ASS WARNING RISC-V has some stupid alignment rules */
 		/* That the inconsiderate use of this feature will break */
+		size = 2;
 	}
 	else if('%' == c)
 	{
@@ -671,17 +672,17 @@ char* express_word(int value, char c)
 
 	if(HEX == ByteMode)
 	{
-		size = 4 * 2;
+		size = size * 2;
 		shift = 4;
 	}
 	else if(OCTAL == ByteMode)
 	{
-		size = 4 * 3;
+		size = size * 3;
 		shift = 3;
 	}
 	else if(BINARY == ByteMode)
 	{
-		size = 4 * 8;
+		size = size * 8;
 		shift = 1;
 	}
 	else
@@ -735,7 +736,7 @@ void eval_immediates(struct blob* p)
 			}
 			else if((RISCV32 == Architecture) || (RISCV64 == Architecture))
 			{
-				if(in_set(i->Text[0], "%~@!"))
+				if(in_set(i->Text[0], "%~@!$"))
 				{
 					value = strtoint(i->Text + 1);
 
