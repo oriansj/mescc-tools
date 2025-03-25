@@ -23,6 +23,7 @@ extern int STRICT;
 extern int INIT_MODE;
 extern int FUZZING;
 extern int WARNINGS;
+extern int PARALLEL;
 extern char* KAEM_BINARY;
 extern char* PATH;
 
@@ -32,3 +33,5 @@ extern struct Token* token;
 extern struct Token* env;
 /* Alias linked-list; stores the aliases */
 extern struct Token* alias;
+
+extern struct ExecUnit* pending_exec;
