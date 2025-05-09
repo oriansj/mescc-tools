@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-// CONSTANT BUFFER_SIZE 4096
 #define BUFFER_SIZE 4096
 
 int main(int argc, char** argv)

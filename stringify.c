@@ -19,12 +19,12 @@
 
 #include <stdio.h>
 
-// CONSTANT HEX 16
-#define HEX 16
-// CONSTANT OCTAL 8
-#define OCTAL 8
-// CONSTANT BINARY 2
-#define BINARY 2
+enum
+{
+	BINARY = 2,
+	OCTAL = 8,
+	HEX = 16,
+};
 
 /***********************************************************
  * Needed for current implementation of little endian      *

@@ -22,40 +22,38 @@
 #include <string.h>
 #include "M2libc/bootstrappable.h"
 
+enum
+{
+	max_string = 4096,
+};
+
 /* Internal processing Constants */
-// CONSTANT max_string 4096
-#define max_string 4096
-// CONSTANT STR 2
-#define STR 2
-// CONSTANT NEWLINE 3
-#define NEWLINE 3
+enum
+{
+	STR = 2,
+	NEWLINE = 3,
+};
 
 /* Unique code for each architecture */
-// CONSTANT KNIGHT 0
-#define KNIGHT 0
-// CONSTANT X86 3
-#define X86 0x03
-// CONSTANT AMD64 62
-#define AMD64 0x3E
-// CONSTANT ARMV7L 40
-#define ARMV7L 0x28
-// CONSTANT AARM64 183
-#define AARM64 0xB7
-// CONSTANT PPC64LE 21
-#define PPC64LE 0x15
-// CONSTANT RISCV32 243
-#define RISCV32 0xF3
-// CONSTANT RISCV64 65779
-#define RISCV64 0x100F3 /* Because RISC-V unlike all other architectures does get a seperate e_machine when changing from 32 to 64bit */
-
+enum
+{
+	KNIGHT = 0,
+	X86 = 0x03,
+	AMD64 = 0x3E,
+	ARMV7L = 0x28,
+	AARCH64 = 0xB7,
+	PPC64LE = 0x15,
+	RISCV32 = 0xF3,
+	RISCV64 = 0x100F3, /* Because RISC-V unlike all other architectures does get a seperate e_machine when changing from 32 to 64bit */
+};
 
 /* How do you want that output? */
-// CONSTANT HEX 16
-#define HEX 16
-// CONSTANT OCTAL 8
-#define OCTAL 8
-// CONSTANT BINARY 2
-#define BINARY 2
+enum
+{
+	BINARY = 2,
+	OCTAL = 8,
+	HEX = 16,
+};
 
 /* Imported from stringify.c */
 int stringify(char* s, int digits, int divisor, int value, int shift);
@@ -710,7 +708,7 @@ void eval_immediates(struct blob* p)
 			if((X86 == Architecture)     ||
 			   (AMD64 == Architecture)   ||
 			   (ARMV7L == Architecture)  ||
-			   (AARM64 == Architecture)  ||
+			   (AARCH64 == Architecture)  ||
 			   (PPC64LE == Architecture) ||
 			   (KNIGHT == Architecture))
 			{
@@ -840,7 +838,7 @@ int main(int argc, char **argv)
 			else if(match("x86", arch)) Architecture = X86;
 			else if(match("amd64", arch)) Architecture = AMD64;
 			else if(match("armv7l", arch)) Architecture = ARMV7L;
-			else if(match("aarch64", arch)) Architecture = AARM64;
+			else if(match("aarch64", arch)) Architecture = AARCH64;
 			else if(match("ppc64le", arch)) Architecture = PPC64LE;
 			else if(match("riscv32", arch)) Architecture = RISCV32;
 			else if(match("riscv64", arch)) Architecture = RISCV64;

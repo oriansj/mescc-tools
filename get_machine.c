@@ -23,9 +23,7 @@
 int match(char* a, char* b);
 
 #define TRUE 1
-//CONSTANT TRUE 1
 #define FALSE 0
-//CONSTANT FALSE 0
 
 /* Standard C main program */
 int main(int argc, char **argv)
