@@ -833,6 +833,7 @@ void unset()
 
 void execute(FILE* script, char** argv);
 int _execute(FILE* script, char** argv);
+int __execute(char** array, char** envp, char* program, int exec);
 int collect_command(FILE* script, char** argv);
 
 /* if builtin */
@@ -956,12 +957,13 @@ int _execute(FILE* script, char** argv)
 	int rc;
 	/* exec without forking */
 	int exec = FALSE;
+	/* is a builtin */
+	int builtin = TRUE;
 
 	/* Actually do the execution */
 	if(is_envar(token->value) == TRUE)
 	{
 		add_envar();
-		return 0;
 	}
 	else if(match(token->value, "cd"))
 	{
@@ -971,8 +973,6 @@ int _execute(FILE* script, char** argv)
 		{
 			require(rc == SUCCESS, "cd failed!\n");
 		}
-
-		return 0;
 	}
 	else if(match(token->value, "set"))
 	{
@@ -982,13 +982,10 @@ int _execute(FILE* script, char** argv)
 		{
 			require(rc == SUCCESS, "set failed!\n");
 		}
-
-		return 0;
 	}
 	else if(match(token->value, "alias"))
 	{
 		add_alias();
-		return 0;
 	}
 	else if(match(token->value, "pwd"))
 	{
@@ -998,18 +995,14 @@ int _execute(FILE* script, char** argv)
 		{
 			require(rc == SUCCESS, "pwd failed!\n");
 		}
-
-		return 0;
 	}
 	else if(match(token->value, "echo"))
 	{
 		echo();
-		return 0;
 	}
 	else if(match(token->value, "unset"))
 	{
 		unset();
-		return 0;
 	}
 	else if(match(token->value, "exec"))
 	{
@@ -1019,26 +1012,105 @@ int _execute(FILE* script, char** argv)
 	else if(match(token->value, "if"))
 	{
 		if_cmd(script, argv);
-		return 0;
 	}
 	else if(match(token->value, "then"))
 	{
 		/* ignore */
-		return 0;
 	}
 	else if(match(token->value, "else"))
 	{
 		/* ignore */
-		return 0;
 	}
 	else if(match(token->value, "fi"))
 	{
 		/* ignore */
+	}
+	else if(match(token->value, "_begin_parallel"))
+	{
+		/* begin parallelisation */
+#ifdef __uefi__
+		fputs("WARN: parallel not supported in uefi, ignoring\n", stderr);
 		return 0;
+#else
+		token = token->next;
+		require(NULL != token->value, "no argument given to _begin_parallel");
+		PARALLEL = strtoint(token->value);
+		return 0;
+#endif
+	}
+	else if(match(token->value, "_end_parallel"))
+	{
+		if (PARALLEL <= 1)
+		{
+			return 0;
+		}
+		fputs("parallel executing up to ", stdout);
+		fputs(int2str(PARALLEL, 10, TRUE), stdout);
+		fputs(" commands at once\n", stdout);
+
+		/* lazy parallelisastion means this is where all the commands actually get executed */
+		int exec_count = 0;
+		int i;
+		for(i = 0; i < PARALLEL && pending_exec != NULL; i += 1)
+		{
+			__execute(pending_exec->array, pending_exec->envp, pending_exec->program, FALSE);
+			pending_exec = pending_exec->next;
+			fputc('.', stdout);
+			exec_count += 1;
+		}
+
+		int status;
+		int rc;
+		while(pending_exec != NULL)
+		{
+			waitpid(-1, &status, 0);
+			rc = what_exit("paralleled program", status);
+			if(rc != 0 && STRICT)
+			{
+				return rc;
+			}
+
+			__execute(pending_exec->array, pending_exec->envp, pending_exec->program, FALSE);
+			pending_exec = pending_exec->next;
+			fputc('.', stdout);
+			exec_count += 1;
+		}
+
+		for(i = 0; i < exec_count && i < PARALLEL; i += 1)
+		{
+			waitpid(-1, &status, 0);
+			rc = what_exit("paralleled program", status);
+			if(rc != 0 && STRICT)
+			{
+				return rc;
+			}
+		}
+
+		/* end parallelisation */
+		PARALLEL = 1;
+		fputc('\n', stdout);
+		fputs("end parallel execution\n", stdout);
+		return 0;
+	}
+	else
+	{
+		builtin = FALSE;
+	}
+
+	if (builtin)
+	{
+		if (PARALLEL > 1)
+		{
+			fputs("builtins are not supported within a parallel block!\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		else if (!exec)
+		{
+			return 0;
+		}
 	}
 
 	/* If it is not a builtin, run it as an executable */
-	int status; /* i.e. return code */
 	char** array;
 	char** envp;
 	/* Get the full path to the executable */
@@ -1059,13 +1131,37 @@ int _execute(FILE* script, char** argv)
 		return 0;
 	}
 
-	int f = 0;
-
-#ifdef __uefi__
 	array = list_to_array(token);
 	envp = list_to_array(env);
+
+	if (PARALLEL > 1)
+	{
+		struct ExecUnit *unit = calloc(1, sizeof(struct ExecUnit));
+		require(NULL != unit, "unable to allocate memory");
+		unit->array = array;
+		unit->envp = envp;
+		unit->program = program;
+		unit->next = pending_exec;
+		pending_exec = unit;
+		return 0;
+	}
+	else
+	{
+		int status;
+		int pid = __execute(array, envp, program, exec);
+		waitpid(pid, &status, 0);
+		return what_exit(program, status);
+	}
+}
+
+int __execute(char** array, char** envp, char* program, int exec)
+{
+#ifdef __uefi__
 	return spawn(program, array, envp);
 #else
+	int status; /* i.e. return code */
+	int f = 0;
+
 	if(!exec)
 	{
 		f = fork();
@@ -1085,12 +1181,7 @@ int _execute(FILE* script, char** argv)
 		/**************************************************************
 		 * Fuzzing produces random stuff; we don't want it running    *
 		 * dangerous commands. So we just don't execve.               *
-		 * But, we still do the list_to_array calls to check for      *
-		 * segfaults.                                                 *
 		 **************************************************************/
-		array = list_to_array(token);
-		envp = list_to_array(env);
-
 		if(FALSE == FUZZING)
 		{
 			/* We are not fuzzing */
@@ -1102,10 +1193,8 @@ int _execute(FILE* script, char** argv)
 		_exit(EXIT_FAILURE);
 	}
 
-	/* Otherwise we are the parent */
-	/* And we should wait for it to complete */
-	waitpid(f, &status, 0);
-	return what_exit(program, status);
+	/* Parent */
+	return f;
 #endif
 }
 
@@ -1339,6 +1428,7 @@ int main(int argc, char** argv, char** envp)
 	STRICT = TRUE;
 	FUZZING = FALSE;
 	WARNINGS = FALSE;
+	PARALLEL = 0;
 	char* filename = "kaem.run";
 	FILE* script = NULL;
 	/* Initalize structs */

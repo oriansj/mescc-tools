@@ -54,4 +54,15 @@ struct Token
 	struct Token* next;
 };
 
+/*
+ * Pending execution struct - holds commands in parallel mode that have not yet been run.
+ */
+struct ExecUnit
+{
+	char** array;
+	char** envp;
+	char *program;
+	struct ExecUnit* next;
+};
+
 #include "kaem_globals.h"
