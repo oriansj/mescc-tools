@@ -517,7 +517,6 @@ void add_envar()
 	newvalue = name + i + 2;
 	value = value + i + 1;
 	i = 0;
-	require(0 != value[i], "add_envar received improper variable\n");
 
 	while(0 != value[i])
 	{

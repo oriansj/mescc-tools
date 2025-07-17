@@ -16,3 +16,9 @@
 #
 # Test adding of an envar
 VAR=text
+echo ${VAR}
+# Empty envar
+EMPTY=
+echo ${EMPTY}
+EMPTY=x
+echo ${EMPTY}
