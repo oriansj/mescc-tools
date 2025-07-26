@@ -708,7 +708,7 @@ void eval_immediates(struct blob* p)
 			if((X86 == Architecture)     ||
 			   (AMD64 == Architecture)   ||
 			   (ARMV7L == Architecture)  ||
-			   (AARCH64 == Architecture)  ||
+			   (AARCH64 == Architecture) ||
 			   (PPC64LE == Architecture) ||
 			   (KNIGHT == Architecture))
 			{
