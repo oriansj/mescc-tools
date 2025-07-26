@@ -904,7 +904,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-V") || match(argv[option_index], "--version"))
 		{
-			fputs("M1 1.6.0\n", stdout);
+			fputs("M1 1.7.0\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else
