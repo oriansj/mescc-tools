@@ -1,0 +1,10 @@
+set -ex
+
+if
+then
+    echo donethen
+else
+    echo doneelse
+fi
+echo done
+
