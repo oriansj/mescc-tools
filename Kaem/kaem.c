@@ -118,7 +118,6 @@ char* find_executable(char* name)
 	char* MPATH = calloc(MAX_STRING, sizeof(char)); /* Modified PATH */
 	require(MPATH != NULL, "Memory initialization of MPATH in find_executable failed\n");
 	strcpy(MPATH, PATH);
-	FILE* t;
 	char* next = find_char(MPATH, ':');
 	int index;
 	int offset;
@@ -158,11 +157,10 @@ char* find_executable(char* name)
 
 		/* Try the trial */
 		require(strlen(trial) < MAX_STRING, "COMMAND TOO LONG!\nABORTING HARD\n");
-		t = fopen(trial, "r");
 
-		if(NULL != t)
+		/* Use access instead of fopen; the latter may read the whole file */
+		if(0 == access(trial, 0))
 		{
-			fclose(t);
 			return trial;
 		}
 
@@ -222,6 +220,8 @@ char** list_to_array(struct Token* s)
 			{
 				element[i + offset] = n->value[i];
 			}
+
+			element[offset + value_length] = 0;
 		}
 
 		/* Insert elements if not empty */
@@ -234,10 +234,7 @@ char** list_to_array(struct Token* s)
 		index = index + 1;
 
 		/* Reset element */
-		for(i = 0; i < MAX_STRING; i = i + 1)
-		{
-			element[i] = 0;
-		}
+		element[0] = 0;
 	}
 
 	return array;
