@@ -31,7 +31,7 @@
 #define SUCCESS 0
 #define FAILURE 1
 #define MAX_STRING 4096
-#define MAX_ARRAY 512
+#define MAX_ARRAY 4096
 
 
 /*
