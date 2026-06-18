@@ -27,6 +27,44 @@
 /* Prototypes from other files */
 void handle_variables(char** argv, struct Token* n);
 
+/* find_executable buffers */
+char* fe_trial;
+char* fe_mpath;
+
+/* Reusable per-command token and string pools, rewound at the start of every
+ * collect_command. */
+struct Token** tok_pool;
+char** str_pool;
+int pool_tok_idx;
+int pool_str_idx;
+
+/* Hand out a zeroed Token from the pool (reused across commands). */
+struct Token* pool_token()
+{
+	require(pool_tok_idx < MAX_ARRAY, "SCRIPT TOO LONG or TOO MANY ENVARS\nABORTING HARD\n");
+	struct Token* t = tok_pool[pool_tok_idx];
+	pool_tok_idx = pool_tok_idx + 1;
+	t->value = NULL;
+	t->var = NULL;
+	t->next = NULL;
+	return t;
+}
+
+/* Hand out a zeroed MAX_STRING buffer from the pool (reused across commands). */
+char* pool_string()
+{
+	require(pool_str_idx < MAX_ARRAY, "LINE IS TOO LONG\nABORTING HARD\n");
+	char* s = str_pool[pool_str_idx];
+	pool_str_idx = pool_str_idx + 1;
+	memset(s, 0, MAX_STRING);
+	return s;
+}
+
+/* Cached envp array for execve */
+char** envp_cache;
+/* Indicates if the envp_cache needs to be updated */
+int env_dirty;
+
 /*
  * UTILITY FUNCTIONS
  */
@@ -114,11 +152,11 @@ char* find_executable(char* name)
 		return name;
 	}
 
-	char* trial = calloc(MAX_STRING, sizeof(char));
-	char* MPATH = calloc(MAX_STRING, sizeof(char)); /* Modified PATH */
-	require(MPATH != NULL, "Memory initialization of MPATH in find_executable failed\n");
+	/* trial is the candidate path returned on success. */
+	char* trial = fe_trial;
+	char* MPATH = fe_mpath; /* Modified PATH */
+	memset(trial, 0, MAX_STRING);
 	strcpy(MPATH, PATH);
-	FILE* t;
 	char* next = find_char(MPATH, ':');
 	int index;
 	int offset;
@@ -158,11 +196,9 @@ char* find_executable(char* name)
 
 		/* Try the trial */
 		require(strlen(trial) < MAX_STRING, "COMMAND TOO LONG!\nABORTING HARD\n");
-		t = fopen(trial, "r");
 
-		if(NULL != t)
+		if(0 == access(trial, 0))
 		{
-			fclose(t);
 			return trial;
 		}
 
@@ -190,9 +226,6 @@ char** list_to_array(struct Token* s)
 
 	while(n != NULL)
 	{
-		/* Loop through each node and assign it to an array index */
-		array[index] = calloc(MAX_STRING, sizeof(char));
-		require(array[index] != NULL, "Memory initialization of array[index] in conversion of list to array failed\n");
 		/* Bounds checking */
 		/* No easy way to tell which it is, output generic message */
 		require(index < MAX_ARRAY, "SCRIPT TOO LONG or TOO MANY ENVARS\nABORTING HARD\n");
@@ -222,25 +255,32 @@ char** list_to_array(struct Token* s)
 			{
 				element[i + offset] = n->value[i];
 			}
-		}
 
-		/* Insert elements if not empty */
-		if(!match("", element))
-		{
+			element[offset + value_length] = 0;
+
+			array[index] = calloc(MAX_STRING, sizeof(char));
+			require(array[index] != NULL, "Memory initialization of array[index] in conversion of list to array failed\n");
 			strcpy(array[index], element);
 		}
 
 		n = n->next;
 		index = index + 1;
-
-		/* Reset element */
-		for(i = 0; i < MAX_STRING; i = i + 1)
-		{
-			element[i] = 0;
-		}
 	}
 
 	return array;
+}
+
+/* Return the envp array for execve, rebuilding it only when the environment
+ * has changed since last time. */
+char** env_to_array()
+{
+	if(env_dirty)
+	{
+		envp_cache = list_to_array(env);
+		env_dirty = FALSE;
+	}
+
+	return envp_cache;
 }
 
 /* Function to handle the correct options for escapes */
@@ -558,6 +598,9 @@ void add_envar()
 
 	/* Since we found the variable we need only to set it to its new value */
 	n->value = newvalue;
+
+	/* Invalidate the cached envp array. */
+	env_dirty = TRUE;
 }
 
 /* Add an alias */
@@ -828,6 +871,9 @@ void unset()
 		}
 
 	}
+
+	/* Invalidate the cached envp array. */
+	env_dirty = TRUE;
 }
 
 void execute(FILE* script, char** argv);
@@ -1070,9 +1116,10 @@ int _execute(FILE* script, char** argv)
 
 	int f = 0;
 
+	envp = env_to_array();
+
 #ifdef __uefi__
 	array = list_to_array(token);
-	envp = list_to_array(env);
 	return spawn(program, array, envp);
 #else
 	if(!exec)
@@ -1098,7 +1145,6 @@ int _execute(FILE* script, char** argv)
 		 * segfaults.                                                 *
 		 **************************************************************/
 		array = list_to_array(token);
-		envp = list_to_array(env);
 
 		if(FALSE == FUZZING)
 		{
@@ -1121,12 +1167,14 @@ int _execute(FILE* script, char** argv)
 int collect_command(FILE* script, char** argv)
 {
 	command_done = FALSE;
+	/* Rewind the per-command pools: the previous command's tokens are fully
+	 * executed before we get here, so reuse the same nodes/buffers. */
+	pool_tok_idx = 0;
+	pool_str_idx = 0;
 	/* Initialize token */
 	struct Token* n;
-	n = calloc(1, sizeof(struct Token));
-	require(n != NULL, "Memory initialization of token in collect_command failed\n");
-	char* s = calloc(MAX_STRING, sizeof(char));
-	require(s != NULL, "Memory initialization of token in collect_command failed\n");
+	n = pool_token();
+	char* s = pool_string();
 	token = n;
 	int index = 0;
 	int alias_index;
@@ -1156,8 +1204,7 @@ int collect_command(FILE* script, char** argv)
 
 			/* add to token */
 			n->value = s;
-			s = calloc(MAX_STRING, sizeof(char));
-			require(s != NULL, "Memory initialization of next token node in collect_command failed\n");
+			s = pool_string();
 			/* Deal with variables */
 			handle_variables(argv, n);
 
@@ -1169,8 +1216,7 @@ int collect_command(FILE* script, char** argv)
 			}
 
 			/* Prepare for next loop */
-			n->next = calloc(1, sizeof(struct Token));
-			require(n->next != NULL, "Memory initialization of next token node in collect_command failed\n");
+			n->next = pool_token();
 			n = n->next;
 		}
 		while(alias_index != 0);
@@ -1350,6 +1396,29 @@ int main(int argc, char** argv, char** envp)
 	WARNINGS = FALSE;
 	char* filename = "kaem.run";
 	FILE* script = NULL;
+
+	/* Allocate find_executable's buffers once up front */
+	fe_trial = calloc(MAX_STRING, sizeof(char));
+	require(fe_trial != NULL, "Memory initialization of fe_trial failed\n");
+	fe_mpath = calloc(MAX_STRING, sizeof(char));
+	require(fe_mpath != NULL, "Memory initialization of fe_mpath failed\n");
+	envp_cache = NULL;
+	env_dirty = TRUE;
+
+	/* Allocate the reusable per-command token and string pools once up front */
+	int pool_i;
+	tok_pool = calloc(MAX_ARRAY, sizeof(struct Token*));
+	require(tok_pool != NULL, "Memory initialization of token pool failed\n");
+	str_pool = calloc(MAX_ARRAY, sizeof(char*));
+	require(str_pool != NULL, "Memory initialization of string pool failed\n");
+	for(pool_i = 0; pool_i < MAX_ARRAY; pool_i = pool_i + 1)
+	{
+		tok_pool[pool_i] = calloc(1, sizeof(struct Token));
+		require(tok_pool[pool_i] != NULL, "Memory initialization of token pool node failed\n");
+		str_pool[pool_i] = calloc(MAX_STRING, sizeof(char));
+		require(str_pool[pool_i] != NULL, "Memory initialization of string pool buffer failed\n");
+	}
+
 	/* Initalize structs */
 	token = calloc(1, sizeof(struct Token));
 	require(token != NULL, "Memory initialization of token failed\n");

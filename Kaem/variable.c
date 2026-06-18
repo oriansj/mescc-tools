@@ -235,6 +235,11 @@ void handle_variables(char** argv, struct Token* n)
 	/* NOTE: index is the position of input */
 	int index = 0;
 
+	if(NULL == strchr(n->value, '$'))
+	{
+		return;
+	}
+
 	/* Create input */
 	char* input = calloc(MAX_STRING, sizeof(char));
 	require(input != NULL, "Memory initialization of input in collect_variable failed\n");
