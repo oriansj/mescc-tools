@@ -457,7 +457,9 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
+			require(NULL != argv[option_index + 1], "File option requires an argument\n");
 			temp = calloc(1, sizeof(struct entry));
+			require(NULL != temp, "failed to allocate file for processing\n");
 			temp->name = argv[option_index + 1];
 			temp->next = input;
 			input = temp;
@@ -465,13 +467,19 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-o") || match(argv[option_index], "--output"))
 		{
+			if(NULL == argv[option_index + 1])
+			{
+				option_index = option_index + 1;
+				continue;
+			}
+
 			output_file = argv[option_index + 1];
 			output = fopen(output_file, "w");
 
 			if(NULL == output)
 			{
 				fputs("The file: ", stderr);
-				fputs(input->name, stderr);
+				fputs(output_file, stderr);
 				fputs(" can not be opened!\n", stderr);
 				exit(EXIT_FAILURE);
 			}
@@ -511,7 +519,9 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "--entry"))
 		{
+			require(NULL != argv[option_index + 1], "Entry option requires an argument\n");
 			head = calloc(1, sizeof(struct entry));
+			require(NULL != head, "failed to allocate entry\n");
 			/* Include _start or any other entry from your .hex2 */
 			head->next = jump_table;
 			jump_table = head;

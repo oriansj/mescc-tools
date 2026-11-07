@@ -70,6 +70,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-A") || match(argv[option_index], "--architecture"))
 		{
+			require(NULL != argv[option_index + 1], "Architecture option requires an argument\n");
 			arch = argv[option_index + 1];
 			if(match("knight-native", arch) || match("knight-posix", arch)) Architecture = KNIGHT;
 			else if(match("x86", arch)) Architecture = X86;
@@ -94,6 +95,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-B") || match(argv[option_index], "--base-address"))
 		{
+			require(NULL != argv[option_index + 1], "Base address option requires an argument\n");
 			Base_Address = strtoint(argv[option_index + 1]);
 			option_index = option_index + 2;
 		}
@@ -109,6 +111,7 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-f") || match(argv[option_index], "--file"))
 		{
+			require(NULL != argv[option_index + 1], "File option requires an argument\n");
 			temp = calloc(1, sizeof(struct input_files));
 			require(NULL != temp, "failed to allocate file for processing\n");
 			temp->filename = argv[option_index + 1];
@@ -118,6 +121,12 @@ int main(int argc, char **argv)
 		}
 		else if(match(argv[option_index], "-o") || match(argv[option_index], "--output"))
 		{
+			if(NULL == argv[option_index + 1])
+			{
+				option_index = option_index + 1;
+				continue;
+			}
+
 			output_file = argv[option_index + 1];
 			output = fopen(output_file, "w");
 
