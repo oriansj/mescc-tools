@@ -314,6 +314,7 @@ int Architectural_displacement(int target, int base)
 		return (target - (base & 0xFFFFFFFC));
 	}
 	else if(RISCV32 == Architecture || RISCV64 == Architecture) return (target - base);
+	else if(LOONGARCH64 == Architecture) return (target - base);
 
 	fputs("Unknown Architecture, aborting before harm is done\n", stderr);
 	exit(EXIT_FAILURE);
@@ -480,7 +481,7 @@ void process_byte(char c, FILE* source_file, int write)
 
 void pad_to_align(int write)
 {
-	if((ARMV7L == Architecture) || (AARM64 == Architecture) || (RISCV32 == Architecture) || (RISCV64 == Architecture))
+	if((ARMV7L == Architecture) || (AARM64 == Architecture) || (RISCV32 == Architecture) || (RISCV64 == Architecture) || (LOONGARCH64 == Architecture))
 	{
 		if(1 == (ip & 0x1))
 		{

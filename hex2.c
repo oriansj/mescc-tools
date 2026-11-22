@@ -79,11 +79,12 @@ int main(int argc, char **argv)
 			else if(match("ppc64le", arch)) Architecture = PPC64LE;
 			else if(match("riscv32", arch)) Architecture = RISCV32;
 			else if(match("riscv64", arch)) Architecture = RISCV64;
+			else if(match("loongarch64", arch)) Architecture = LOONGARCH64;
 			else
 			{
 				fputs("Unknown architecture: ", stderr);
 				fputs(arch, stderr);
-				fputs(" know values are: knight-native, knight-posix, x86, amd64, armv7l, riscv32 and riscv64", stderr);
+				fputs(" know values are: knight-native, knight-posix, x86, amd64, armv7l, riscv32, riscv64 and loongarch64", stderr);
 			}
 			option_index = option_index + 2;
 		}
@@ -103,7 +104,7 @@ int main(int argc, char **argv)
 			fputs(argv[0], stderr);
 			fputs(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian)", stderr);
 			fputs(" [--base-address 0x12345] [--architecture name]\nArchitecture:", stderr);
-			fputs(" knight-native, knight-posix, x86, amd64, armv7l, aarch64, riscv32 and riscv64\n", stderr);
+			fputs(" knight-native, knight-posix, x86, amd64, armv7l, aarch64, riscv32, riscv64 and loongarch64\n", stderr);
 			fputs("To leverage octal or binary input: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if((Architecture == RISCV32) || (Architecture == RISCV64))
+	if((Architecture == RISCV32) || (Architecture == RISCV64) || (Architecture == LOONGARCH64))
 	{
 		/* Forcing me to use words instead of just byting into the problem */
 		InsaneArchitecture = TRUE;
@@ -161,7 +162,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Catch implicitly false assumptions */
-	if(BigEndian && ((X86 == Architecture) || ( AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (RISCV32 == Architecture) || (RISCV64 == Architecture)))
+	if(BigEndian && ((X86 == Architecture) || ( AMD64 == Architecture) || (ARMV7L == Architecture) || (AARM64 == Architecture) || (RISCV32 == Architecture) || (RISCV64 == Architecture) || (LOONGARCH64 == Architecture)))
 	{
 		fputs(">> WARNING <<\n>> WARNING <<\n>> WARNING <<\n", stderr);
 		fputs("You have specified big endian output on likely a little endian processor\n", stderr);

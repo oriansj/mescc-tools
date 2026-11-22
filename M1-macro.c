@@ -45,6 +45,7 @@ enum
 	PPC64LE = 0x15,
 	RISCV32 = 0xF3,
 	RISCV64 = 0x100F3, /* Because RISC-V unlike all other architectures does get a seperate e_machine when changing from 32 to 64bit */
+	LOONGARCH64 = 0x102,
 };
 
 /* How do you want that output? */
@@ -480,7 +481,7 @@ void preserve_other(struct blob* p)
 		{
 			c = i->Text[0];
 
-			if(in_set(c, "!@$~%&:^"))
+			if(in_set(c, "!@$~%&:^*"))
 			{
 				i->Expression = i->Text;
 			}
@@ -619,7 +620,53 @@ char* express_word(int value, char c)
 	int size = 4;
 	int shift;
 	int immediate;
-	if('!' == c)
+	if(LOONGARCH64 == Architecture)
+	{
+		if('!' == c)
+		{
+			/* 2RI12: imm12[21:10] */
+			immediate = (value & 0xFFF) << 10;
+		}
+		else if('@' == c)
+		{
+			/* 2RI16: imm16[25:10] */
+			immediate = (((unsigned)value >> 2) & 0xFFFF) << 10;
+		}
+		else if('$' == c)
+		{
+			/* I26: imm26[15:0][25:10] and imm26[25:16][9:0] */
+			immediate = ((((unsigned)value >> 2) & 0xFFFF) << 10)
+				| (((unsigned)value >> 18) & 0x3FF);
+		}
+		else if('~' == c)
+		{
+			/* U20: imm20[24:5], rounded to a page */
+			immediate = ((((unsigned)(value + 0x800)) >> 12) & 0xFFFFF) << 5;
+		}
+		else if('*' == c)
+		{
+			/* 1RI21: imm21[15:0][25:10] and imm21[20:16][4:0] */
+			immediate = ((((unsigned)value >> 2) & 0xFFFF) << 10)
+				| (((unsigned)value >> 18) & 0x1F);
+		}
+		else if('%' == c)
+		{
+			/* provides an option for 32bit immediate constants */
+			immediate = value & 0xFFFFFFFF;
+			/* drop the leading */
+			ch = s;
+		}
+		else
+		{
+			fputs("Given symbol ", stderr);
+			fputc(c, stderr);
+			fputs(" to express immediate value ", stderr);
+			fputs(int2str(value, 10, TRUE), stderr);
+			fputc('\n', stderr);
+			exit(EXIT_FAILURE);
+		}
+	}
+	else if('!' == c)
 	{
 		/* Corresponds to RISC-V I format */
 		immediate = (value & 0xFFF) << 20;
@@ -744,6 +791,17 @@ void eval_immediates(struct blob* p)
 					}
 				}
 			}
+			else if((LOONGARCH64 == Architecture)) {
+				if(in_set(i->Text[0], "%~@!$*"))
+				{
+					value = strtoint(i->Text + 1);
+
+					if(('0' == i->Text[1]) || (0 != value))
+					{
+						i->Expression = express_word(value, i->Text[0]);
+					}
+				}
+			}
 			else
 			{
 				fputs("Unknown architecture received in eval_immediates\n", stderr);
@@ -842,11 +900,12 @@ int main(int argc, char **argv)
 			else if(match("ppc64le", arch)) Architecture = PPC64LE;
 			else if(match("riscv32", arch)) Architecture = RISCV32;
 			else if(match("riscv64", arch)) Architecture = RISCV64;
+			else if(match("loongarch64", arch)) Architecture = LOONGARCH64;
 			else
 			{
 				fputs("Unknown architecture: ", stderr);
 				fputs(arch, stderr);
-				fputs(" know values are: knight-native, knight-posix, x86, amd64, armv7l, aarch64, ppc64le, riscv32 and riscv64", stderr);
+				fputs(" know values are: knight-native, knight-posix, x86, amd64, armv7l, aarch64, ppc64le, riscv32, riscv64 and loongarch64", stderr);
 				exit(EXIT_FAILURE);
 			}
 			option_index = option_index + 2;
@@ -861,7 +920,7 @@ int main(int argc, char **argv)
 			fputs("Usage: ", stderr);
 			fputs(argv[0], stderr);
 			fputs(" --file FILENAME1 {-f FILENAME2} (--big-endian|--little-endian) ", stderr);
-			fputs("[--architecture name]\nArchitectures: knight-native, knight-posix, x86, amd64, armv7, riscv32 and riscv64\n", stderr);
+			fputs("[--architecture name]\nArchitectures: knight-native, knight-posix, x86, amd64, armv7, aarch64, ppc64le, riscv32, riscv64 and loongarch64\n", stderr);
 			fputs("To leverage octal or binary output: --octal, --binary\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
