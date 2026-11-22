@@ -34,6 +34,57 @@ void outOfRange(char* s, int value)
 	exit(EXIT_FAILURE);
 }
 
+void UpdateShiftRegister_LoongArch64(char ch, int value)
+{
+	if('!' == ch)
+	{
+		/* 2RI12: imm12[21:10] */
+		/* Used as the second half of a pcalau12i + addi.d pair */
+		/* pcalau12i computes rd = (pc & ~0xFFF) + (imm20 << 12), so the low
+		 * part is relative to the page containing the pcalau12i */
+		value = value + 4 + ((ip - 4) & 0xFFF);
+		tempword = (value & 0xFFF) << 10;
+	}
+	else if('@' == ch)
+	{
+		/* 2RI16: imm16[25:10] */
+		if ((value < -0x20000 || value > 0x1FFFC) || (value & 3)) outOfRange("2RI16", value);
+		tempword = (((unsigned)value >> 2) & 0xFFFF) << 10;
+	}
+	else if('$' == ch)
+	{
+		/* I26: imm26[15:0][25:10] and imm26[25:16][9:0] */
+		if ((value < -0x8000000 || value > 0x7FFFFFC) || (value & 3)) outOfRange("I26", value);
+		tempword = ((((unsigned)value >> 2) & 0xFFFF) << 10)
+			| (((unsigned)value >> 18) & 0x3FF);
+	}
+	else if('~' == ch)
+	{
+		/* U20: imm20[24:5], rounded to a page (pcalau12i/lu12i.w) */
+		/* pcalau12i addresses are relative to (pc & ~0xFFF) */
+		value = value + (ip & 0xFFF);
+		tempword = ((((unsigned)(value + 0x800)) >> 12) & 0xFFFFF) << 5;
+	}
+	else if('*' == ch)
+	{
+		/* 1RI21: imm21[15:0][25:10] and imm21[20:16][4:0] */
+		if ((value < -0x400000 || value > 0x3FFFFC) || (value & 3)) outOfRange("1RI21", value);
+		tempword = ((((unsigned)value >> 2) & 0xFFFF) << 10)
+			| (((unsigned)value >> 18) & 0x1F);
+	}
+	else
+	{
+		line_error();
+		fputs("error: UpdateShiftRegister_LoongArch64 reached impossible case: ch=", stderr);
+		fputc(ch, stderr);
+		fputs("\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	tempword = tempword & ((0xFFFF << 16) | 0xFFFF);
+	shiftregister = shiftregister ^ tempword;
+}
+
 void UpdateShiftRegister(char ch, int value)
 {
 	if ('.' == ch)
@@ -56,6 +107,10 @@ void UpdateShiftRegister(char ch, int value)
 		/* we just take the 4 bytes after the . and shove in the shift register */
 		swap = swap & ((0xFFFF << 16) | 0xFFFF);
 		shiftregister = shiftregister ^ swap;
+	}
+	else if(LOONGARCH64 == Architecture)
+	{
+		UpdateShiftRegister_LoongArch64(ch, value);
 	}
 	else if ('!' == ch)
 	{
@@ -285,7 +340,7 @@ void WordFirstPass(struct input_files* input)
 			}
 			ip = ip - 4;
 		}
-		else if(in_set(c, "!@$~"))
+		else if(in_set(c, "!@$~*"))
 		{
 			/* Don't update IP */
 			c = Throwaway_token(source_file);
@@ -355,7 +410,7 @@ void WordSecondPass(struct input_files* input)
 			ip = ip - 4;
 		}
 		else if(in_set(c, "%&")) WordStorePointer(c, source_file);  /* Deal with % and & */
-		else if(in_set(c, "!@$~"))
+		else if(in_set(c, "!@$~*"))
 		{
 			Clear_Scratch(scratch);
 			consume_token(source_file);

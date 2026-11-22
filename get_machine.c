@@ -75,6 +75,7 @@ int main(int argc, char **argv)
 			     || match("amd64", unameData->machine)
 			     || match("ppc64le", unameData->machine)
 			     || match("riscv64", unameData->machine)
+			     || match("loongarch64", unameData->machine)
 			     || match("x86_64", unameData->machine)) fputs("--64", stdout);
 			fputc('\n', stdout);
 			exit(EXIT_SUCCESS);
@@ -86,6 +87,7 @@ int main(int argc, char **argv)
 			     || match("amd64", unameData->machine)
 			     || match("ppc64le", unameData->machine)
 			     || match("riscv64", unameData->machine)
+			     || match("loongarch64", unameData->machine)
 			     || match("x86_64", unameData->machine)
 			     || match("i386", unameData->machine)
 			     || match("i486", unameData->machine)
@@ -105,6 +107,7 @@ int main(int argc, char **argv)
 			     || match("x86_64", unameData->machine)) fputs("0x600000", stdout);
 			else if(match("ppc64le", unameData->machine)) fputs("0x10000", stdout);
 			else if(match("riscv64", unameData->machine)) fputs("0x600000", stdout);
+			else if(match("loongarch64", unameData->machine)) fputs("0x600000", stdout);
 			else if(match("i386", unameData->machine)
 			     || match("i486", unameData->machine)
 			     || match("i586", unameData->machine)
